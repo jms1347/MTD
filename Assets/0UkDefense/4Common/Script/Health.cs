@@ -76,6 +76,16 @@ public class Health : MonoBehaviour
             Die();
     }
 
+    public void ApplyAuthoritativeHealth(float hp, float maxHp, float defenseValue = -1f)
+    {
+        if (defenseValue >= 0f)
+            defense = Mathf.Max(0f, defenseValue);
+
+        maxHealth = Mathf.Max(1f, maxHp);
+        currentHealth = Mathf.Clamp(hp, 0f, maxHealth);
+        isDead = currentHealth <= 0f;
+        OnHealthChanged?.Invoke(currentHealth, maxHealth);
+    }
     public void Heal(float amount)
     {
         if (!IsAlive || amount <= 0f)

@@ -102,6 +102,9 @@ public static class CoopSkillCatalog
     public static bool RequiresGroundTarget(string skillId)
         => TryGet(skillId, out var definition) && definition.RequiresGroundTarget;
 
+    public static string ResolveDescription(string skillId)
+        => TryGet(skillId, out var definition) ? definition.Description : string.Empty;
+
     public static string ResolveDisplayName(string skillId)
         => TryGet(skillId, out var definition) ? definition.DisplayName : skillId;
 }

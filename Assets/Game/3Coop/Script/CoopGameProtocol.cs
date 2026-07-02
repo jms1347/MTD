@@ -31,6 +31,7 @@ public class CoopPlayerState
     public float moveTargetZ;
     public string skillId = "";
     public float skillCooldown;
+    public float respawnRemaining;
 }
 
 [Serializable]
@@ -46,6 +47,7 @@ public class CoopEnemyState
     public bool isBoss;
     public int goldReward;
     public string monsterCode;
+    public string archetype = "grunt";
 }
 
 [Serializable]
@@ -111,6 +113,22 @@ public class CoopEventPayload
     public int wave;
 }
 
+[Serializable]
+public class CoopFxEventPayload
+{
+    public string type = CoopGameProtocol.FxEvent;
+    public string fxKind;
+    public float x;
+    public float y;
+    public float z;
+    public float tx;
+    public float ty;
+    public float tz;
+    public int targetEnemyId = -1;
+    public float radius;
+    public bool heavy;
+}
+
 public static class CoopGameProtocol
 {
     public const string StateSync = "coop_state_sync";
@@ -120,6 +138,11 @@ public static class CoopGameProtocol
     public const string SkillRequest = "coop_skill_request";
     public const string Event = "coop_event";
     public const string GameOver = "coop_game_over";
+    public const string FxEvent = "coop_fx_event";
+
+    public const string FxMissile = "missile";
+    public const string FxExplosion = "explosion";
+    public const string FxImpact = "impact";
 
     public const string UpgradeAttack = "attack";
     public const string UpgradeHealth = "health";

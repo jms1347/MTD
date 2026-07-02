@@ -25,22 +25,43 @@ public class CoopTankMissile : MonoBehaviour
         if (targetEnemy == null || gameSession == null)
             return;
 
-        var missileObject = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-        missileObject.name = "CoopTankMissile";
+        CoopCombatVfxCache.EnsureInitialized();
+
+        var targetId = ResolveEnemyId(targetEnemy);
+        var targetPos = targetEnemy.transform.position;
+
+        var missileObject = new GameObject("CoopTankMissile");
         missileObject.transform.position = origin;
         missileObject.transform.rotation = rotation;
-        missileObject.transform.localScale = new Vector3(0.14f, 0.28f, 0.14f);
-
-        var collider = missileObject.GetComponent<Collider>();
-        if (collider != null)
-            Object.Destroy(collider);
-
-        var renderer = missileObject.GetComponent<Renderer>();
-        if (renderer != null)
-            renderer.material.color = new Color(1f, 0.82f, 0.2f);
+        CoopCombatVfxCache.AttachMissileVisual(missileObject.transform);
 
         var missile = missileObject.AddComponent<CoopTankMissile>();
         missile.Initialize(targetEnemy.transform, attackDamage, pen, playerId, gameSession);
+
+        gameSession.BroadcastFx(new CoopFxEventPayload
+        {
+            fxKind = CoopGameProtocol.FxMissile,
+            x = origin.x,
+            y = origin.y,
+            z = origin.z,
+            tx = targetPos.x,
+            ty = targetPos.y + 0.6f,
+            tz = targetPos.z,
+            targetEnemyId = targetId
+        });
+    }
+
+    private static int ResolveEnemyId(GameObject targetEnemy)
+    {
+        var actor = targetEnemy.GetComponent<CoopEnemyActor>();
+        if (actor != null)
+            return actor.NetworkId;
+
+        var synced = targetEnemy.GetComponent<CoopSyncedMonster>();
+        if (synced != null)
+            return synced.NetworkId;
+
+        return -1;
     }
 
     private void Initialize(
@@ -89,23 +110,8 @@ public class CoopTankMissile : MonoBehaviour
         if ((aimPoint - next).sqrMagnitude <= HitDistance * HitDistance)
         {
             CoopTankAttack.ApplyDamageToEnemy(session, target.gameObject, damage, penetration, attackerPlayerId);
-            SpawnImpactFx(aimPoint);
+            CoopCombatVfxCache.PlayImpact(aimPoint, Quaternion.identity);
             Destroy(gameObject);
         }
-    }
-
-    private static void SpawnImpactFx(Vector3 position)
-    {
-        var fx = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        fx.name = "CoopMissileImpact";
-        fx.transform.position = position;
-        fx.transform.localScale = Vector3.one * 0.45f;
-        Object.Destroy(fx.GetComponent<Collider>());
-
-        var renderer = fx.GetComponent<Renderer>();
-        if (renderer != null)
-            renderer.material.color = new Color(1f, 0.55f, 0.1f, 0.85f);
-
-        Object.Destroy(fx, 0.25f);
     }
 }

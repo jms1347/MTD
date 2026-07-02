@@ -17,6 +17,7 @@ public class CoopPlayerTowerUnit : MonoBehaviour
     private Health health;
     private Transform hull;
     private Transform turret;
+    private Transform firePoint;
     private bool isLocalOwner;
     private Vector3 syncTargetPosition;
     private bool hasSyncTarget;
@@ -28,7 +29,7 @@ public class CoopPlayerTowerUnit : MonoBehaviour
         Health tankHealth,
         Transform hullTransform,
         Transform turretTransform,
-        Transform firePoint)
+        Transform firePointTransform)
     {
         PlayerId = playerId;
         PlayerName = playerName;
@@ -39,6 +40,7 @@ public class CoopPlayerTowerUnit : MonoBehaviour
         health = tankHealth;
         hull = hullTransform;
         turret = turretTransform != null ? turretTransform : hullTransform;
+        firePoint = firePointTransform != null ? firePointTransform : turret;
 
         var lobby = LobbyNetworkManager.Instance;
         var localId = lobby != null ? lobby.LocalPlayerId : CoopGameSession.Instance?.LocalPlayerId;
@@ -64,6 +66,10 @@ public class CoopPlayerTowerUnit : MonoBehaviour
                 health.Initialize(state.towerMaxHp, 0f, 0f);
             health.Heal(state.towerHp - health.CurrentHealth);
         }
+
+        var attack = GetComponent<CoopTankAttack>();
+        if (attack != null)
+            attack.enabled = state.towerHp > 0f;
     }
 
     public bool ProcessHostOrder(CoopPlayerState player, float arriveDistance, CoopGameSession session)
@@ -88,7 +94,7 @@ public class CoopPlayerTowerUnit : MonoBehaviour
             flat.y = 0f;
             if (flat.magnitude <= AttackRange)
             {
-                FaceTowards(chasePos);
+                FaceHullTowards(chasePos);
                 return false;
             }
 
@@ -117,7 +123,38 @@ public class CoopPlayerTowerUnit : MonoBehaviour
         player.towerX = next.x;
         player.towerZ = next.z;
         ApplyWorldPosition(next);
-        FaceTowards(moveTarget);
+        FaceHullTowards(moveTarget);
+        return true;
+    }
+
+    public Transform FirePoint => firePoint != null ? firePoint : turret;
+
+    public void AimTurretAt(Vector3 worldAimPoint, bool instant = false)
+    {
+        if (turret == null)
+            return;
+
+        var pivot = turret.position;
+        var toTarget = worldAimPoint - pivot;
+        if (toTarget.sqrMagnitude < 0.0001f)
+            return;
+
+        var desired = Quaternion.LookRotation(toTarget.normalized, Vector3.up);
+        if (instant)
+            turret.rotation = desired;
+        else
+            turret.rotation = Quaternion.Slerp(turret.rotation, desired, Time.deltaTime * RotateSpeed * 1.8f);
+    }
+
+    public bool TryGetAimRotation(Vector3 worldAimPoint, out Quaternion rotation)
+    {
+        rotation = turret != null ? turret.rotation : transform.rotation;
+        var origin = FirePoint != null ? FirePoint.position : transform.position;
+        var toTarget = worldAimPoint - origin;
+        if (toTarget.sqrMagnitude < 0.0001f)
+            return false;
+
+        rotation = Quaternion.LookRotation(toTarget.normalized, Vector3.up);
         return true;
     }
 
@@ -142,7 +179,7 @@ public class CoopPlayerTowerUnit : MonoBehaviour
         var flat = syncTargetPosition - transform.position;
         flat.y = 0f;
         if (flat.sqrMagnitude > 0.05f)
-            FaceTowards(syncTargetPosition);
+            FaceHullTowards(syncTargetPosition);
     }
 
     private void ApplyWorldPosition(Vector3 world)
@@ -150,7 +187,7 @@ public class CoopPlayerTowerUnit : MonoBehaviour
         transform.position = new Vector3(world.x, BodyY, world.z);
     }
 
-    private void FaceTowards(Vector3 worldTarget)
+    private void FaceHullTowards(Vector3 worldTarget)
     {
         var flat = worldTarget - transform.position;
         flat.y = 0f;
@@ -160,8 +197,11 @@ public class CoopPlayerTowerUnit : MonoBehaviour
         var rotation = Quaternion.LookRotation(flat.normalized, Vector3.up);
         if (hull != null)
             hull.rotation = Quaternion.Slerp(hull.rotation, rotation, Time.deltaTime * RotateSpeed);
-        if (turret != null)
-            turret.rotation = Quaternion.Slerp(turret.rotation, rotation, Time.deltaTime * RotateSpeed * 1.2f);
+    }
+
+    private void FaceTowards(Vector3 worldTarget)
+    {
+        FaceHullTowards(worldTarget);
     }
 
     public void IssueMove(Vector3 worldPoint)

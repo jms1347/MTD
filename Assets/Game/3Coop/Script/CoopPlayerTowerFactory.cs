@@ -18,6 +18,10 @@ public static class CoopPlayerTowerFactory
         var health = tankObject.AddComponent<Health>();
         health.Initialize(state.towerMaxHp, 0f, 0f);
 
+        var healthBar = tankObject.AddComponent<HealthBarUI>();
+        healthBar.ConfigureAsAlly();
+        healthBar.RefreshForSpawn();
+
         var unit = tankObject.AddComponent<CoopPlayerTowerUnit>();
         unit.Initialize(state.playerId, state.playerName, tank, health, visuals.Hull, visuals.Turret, visuals.FirePoint);
 

@@ -14,6 +14,7 @@ public class CoopGameUI : MonoBehaviour
     private TextMeshProUGUI announceText;
     private TextMeshProUGUI costText;
     private TextMeshProUGUI skillText;
+    private TextMeshProUGUI skillHintText;
     private Button skillButton;
 
     private void Start()
@@ -66,19 +67,21 @@ public class CoopGameUI : MonoBehaviour
         goldText = CreateLabel(panel.transform, "골드 0", 28, new Vector2(20f, -60f), TextAlignmentOptions.TopLeft);
         statsText = CreateLabel(panel.transform, "스탯", 22, new Vector2(20f, -110f), TextAlignmentOptions.TopLeft);
         announceText = CreateLabel(panel.transform, "", 24, new Vector2(0f, -20f), TextAlignmentOptions.Top);
-        costText = CreateLabel(panel.transform, "", 20, new Vector2(-20f, -100f), TextAlignmentOptions.TopRight);
+        costText = CreateLabel(panel.transform, "", 20, new Vector2(-250f, -100f), TextAlignmentOptions.TopRight);
 
-        CreateUpgradeButton(panel.transform, "공격력 +", new Vector2(-20f, -160f), CoopGameProtocol.UpgradeAttack);
-        CreateUpgradeButton(panel.transform, "체력 +", new Vector2(-20f, -220f), CoopGameProtocol.UpgradeHealth);
-        CreateUpgradeButton(panel.transform, "공속 +", new Vector2(-20f, -280f), CoopGameProtocol.UpgradeSpeed);
-        CreateUpgradeButton(panel.transform, "관통 +", new Vector2(-20f, -340f), CoopGameProtocol.UpgradePenetration);
+        CreateUpgradeButton(panel.transform, "공격력 +", new Vector2(-250f, -160f), CoopGameProtocol.UpgradeAttack);
+        CreateUpgradeButton(panel.transform, "체력 +", new Vector2(-250f, -220f), CoopGameProtocol.UpgradeHealth);
+        CreateUpgradeButton(panel.transform, "공속 +", new Vector2(-250f, -280f), CoopGameProtocol.UpgradeSpeed);
+        CreateUpgradeButton(panel.transform, "관통 +", new Vector2(-250f, -340f), CoopGameProtocol.UpgradePenetration);
 
         skillText = CreateLabel(panel.transform, "스킬", 20, new Vector2(20f, -400f), TextAlignmentOptions.TopLeft);
-        skillButton = CreateButton(panel.transform, "스킬 (Q)", new Vector2(-20f, -400f), new Vector2(180f, 48f));
+        skillButton = CreateButton(panel.transform, "스킬 (Q)", new Vector2(-250f, -400f), new Vector2(180f, 48f));
         skillButton.onClick.AddListener(CastSkillFromUi);
 
+        skillHintText = CreateBottomLeftLabel(panel.transform, "[Q] 스킬 준비 중");
+
         CreateLabel(panel.transform, "우클릭:이동 | A+클릭:어택땅 | Q:스킬 | 빨강:매복 | 보라:위험 | 초록:회복 | 하늘:가속 | 노랑:보급/보물", 16,
-            new Vector2(0f, 20f), TextAlignmentOptions.Bottom);
+            new Vector2(0f, 52f), TextAlignmentOptions.Bottom);
 
         var lobbyButton = CreateButton(panel.transform, "로비로", new Vector2(-20f, -20f), new Vector2(140f, 44f));
         lobbyButton.onClick.AddListener(() => SceneManager.LoadScene("LobbyScene"));
@@ -97,22 +100,44 @@ public class CoopGameUI : MonoBehaviour
         {
             goldText.text = "플레이어 정보 없음";
             skillText.text = string.Empty;
+            skillHintText.text = string.Empty;
             return;
         }
 
         goldText.text = $"골드 {local.gold}";
         statsText.text =
-            $"탱크 {ResolveTankLabel(local.towerCode)}\n" +
-            $"공격력 {local.attack:0} (Lv.{local.atkLevel})\n" +
-            $"체력 {local.towerHp:0}/{local.towerMaxHp:0} (Lv.{local.hpLevel})\n" +
-            $"공격속도 {local.fireInterval:0.0}초 (Lv.{local.spdLevel})\n" +
-            $"관통력 {local.penetration} (Lv.{local.penLevel})";
+            local.respawnRemaining > 0f
+                ? $"탱크 파괴 — {Mathf.CeilToInt(local.respawnRemaining)}초 후 재배치"
+                : $"탱크 {ResolveTankLabel(local.towerCode)}\n" +
+                  $"공격력 {local.attack:0} (Lv.{local.atkLevel})\n" +
+                  $"체력 {local.towerHp:0}/{local.towerMaxHp:0} (Lv.{local.hpLevel})\n" +
+                  $"공격속도 {local.fireInterval:0.0}초 (Lv.{local.spdLevel})\n" +
+                  $"관통력 {local.penetration} (Lv.{local.penLevel})";
 
         var skillName = CoopSkillCatalog.ResolveDisplayName(local.skillId);
+        var skillDesc = CoopSkillCatalog.ResolveDescription(local.skillId);
+        var needsTarget = CoopSkillCatalog.RequiresGroundTarget(local.skillId);
+
         if (local.skillCooldown > 0f)
             skillText.text = $"스킬: {skillName}  |  쿨다운 {Mathf.CeilToInt(local.skillCooldown)}초";
         else
             skillText.text = $"스킬: {skillName}  |  사용 가능 (Q)";
+
+        if (local.skillCooldown > 0f)
+        {
+            skillHintText.text =
+                $"[Q] {skillName}\n{skillDesc}\n쿨다운 {Mathf.CeilToInt(local.skillCooldown)}초";
+        }
+        else if (needsTarget)
+        {
+            skillHintText.text =
+                $"[Q] {skillName}\n{skillDesc}\nQ 누른 뒤 지면 클릭";
+        }
+        else
+        {
+            skillHintText.text =
+                $"[Q] {skillName}\n{skillDesc}\nQ 키로 즉시 사용";
+        }
 
         if (skillButton != null)
             skillButton.interactable = local.skillCooldown <= 0f && !string.IsNullOrEmpty(local.skillId);
@@ -217,7 +242,10 @@ public class CoopGameUI : MonoBehaviour
         var go = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
         go.transform.SetParent(parent, false);
         var rect = go.GetComponent<RectTransform>();
-        rect.anchorMin = align == TextAlignmentOptions.Top ? new Vector2(0.5f, 1f) : align == TextAlignmentOptions.TopRight ? new Vector2(1f, 1f) : new Vector2(0f, 1f);
+        rect.anchorMin = align == TextAlignmentOptions.Top ? new Vector2(0.5f, 1f)
+            : align == TextAlignmentOptions.TopRight ? new Vector2(1f, 1f)
+            : align == TextAlignmentOptions.Bottom ? new Vector2(0.5f, 0f)
+            : new Vector2(0f, 1f);
         rect.anchorMax = rect.anchorMin;
         rect.pivot = rect.anchorMin;
         rect.anchoredPosition = anchoredPos;
@@ -228,6 +256,26 @@ public class CoopGameUI : MonoBehaviour
         label.fontSize = size;
         label.alignment = align;
         label.color = Color.white;
+        label.raycastTarget = false;
+        return label;
+    }
+
+    private static TextMeshProUGUI CreateBottomLeftLabel(Transform parent, string text)
+    {
+        var go = new GameObject("SkillHint", typeof(RectTransform), typeof(TextMeshProUGUI));
+        go.transform.SetParent(parent, false);
+        var rect = go.GetComponent<RectTransform>();
+        rect.anchorMin = new Vector2(0f, 0f);
+        rect.anchorMax = new Vector2(0f, 0f);
+        rect.pivot = new Vector2(0f, 0f);
+        rect.anchoredPosition = new Vector2(20f, 20f);
+        rect.sizeDelta = new Vector2(520f, 110f);
+
+        var label = go.GetComponent<TextMeshProUGUI>();
+        label.text = text;
+        label.fontSize = 22f;
+        label.alignment = TextAlignmentOptions.BottomLeft;
+        label.color = new Color(0.95f, 0.98f, 1f, 0.95f);
         label.raycastTarget = false;
         return label;
     }

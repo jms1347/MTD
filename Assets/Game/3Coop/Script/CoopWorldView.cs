@@ -3,9 +3,32 @@ using UnityEngine;
 
 public class CoopWorldView : MonoBehaviour
 {
+    public static CoopWorldView Instance { get; private set; }
+
     private readonly Dictionary<string, CoopPlayerTowerUnit> mirroredTowers = new();
     private readonly Dictionary<int, Transform> mirroredEnemies = new();
+    private readonly Dictionary<int, CoopMirroredEnemyProxy> mirroredProxies = new();
     private CoopGameSession session;
+
+    private void Awake()
+    {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(this);
+            return;
+        }
+
+        Instance = this;
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+            Instance = null;
+
+        if (session != null)
+            session.OnStateUpdated -= Refresh;
+    }
 
     private void Start()
     {
@@ -21,20 +44,14 @@ public class CoopWorldView : MonoBehaviour
             Refresh(session.LatestState);
     }
 
-    private void OnDestroy()
+    public bool TryGetMirroredEnemy(int enemyId, out Transform enemyTransform)
     {
-        if (session != null)
-            session.OnStateUpdated -= Refresh;
-    }
+        enemyTransform = null;
+        if (!mirroredEnemies.TryGetValue(enemyId, out var transform) || transform == null)
+            return false;
 
-    private void BuildFallbackArena()
-    {
-        var ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
-        ground.name = "CoopGround";
-        ground.transform.SetParent(transform);
-        ground.transform.localScale = new Vector3(4f, 1f, 4f);
-        ground.GetComponent<Renderer>().material.color = new Color(0.35f, 0.42f, 0.32f);
-        ground.tag = "Ground";
+        enemyTransform = transform;
+        return true;
     }
 
     private void Refresh(CoopSyncPayload state)
@@ -84,6 +101,9 @@ public class CoopWorldView : MonoBehaviour
 
         foreach (var enemy in state.enemies)
         {
+            if (enemy.hp <= 0f)
+                continue;
+
             activeIds.Add(enemy.id);
             var view = GetOrCreateMirroredEnemy(enemy);
             var y = enemy.isBoss ? 0.2f : 0.08f;
@@ -93,6 +113,9 @@ public class CoopWorldView : MonoBehaviour
                 Time.deltaTime * 12f);
 
             view.localScale = Vector3.one;
+
+            if (mirroredProxies.TryGetValue(enemy.id, out var proxy) && proxy != null)
+                proxy.ApplySyncedState(enemy);
         }
 
         RemoveMissingEnemies(activeIds);
@@ -108,8 +131,15 @@ public class CoopWorldView : MonoBehaviour
         var code = string.IsNullOrEmpty(enemy.monsterCode)
             ? CoopGameProtocol.EnemyVisualTypes[enemy.id % CoopGameProtocol.EnemyVisualTypes.Length]
             : enemy.monsterCode;
-        CoopSlimeVisualFactory.BuildMirrored(root.transform, code, enemy.speed, enemy.isBoss);
+        CoopSlimeVisualFactory.BuildMirrored(root.transform, code, enemy.archetype, enemy.speed, enemy.isBoss);
+
+        var proxy = root.GetComponent<CoopMirroredEnemyProxy>();
+        if (proxy == null)
+            proxy = root.AddComponent<CoopMirroredEnemyProxy>();
+        proxy.Initialize(enemy);
+
         mirroredEnemies[enemy.id] = root.transform;
+        mirroredProxies[enemy.id] = proxy;
         return root.transform;
     }
 
@@ -144,6 +174,9 @@ public class CoopWorldView : MonoBehaviour
         }
 
         foreach (var id in remove)
+        {
             mirroredEnemies.Remove(id);
+            mirroredProxies.Remove(id);
+        }
     }
 }

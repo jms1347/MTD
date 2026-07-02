@@ -44,12 +44,15 @@ public class CoopGameSession : MonoBehaviour
     private bool lastSyncedWaveActive;
     private bool farmGateOpen = true;
     private readonly System.Random random = new();
+    private readonly Dictionary<string, float> respawnAtTime = new();
+    private readonly Dictionary<string, Vector3> playerSpawnPositions = new();
 
     private const float SyncInterval = 0.1f;
     private const float SpawnInterval = 0.85f;
     private const float WaveBreakDuration = 8f;
     private const float TowerRingRadius = 11f;
     private const float OrderArriveDistance = 0.35f;
+    private const float RespawnDelaySeconds = 60f;
     public const float MoveArriveDistance = OrderArriveDistance;
 
     private void Awake()
@@ -169,6 +172,9 @@ public class CoopGameSession : MonoBehaviour
 
         if (IsHostAuthority)
             TickSkillCooldowns();
+
+        if (IsHostAuthority)
+            TickRespawns();
 
         syncTimer += Time.deltaTime;
         if (IsHostAuthority && syncTimer >= SyncInterval)
@@ -321,7 +327,11 @@ public class CoopGameSession : MonoBehaviour
         lastHitByPlayer.TryGetValue(enemyId, out var killerId);
         lastHitByPlayer.Remove(enemyId);
 
-        if (!players.TryGetValue(killerId, out var killer))
+        CoopPlayerState killer = null;
+        if (!string.IsNullOrEmpty(killerId))
+            players.TryGetValue(killerId, out killer);
+
+        if (killer == null)
         {
             foreach (var pair in players)
             {
@@ -369,7 +379,8 @@ public class CoopGameSession : MonoBehaviour
         if (!IsHostAuthority)
             return;
 
-        lastHitByPlayer[enemyId] = attackerPlayerId;
+        if (!string.IsNullOrEmpty(attackerPlayerId))
+            lastHitByPlayer[enemyId] = attackerPlayerId;
     }
 
     public void RefreshFarmGates()
@@ -386,11 +397,105 @@ public class CoopGameSession : MonoBehaviour
         if (!players.TryGetValue(playerId, out var player))
             return;
 
-        player.towerHp = Mathf.Max(0f, player.towerHp - amount);
         if (player.towerHp <= 0f)
-            SetAnnouncement($"{player.playerName}의 타워가 파괴되었습니다!");
+            return;
+
+        if (liveTowers.TryGetValue(playerId, out var unit) && unit != null)
+        {
+            var health = unit.GetComponent<Health>();
+            if (health != null && health.IsAlive)
+            {
+                health.TakeDamage(amount);
+                player.towerHp = health.CurrentHealth;
+            }
+            else
+            {
+                player.towerHp = Mathf.Max(0f, player.towerHp - amount);
+            }
+        }
+        else
+        {
+            player.towerHp = Mathf.Max(0f, player.towerHp - amount);
+        }
+
+        if (player.towerHp <= 0f)
+        {
+            player.orderType = CoopGameProtocol.OrderNone;
+            if (liveTowers.TryGetValue(playerId, out var deadUnit) && deadUnit != null)
+            {
+                var attack = deadUnit.GetComponent<CoopTankAttack>();
+                if (attack != null)
+                    attack.enabled = false;
+            }
+
+            if (!respawnAtTime.ContainsKey(playerId))
+            {
+                respawnAtTime[playerId] = Time.time + RespawnDelaySeconds;
+                SetAnnouncement($"{player.playerName} 탱크 파괴! {RespawnDelaySeconds:0}초 후 재배치");
+            }
+        }
 
         CheckAllTowersDestroyed();
+    }
+
+    private void TickRespawns()
+    {
+        if (respawnAtTime.Count == 0)
+            return;
+
+        var ready = new List<string>();
+        foreach (var pair in respawnAtTime)
+        {
+            if (Time.time >= pair.Value)
+                ready.Add(pair.Key);
+        }
+
+        for (var i = 0; i < ready.Count; i++)
+            RespawnPlayer(ready[i]);
+    }
+
+    private void RespawnPlayer(string playerId)
+    {
+        respawnAtTime.Remove(playerId);
+        if (!players.TryGetValue(playerId, out var player))
+            return;
+
+        player.towerHp = player.towerMaxHp;
+        player.orderType = CoopGameProtocol.OrderNone;
+        player.respawnRemaining = 0f;
+
+        if (playerSpawnPositions.TryGetValue(playerId, out var spawnPos))
+        {
+            player.towerX = spawnPos.x;
+            player.towerZ = spawnPos.z;
+        }
+
+        if (liveTowers.TryGetValue(playerId, out var unit) && unit != null)
+        {
+            var health = unit.GetComponent<Health>();
+            if (health != null)
+                health.Initialize(player.towerMaxHp, 0f, 0f);
+
+            unit.gameObject.SetActive(true);
+            unit.ApplyState(player, snapPosition: true);
+
+            var attack = unit.GetComponent<CoopTankAttack>();
+            if (attack != null)
+                attack.enabled = true;
+        }
+
+        SetAnnouncement($"{player.playerName} 탱크 재배치 완료!");
+    }
+
+    private void UpdateRespawnCountdowns()
+    {
+        foreach (var player in players.Values)
+        {
+            if (respawnAtTime.TryGetValue(player.playerId, out var respawnAt))
+                player.respawnRemaining = Mathf.Max(0f, respawnAt - Time.time);
+            else
+                player.respawnRemaining = 0f;
+        }
     }
 
     private void CheckAllTowersDestroyed()
@@ -398,13 +503,16 @@ public class CoopGameSession : MonoBehaviour
         if (!IsHostAuthority || gameOver)
             return;
 
+        var anyAlive = false;
+        var anyRespawning = respawnAtTime.Count > 0;
         foreach (var player in players.Values)
         {
             if (player.towerHp > 0f)
-                return;
+                anyAlive = true;
         }
 
-        EndGame("모든 플레이어 탱크가 파괴되었습니다!");
+        if (!anyAlive && !anyRespawning)
+            EndGame("모든 플레이어 탱크가 파괴되었습니다!");
     }
 
     public void DamageNexus(float amount)
@@ -436,6 +544,7 @@ public class CoopGameSession : MonoBehaviour
             CoopTankCatalog.ApplyBaseStats(state, tank);
             state.skillId = CoopSkillCatalog.PickRandom(random);
             players[state.playerId] = state;
+            playerSpawnPositions[state.playerId] = new Vector3(slot.x, 0.12f, slot.z);
         }
 
         if (players.Count == 0)
@@ -453,6 +562,7 @@ public class CoopGameSession : MonoBehaviour
             CoopTankCatalog.ApplyBaseStats(fallback, tank);
             fallback.skillId = CoopSkillCatalog.PickRandom(random);
             players[lobby.LocalPlayerId] = fallback;
+            playerSpawnPositions[fallback.playerId] = new Vector3(slot.x, 0.12f, slot.z);
         }
     }
 
@@ -712,17 +822,7 @@ public class CoopGameSession : MonoBehaviour
         var enemyObject = new GameObject(stats.isBoss ? $"Boss_{id}" : $"Enemy_{id}");
         enemyObject.transform.SetParent(entityRoot, false);
         var actor = enemyObject.AddComponent<CoopEnemyActor>();
-        actor.Initialize(
-            this,
-            id,
-            position,
-            stats.maxHp,
-            stats.defense,
-            stats.moveSpeed,
-            stats.isBoss,
-            stats.goldReward,
-            stats.slimeKey,
-            stats.contactDamage);
+        actor.Initialize(this, id, position, stats);
         liveEnemies[id] = actor;
     }
 
@@ -823,6 +923,13 @@ public class CoopGameSession : MonoBehaviour
             return;
         }
 
+        if (json.Contains(CoopGameProtocol.FxEvent) && !IsHostAuthority)
+        {
+            var fx = JsonConvert.DeserializeObject<CoopFxEventPayload>(json);
+            CoopFxReplayer.Play(fx);
+            return;
+        }
+
         if (json.Contains(CoopGameProtocol.GameOver))
         {
             var evt = JsonConvert.DeserializeObject<CoopEventPayload>(json);
@@ -863,6 +970,9 @@ public class CoopGameSession : MonoBehaviour
 
     private void BroadcastState()
     {
+        if (IsHostAuthority)
+            UpdateRespawnCountdowns();
+
         var playerArray = new CoopPlayerState[players.Count];
         players.Values.CopyTo(playerArray, 0);
 
@@ -909,6 +1019,15 @@ public class CoopGameSession : MonoBehaviour
             wave = currentWave
         }));
         SetAnnouncement(message);
+    }
+
+    public void BroadcastFx(CoopFxEventPayload fx)
+    {
+        if (!IsHostAuthority || lobby == null || fx == null)
+            return;
+
+        fx.type = CoopGameProtocol.FxEvent;
+        lobby.SendCoopToAll(JsonConvert.SerializeObject(fx));
     }
 
     public void SetAnnouncement(string message)

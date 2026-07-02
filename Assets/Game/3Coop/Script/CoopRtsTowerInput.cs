@@ -215,6 +215,13 @@ public class CoopRtsTowerInput : MonoBehaviour
                 return true;
             }
 
+            var proxy = enemyRoot.GetComponent<CoopMirroredEnemyProxy>();
+            if (proxy != null)
+            {
+                enemyId = proxy.NetworkId;
+                return true;
+            }
+
             var actor = enemyRoot.GetComponent<CoopEnemyActor>();
             if (actor != null)
             {

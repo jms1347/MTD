@@ -7,14 +7,21 @@ public class CoopEnemyActor : MonoBehaviour
     public bool IsBoss { get; private set; }
     public int GoldReward { get; private set; }
     public int Defense { get; private set; }
+    public CoopEnemyArchetype Archetype { get; private set; }
 
     private Health health;
     private float moveSpeed = 3f;
     private float contactDamage = 6f;
+    private float explosionRadius;
+    private float explosionDamage;
+    private float touchRadius = 1.35f;
+    private float meleeInterval = 1.4f;
+    private float meleeTimer;
     private string monsterCode;
     private CoopGameSession session;
     private CoopEnemySlimeVisual slimeVisual;
     private bool killedByCombat;
+    private bool hasDetonated;
 
     public float MoveSpeed => moveSpeed;
 
@@ -22,51 +29,102 @@ public class CoopEnemyActor : MonoBehaviour
         CoopGameSession gameSession,
         int networkId,
         Vector3 position,
-        float maxHp,
-        int defense,
-        float speed,
-        bool isBoss,
-        int goldReward,
-        string monsterCode,
-        float contactDamage = 6f)
+        CoopSlimeWaveStats stats)
     {
         session = gameSession;
         NetworkId = networkId;
-        IsBoss = isBoss;
-        GoldReward = goldReward;
-        Defense = defense;
-        moveSpeed = speed;
-        this.contactDamage = contactDamage;
-        this.monsterCode = monsterCode;
+        IsBoss = stats.isBoss;
+        GoldReward = stats.goldReward;
+        Defense = stats.defense;
+        Archetype = stats.archetype;
+        moveSpeed = stats.moveSpeed;
+        contactDamage = stats.contactDamage;
+        explosionRadius = stats.explosionRadius;
+        explosionDamage = stats.explosionDamage;
+        touchRadius = stats.touchRadius;
+        meleeInterval = stats.meleeInterval;
+        monsterCode = stats.slimeKey;
 
+        gameObject.name = stats.isBoss
+            ? $"Boss_{CoopEnemyArchetypeUtil.ToId(stats.archetype)}_{networkId}"
+            : $"Enemy_{CoopEnemyArchetypeUtil.ToId(stats.archetype)}_{networkId}";
         gameObject.tag = "Enemy";
         transform.position = position;
 
         health = gameObject.GetComponent<Health>();
         if (health == null)
             health = gameObject.AddComponent<Health>();
-        health.Initialize(maxHp, 0.2f, defense);
+        health.Initialize(stats.maxHp, 0.2f, stats.defense);
         health.OnDeath += HandleDeath;
 
+        var healthBar = gameObject.GetComponent<HealthBarUI>();
+        if (healthBar == null)
+            healthBar = gameObject.AddComponent<HealthBarUI>();
+        healthBar.ConfigureAsEnemy();
+        healthBar.RefreshForSpawn();
+
         slimeVisual = CoopSlimeVisualFactory.Build(
-            transform, monsterCode, moveSpeed, isBoss, out _);
+            transform, stats.slimeKey, stats.archetype, moveSpeed, stats.isBoss, out var bodyCollider);
+
+        if (stats.explosionRadius > 0f)
+            explosionRadius = stats.explosionRadius + ResolveBodyRadius(bodyCollider) * 0.75f;
     }
+
+    private static float ResolveBodyRadius(CapsuleCollider collider)
+        => collider != null ? collider.radius : 0.55f;
+
+    private float GetSurfaceGapTo(Vector3 targetPos)
+    {
+        var flat = targetPos - transform.position;
+        flat.y = 0f;
+        var bodyRadius = ResolveBodyRadius(GetComponent<CapsuleCollider>());
+        const float tankBodyRadius = 0.7f;
+        return flat.magnitude - bodyRadius - tankBodyRadius;
+    }
+
+    private bool IsInMeleeRange(float surfaceGap) => surfaceGap <= touchRadius;
 
     private void Update()
     {
-        if (session == null || !session.IsHostAuthority || health == null || !health.IsAlive)
+        if (session == null || !session.IsHostAuthority || health == null || !health.IsAlive || hasDetonated)
             return;
 
         var target = FindMoveTarget();
         var flat = target - transform.position;
         flat.y = 0f;
-        if (flat.sqrMagnitude < 0.2f)
+        var distance = flat.magnitude;
+        var surfaceGap = GetSurfaceGapTo(target);
+
+        if (Archetype.IsSuicide())
         {
-            ReachTarget(target);
+            if (IsInMeleeRange(surfaceGap))
+            {
+                Detonate();
+                return;
+            }
+        }
+        else if (Archetype == CoopEnemyArchetype.Tank || Archetype == CoopEnemyArchetype.Grunt)
+        {
+            if (IsInMeleeRange(surfaceGap))
+            {
+                TickTankMelee();
+                return;
+            }
+        }
+        else if (IsInMeleeRange(surfaceGap))
+        {
+            StrikeAndExpire();
             return;
         }
 
+        if (distance < 0.05f)
+            return;
+
         transform.position += flat.normalized * (moveSpeed * Time.deltaTime);
+        transform.rotation = Quaternion.Slerp(
+            transform.rotation,
+            Quaternion.LookRotation(flat.normalized),
+            Time.deltaTime * 8f);
     }
 
     public void SyncPosition(Vector3 position)
@@ -84,12 +142,12 @@ public class CoopEnemyActor : MonoBehaviour
 
         if (Mathf.Abs(health.MaxHealth - maxHp) > 0.1f)
             health.Initialize(maxHp, 0.2f, Defense);
-        health.Heal(hp - health.CurrentHealth);
+        health.ApplyAuthoritativeHealth(hp, maxHp);
     }
 
     public void TakeDamage(float attack, int penetration, string attackerPlayerId)
     {
-        if (health == null || !health.IsAlive)
+        if (health == null || !health.IsAlive || hasDetonated)
             return;
 
         health.SetFlatDefenseReduction(penetration);
@@ -110,7 +168,8 @@ public class CoopEnemyActor : MonoBehaviour
             defense = Defense,
             isBoss = IsBoss,
             goldReward = GoldReward,
-            monsterCode = monsterCode
+            monsterCode = monsterCode,
+            archetype = CoopEnemyArchetypeUtil.ToId(Archetype)
         };
     }
 
@@ -123,8 +182,8 @@ public class CoopEnemyActor : MonoBehaviour
             if (tower == null)
                 continue;
 
-            var healthComponent = tower.GetComponent<Health>();
-            if (healthComponent != null && !healthComponent.IsAlive)
+            var towerHealth = tower.GetComponent<Health>();
+            if (towerHealth != null && !towerHealth.IsAlive)
                 continue;
 
             var dist = Vector3.Distance(transform.position, tower.transform.position);
@@ -135,34 +194,108 @@ public class CoopEnemyActor : MonoBehaviour
             nearestTower = tower;
         }
 
-        return nearestTower != null ? nearestTower.transform.position : Vector3.zero;
+        return nearestTower != null ? nearestTower.transform.position : transform.position;
     }
 
-    private void ReachTarget(Vector3 target)
+    private void TickTankMelee()
+    {
+        meleeTimer -= Time.deltaTime;
+        if (meleeTimer > 0f)
+            return;
+
+        meleeTimer = Mathf.Max(0.35f, meleeInterval);
+        slimeVisual?.PlayAttack();
+        DamageNearestTower(contactDamage);
+    }
+
+    private void StrikeAndExpire()
+    {
+        slimeVisual?.PlayAttack();
+        DamageNearestTower(contactDamage);
+        CompleteEnemy(false);
+    }
+
+    private void Detonate()
+    {
+        if (hasDetonated)
+            return;
+
+        hasDetonated = true;
+        slimeVisual?.PlayAttack();
+        CoopEnemyExplosionVfx.Spawn(
+            transform.position,
+            explosionRadius,
+            Archetype == CoopEnemyArchetype.HeavyBomber || IsBoss);
+
+        session?.BroadcastFx(new CoopFxEventPayload
+        {
+            fxKind = CoopGameProtocol.FxExplosion,
+            x = transform.position.x,
+            y = transform.position.y,
+            z = transform.position.z,
+            radius = explosionRadius,
+            heavy = Archetype == CoopEnemyArchetype.HeavyBomber || IsBoss
+        });
+
+        foreach (var tower in FindObjectsByType<CoopPlayerTowerUnit>(FindObjectsSortMode.None))
+        {
+            if (tower == null)
+                continue;
+
+            var dist = Vector3.Distance(tower.transform.position, transform.position);
+            if (dist > explosionRadius + 0.35f)
+                continue;
+
+            var falloff = 1f - (dist / Mathf.Max(0.1f, explosionRadius)) * 0.3f;
+            var damage = explosionDamage * Mathf.Clamp(falloff, 0.55f, 1f);
+            ApplyDamageToTower(tower, damage);
+        }
+
+        CompleteEnemy(true);
+    }
+
+    private void DamageNearestTower(float damage)
     {
         foreach (var tower in FindObjectsByType<CoopPlayerTowerUnit>(FindObjectsSortMode.None))
         {
             if (tower == null)
                 continue;
 
-            if (Vector3.Distance(tower.transform.position, transform.position) > 1.4f)
+            if (GetSurfaceGapTo(tower.transform.position) > touchRadius + 0.25f)
                 continue;
 
-            slimeVisual?.PlayAttack();
-
-            var towerHealth = tower.GetComponent<Health>();
-            if (towerHealth != null)
-                towerHealth.TakeDamage(contactDamage);
-            else
-                session?.DamagePlayerTower(tower.PlayerId, contactDamage);
+            ApplyDamageToTower(tower, damage);
             break;
         }
+    }
 
+    private void ApplyDamageToTower(CoopPlayerTowerUnit tower, float damage)
+    {
+        var towerHealth = tower.GetComponent<Health>();
+        if (towerHealth != null)
+            towerHealth.TakeDamage(damage);
+        else
+            session?.DamagePlayerTower(tower.PlayerId, damage);
+    }
+
+    private void CompleteEnemy(bool fromSuicide)
+    {
+        killedByCombat = true;
+        session?.OnEnemyKilled(NetworkId);
         Destroy(gameObject);
     }
 
     private void HandleDeath()
     {
+        if (hasDetonated)
+            return;
+
+        if (Archetype.IsSuicide())
+        {
+            Detonate();
+            return;
+        }
+
         killedByCombat = true;
         session?.OnEnemyKilled(NetworkId);
     }
@@ -172,7 +305,7 @@ public class CoopEnemyActor : MonoBehaviour
         if (health != null)
             health.OnDeath -= HandleDeath;
 
-        if (!killedByCombat)
+        if (!killedByCombat && !hasDetonated)
             session?.UnregisterEnemyIfPresent(NetworkId);
     }
 }

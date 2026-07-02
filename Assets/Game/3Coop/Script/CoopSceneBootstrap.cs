@@ -32,5 +32,17 @@ public class CoopSceneBootstrap : MonoBehaviour
             var uiObject = new GameObject("CoopGameUI");
             uiObject.AddComponent<CoopGameUI>();
         }
+
+        if (FindFirstObjectByType<CoopMinimapUI>() == null)
+        {
+            var minimapObject = new GameObject("CoopMinimapUI");
+            minimapObject.AddComponent<CoopMinimapUI>();
+        }
+
+        if (FindFirstObjectByType<CoopCombatVfxBootstrap>() == null)
+        {
+            var vfxObject = new GameObject("CoopCombatVfxBootstrap");
+            vfxObject.AddComponent<CoopCombatVfxBootstrap>();
+        }
     }
 }

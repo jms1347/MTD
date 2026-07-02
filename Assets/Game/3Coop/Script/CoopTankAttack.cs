@@ -18,16 +18,26 @@ public class CoopTankAttack : MonoBehaviour
         if (session == null || !session.IsHostAuthority || tankUnit == null)
             return;
 
-        if (Time.time < nextFireTime)
+        if (!session.TryGetPlayer(tankUnit.PlayerId, out var player))
             return;
 
-        if (!session.TryGetPlayer(tankUnit.PlayerId, out var player))
+        if (player.towerHp <= 0f)
+            return;
+
+        var tankHealth = tankUnit.GetComponent<Health>();
+        if (tankHealth != null && !tankHealth.IsAlive)
             return;
 
         if (!TryFindTarget(session, player, out var target))
             return;
 
-        FireMissile(session, target, player);
+        var aimPoint = DefenseCombatTargeting.ResolveEnemyAimPoint(target.transform);
+        tankUnit.AimTurretAt(aimPoint);
+
+        if (Time.time < nextFireTime)
+            return;
+
+        FireMissile(session, target, player, aimPoint);
         var fireInterval = Mathf.Max(0.35f, player.fireInterval * CoopSkillBuffs.GetFireIntervalMultiplier(player.playerId));
         nextFireTime = Time.time + fireInterval;
     }
@@ -63,17 +73,18 @@ public class CoopTankAttack : MonoBehaviour
         return target != null;
     }
 
-    private void FireMissile(CoopGameSession session, GameObject target, CoopPlayerState player)
+    private void FireMissile(CoopGameSession session, GameObject target, CoopPlayerState player, Vector3 aimPoint)
     {
-        var muzzle = firePoint != null ? firePoint : transform;
-        var look = target.transform.position - muzzle.position;
-        look.y = 0f;
-        var rotation = look.sqrMagnitude > 0.01f
-            ? Quaternion.LookRotation(look.normalized, Vector3.up)
-            : muzzle.rotation;
+        tankUnit.AimTurretAt(aimPoint, instant: true);
 
-        if (firePoint != null)
-            firePoint.rotation = rotation;
+        var muzzle = firePoint != null ? firePoint : tankUnit.FirePoint;
+        if (muzzle == null)
+            muzzle = transform;
+
+        if (!tankUnit.TryGetAimRotation(aimPoint, out var rotation))
+            rotation = muzzle.rotation;
+
+        muzzle.rotation = rotation;
 
         var damage = player.attack * CoopSkillBuffs.GetAttackMultiplier(player.playerId);
         CoopTankMissile.Fire(

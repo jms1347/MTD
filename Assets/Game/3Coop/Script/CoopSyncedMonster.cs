@@ -58,7 +58,8 @@ public class CoopSyncedMonster : MonoBehaviour
             defense = health != null ? Mathf.RoundToInt(health.Defense) : 0,
             isBoss = IsBoss,
             goldReward = GoldReward,
-            monsterCode = MonsterCode
+            monsterCode = MonsterCode,
+            archetype = "grunt"
         };
     }
 
