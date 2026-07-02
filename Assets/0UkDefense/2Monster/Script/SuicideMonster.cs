@@ -22,7 +22,7 @@ public class SuicideMonster : MonsterAttack
         if (hasExploded)
             return;
 
-        attackTarget = Monster.FindNexus();
+        attackTarget = Monster.FindAttackTarget(monster);
         if (attackTarget == null)
             return;
 

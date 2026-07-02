@@ -31,7 +31,7 @@ public class MeleeMonster : MonsterAttack
         if (health != null && !health.IsAlive)
             return;
 
-        attackTarget = Monster.FindNexus();
+        attackTarget = Monster.FindAttackTarget(monster);
         if (attackTarget == null)
             return;
 

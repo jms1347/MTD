@@ -97,6 +97,7 @@ public class StageManager : Singleton<StageManager>
     private int stageSpawnedTotal;
     private bool stageBattleActive;
     private bool stageClearNotified;
+    private bool coopSpawnMode;
     private bool isPoolReady;
     private Coroutine spawnCoroutine;
     private int laneSpawnSpreadCounter;
@@ -232,7 +233,46 @@ public class StageManager : Singleton<StageManager>
 
     private bool CanSpawnMoreForStage()
     {
+        if (coopSpawnMode)
+            return aliveEnemyCount < maxAliveEnemies;
+
         return stageBattleActive && stageSpawnedTotal < stageSpawnQuota;
+    }
+
+    public void EnterCoopSpawnMode()
+    {
+        EnsurePoolReady();
+        EnsureStageManagerActive();
+        coopSpawnMode = true;
+        stageBattleActive = true;
+        stageSpawnQuota = int.MaxValue;
+        stageClearNotified = false;
+
+        var pool = EnsureMonsterEnemyPool();
+        pool.PrepareFromMonsterTable();
+
+        if (spawnCoroutine != null)
+        {
+            StopCoroutine(spawnCoroutine);
+            spawnCoroutine = null;
+        }
+    }
+
+    public bool TryCoopSpawnInDirection(SpawnDirection direction)
+    {
+        if (!coopSpawnMode)
+            return false;
+
+        return SpawnEnemyOnLane(direction);
+    }
+
+    public bool TryCoopSpawnAtWorld(Vector3 worldPoint)
+    {
+        if (!coopSpawnMode || !CanSpawnMoreForStage())
+            return false;
+
+        var direction = (SpawnDirection)UnityEngine.Random.Range(0, 2);
+        return SpawnEnemyAtGroundPoint(worldPoint, direction);
     }
 
     private void TryNotifyStageCleared()
@@ -386,10 +426,10 @@ public class StageManager : Singleton<StageManager>
         SpawnEnemyOnLane(direction);
     }
 
-    private void SpawnEnemyOnLane(SpawnDirection spawnDirection)
+    private bool SpawnEnemyOnLane(SpawnDirection spawnDirection)
     {
         if (!CanSpawnMoreForStage())
-            return;
+            return false;
 
         int spreadIndex = laneSpawnSpreadCounter % 3;
         laneSpawnSpreadCounter++;
@@ -404,13 +444,13 @@ public class StageManager : Singleton<StageManager>
                 spawnCenter.z + Mathf.Sin(angle) * spawnRadius);
         }
 
-        SpawnEnemyAtGroundPoint(groundPoint, spawnDirection);
+        return SpawnEnemyAtGroundPoint(groundPoint, spawnDirection);
     }
 
-    private void SpawnEnemyAtGroundPoint(Vector3 groundPoint, SpawnDirection spawnDirection)
+    private bool SpawnEnemyAtGroundPoint(Vector3 groundPoint, SpawnDirection spawnDirection)
     {
         if (!CanSpawnMoreForStage())
-            return;
+            return false;
 
         float spawnX = groundPoint.x;
         float spawnZ = groundPoint.z;
@@ -418,11 +458,9 @@ public class StageManager : Singleton<StageManager>
         var monsterData = ResolveMonsterDataForSpawn(out var consumedStageEntry, out var bossData);
         if (!TryGetEnemyFromPool(monsterData.code, out var enemy))
         {
-            Debug.LogError(
-                $"[StageManager] '{monsterData.code}' 풀 생성 실패. Monster.tsv prefabKey와 AddressableKey를 확인하세요.");
             if (consumedStageEntry)
                 stageSpawnQueue?.ConfirmSpawn();
-            return;
+            return false;
         }
 
         float groundY = MonsterGroundPlacement.ResolveGroundY(groundPoint);
@@ -437,10 +475,9 @@ public class StageManager : Singleton<StageManager>
         var health = enemy.GetComponent<Health>();
         if (health == null)
         {
-            Debug.LogError($"[StageManager] '{monsterData.code}' 풀 오브젝트에 Health가 없습니다.");
             if (consumedStageEntry)
                 stageSpawnQueue?.ConfirmSpawn();
-            return;
+            return false;
         }
 
         enemy.GetComponent<HealthBarUI>()?.RefreshForSpawn();
@@ -456,10 +493,9 @@ public class StageManager : Singleton<StageManager>
         var monster = enemy.GetComponent<Monster>();
         if (monster == null)
         {
-            Debug.LogError($"[StageManager] '{monsterData.code}' 풀 오브젝트에 Monster가 없습니다.");
             if (consumedStageEntry)
                 stageSpawnQueue?.ConfirmSpawn();
-            return;
+            return false;
         }
 
         monster.ResetForSpawn(
@@ -481,8 +517,12 @@ public class StageManager : Singleton<StageManager>
 
         aliveEnemyCount++;
         stageSpawnedTotal++;
+        OnEnemySpawned?.Invoke(enemy, monsterData);
         TryNotifyStageCleared();
+        return true;
     }
+
+    public static event System.Action<GameObject, MonsterData> OnEnemySpawned;
 
     public static float DirectionToRadians(SpawnDirection direction)
     {

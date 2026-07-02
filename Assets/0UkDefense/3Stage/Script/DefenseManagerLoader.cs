@@ -10,7 +10,8 @@ public static class DefenseManagerLoader
         GameObject stageManagerPrefab)
     {
         MissilePoolManager.Load(missilePoolManagerPrefab);
-        NexusManager.Load(nexusManagerPrefab);
+        if (nexusManagerPrefab != null)
+            NexusManager.Load(nexusManagerPrefab);
         TowerStatsManager.Load(towerStatsManagerPrefab);
         TowerManager.Load(towerManagerPrefab);
         EnsureStageManager(stageManagerPrefab);

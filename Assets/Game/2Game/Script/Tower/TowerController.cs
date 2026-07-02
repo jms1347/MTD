@@ -78,6 +78,15 @@ public class TowerController : MonoBehaviour
         missileSpeed = stats.missileSpeed;
     }
 
+    /// <summary>협동 모드에서 업그레이드 스탯을 타워 전투에 반영합니다.</summary>
+    public void ApplyCoopStats(float damage, float interval, float range)
+    {
+        missileDamage = damage;
+        fireInterval = Mathf.Max(0.05f, interval);
+        attackRange = range;
+    }
+
+    public float MissileDamage => missileDamage;
     public float AttackRange => attackRange;
     public string TargetMobility => targetMobility;
     public float FireCooldownRemaining => Mathf.Max(0f, nextFireTime - Time.time);

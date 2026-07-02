@@ -147,6 +147,21 @@ public class Monster : MonoBehaviour
         return nexus != null ? nexus.transform : null;
     }
 
+    public static Transform FindAttackTarget(Monster self = null)
+    {
+        if (CoopGameSession.Instance != null)
+        {
+            var origin = self != null ? self.transform.position : Vector3.zero;
+            var tower = CoopPlayerTargetQuery.FindNearestLivingTower(origin);
+            if (tower != null)
+                return tower;
+
+            return null;
+        }
+
+        return FindNexus();
+    }
+
     public Vector3 MoveAlongPath(Vector3 targetPosition)
     {
         var laneFollower = GetComponent<MonsterLaneFollower>();
