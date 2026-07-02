@@ -1,0 +1,367 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b6a5948372615049382a1b0c9d8e7f6, type: 3}
+  m_Name: TowerDataSo
+  m_EditorClassIdentifier: Assembly-CSharp::TowerDataSo
+  list:
+  - towerId: 93686599
+    code: N-0001
+    prefabKey: N-0001
+    towerName: "\uB178\uBA40 \uAE30\uBCF8 \uD0C0\uC6CC"
+    targetMobility: "\uC9C0\uC0C1"
+    cost: 100
+    buildTime: 2
+    baseDamage: 38
+    fireInterval: 2.5
+    attackRange: 10
+    skillId: 425242029
+    description: "\uAE30\uBCF8"
+  - towerId: 351414031
+    code: F-0001
+    prefabKey: F-0001
+    towerName: "\uD654\uC5FC \uAE30\uBCF8 \uD0C0\uC6CC"
+    targetMobility: "\uC9C0\uC0C1"
+    cost: 200
+    buildTime: 4
+    baseDamage: 62
+    fireInterval: 2.5
+    attackRange: 10
+    skillId: 2096646981
+    description: "\uD654\uC5FC 1\uB2E8\uACC4"
+  - towerId: 872721224
+    code: I-0001
+    prefabKey: I-0001
+    towerName: "\uC5BC\uC74C \uAE30\uBCF8 \uD0C0\uC6CC"
+    targetMobility: "\uC9C0\uC0C1"
+    cost: 200
+    buildTime: 4
+    baseDamage: 25
+    fireInterval: 2.5
+    attackRange: 10
+    skillId: 1033319530
+    description: "\uC5BC\uC74C 1\uB2E8\uACC4"
+  - towerId: 1598387813
+    code: L-0001
+    prefabKey: L-0001
+    towerName: "\uBC88\uAC1C \uAE30\uBCF8 \uD0C0\uC6CC"
+    targetMobility: "\uC9C0\uC0C1"
+    cost: 200
+    buildTime: 4
+    baseDamage: 50
+    fireInterval: 2.5
+    attackRange: 10
+    skillId: 849724783
+    description: "\uBC88\uAC1C 1\uB2E8\uACC4"
+  - towerId: 1910083577
+    code: P-0001
+    prefabKey: P-0001
+    towerName: "\uB3C5 \uAE30\uBCF8 \uD0C0\uC6CC"
+    targetMobility: "\uC9C0\uC0C1"
+    cost: 200
+    buildTime: 4
+    baseDamage: 25
+    fireInterval: 2.5
+    attackRange: 10
+    skillId: 1969375827
+    description: "\uB3C5 1\uB2E8\uACC4"
+  - towerId: 110464218
+    code: N-0002
+    prefabKey: N-0002
+    towerName: "\uAC00\uD2C0\uB9C1 \uD3EC\uD0D1"
+    targetMobility: "\uC9C0\uC0C1"
+    cost: 400
+    buildTime: 5
+    baseDamage: 20
+    fireInterval: 0.88
+    attackRange: 5
+    skillId: 374909172
+    description: "\uB9E4\uC6B0 \uBE60\uB978 \uACF5\uC18D\uC73C\uB85C \uB2E8\uC77C
+      \uC801\uC744 \uAC08\uC544\uBC84\uB9BC. \uADFC\uAC70\uB9AC DPS \uD2B9\uD654."
+  - towerId: 127241837
+    code: N-0003
+    prefabKey: N-0003
+    towerName: "\uC911\uC7A5\uAC11 \uCE90\uB17C"
+    targetMobility: "\uC9C0\uC0C1"
+    cost: 400
+    buildTime: 5
+    baseDamage: 80
+    fireInterval: 4.4
+    attackRange: 15
+    skillId: 391686791
+    description: "\uD3EC\uBB3C\uC120 \uACE0\uD3ED\uD0C4\uC73C\uB85C \uBC94\uC704
+      \uBB3C\uB9AC \uD53C\uD574. \uB290\uB9AC\uC9C0\uB9CC \uAD11\uC5ED \uC81C\uC555."
+  - towerId: 9798504
+    code: N-0004
+    prefabKey: N-0004
+    towerName: "\uC2A4\uB098\uC774\uD37C \uB808\uC77C\uAC74"
+    targetMobility: "\uC9C0\uC0C1"
+    cost: 500
+    buildTime: 5
+    baseDamage: 50
+    fireInterval: 6.2
+    attackRange: 25
+    skillId: 341353934
+    description: "\uCD08\uC7A5\uAC70\uB9AC \uAD00\uD1B5 \uB808\uC774\uC800. \uB290\uB9B0
+      \uACF5\uC18D, \uAE34 \uC0AC\uAC70\uB9AC, 3\uCCB4 \uAD00\uD1B5."
+  - towerId: 26576123
+    code: N-0005
+    prefabKey: N-0005
+    towerName: "\uC2A4\uD2B8\uB77C\uC774\uCEE4 \uB530\uBC1C\uCD1D"
+    targetMobility: "\uC9C0\uC0C1"
+    cost: 380
+    buildTime: 4
+    baseDamage: 12
+    fireInterval: 0.1
+    attackRange: 7
+    skillId: 358131553
+    description: "\uC989\uBC1C \uD0C4\uB9C9. \uBBF8\uC0AC\uC77C \uBE44\uD589 \uC5C6\uC774
+      \uCD08\uACE0\uC18D \uC5F0\uC0AC."
+  - towerId: 368191650
+    code: F-0002
+    prefabKey: F-0002
+    towerName: "\uD654\uC5FC\uBC29\uC0AC\uAE30"
+    targetMobility: "\uC9C0\uC0C1"
+    cost: 380
+    buildTime: 4
+    baseDamage: 36
+    fireInterval: 0.31
+    attackRange: 7
+    skillId: 2046314124
+    description: "\uC9E7\uC740 \uC0AC\uAC70\uB9AC \uD654\uC5FC \uBD84\uC0AC. \uBE60\uB978
+      \uC5F0\uC0AC + \uD654\uC0C12."
+  - towerId: 384969269
+    code: F-0003
+    prefabKey: F-0003
+    towerName: "\uC720\uC131 \uD22C\uCC99\uAE30"
+    targetMobility: "\uC9C0\uC0C1"
+    cost: 520
+    buildTime: 6
+    baseDamage: 110
+    fireInterval: 5.3
+    attackRange: 12
+    skillId: 2063091743
+    description: "\uD3EC\uBB3C\uC120 \uC720\uC131\uD0C4\uC73C\uB85C \uB113\uC740
+      \uD654\uC5FC \uC7A5\uD310. \uD654\uC0C13."
+  - towerId: 267525936
+    code: F-0004
+    prefabKey: F-0004
+    towerName: "\uD654\uC0B0\uC2DD"
+    targetMobility: "\uC9C0\uC0C1"
+    cost: 420
+    buildTime: 4
+    baseDamage: 44
+    fireInterval: 10
+    attackRange: 13
+    skillId: 2012758886
+    description: "\uD654\uC0B0 \uBD84\uCD9C \uD6C4 \uC8FC\uBCC0\uC5D0 \uC6A9\uC554
+      \uB3CC\uC774 \uB79C\uB364 \uB099\uD558. \uD654\uC0C12+\uCD94\uAC00 \uBB3C\uB9AC
+      \uD53C\uD574."
+  - towerId: 284303555
+    code: F-0005
+    prefabKey: F-0005
+    towerName: "\uD654\uC5FC \uC120\uB3CC\uC774"
+    targetMobility: "\uC9C0\uC0C1"
+    cost: 460
+    buildTime: 5
+    baseDamage: 25
+    fireInterval: 4.8
+    attackRange: 16
+    skillId: 2029536505
+    description: "\uD45C\uC2DD \uD0C4 \uCC29\uC9C0 \uD6C4 \uBE68\uAC04 \uACBD\uACE0
+      \uC601\uC5ED, 2.5\uCD08 \uB4A4 \uC720\uC131 \uB099\uD558. \uD654\uC0C13."
+  - towerId: 301081174
+    code: F-0006
+    prefabKey: F-0006
+    towerName: "\uC9C0\uC625\uBB38 \uC5F0\uC131\uB85C"
+    targetMobility: "\uC9C0\uC0C1"
+    cost: 540
+    buildTime: 6
+    baseDamage: 74
+    fireInterval: 4.1
+    attackRange: 18
+    skillId: 1979203648
+    description: "\uC720\uB3C4 \uC9C0\uC625\uBD88. \uB2E8\uC77C \uB300\uC0C1 \uD654\uC0C13."
+  - towerId: 923054081
+    code: I-0002
+    prefabKey: I-0002
+    towerName: "\uBE59\uACB0 \uBC29\uC0AC\uAE30"
+    targetMobility: "\uC9C0\uC0C1"
+    cost: 380
+    buildTime: 4
+    baseDamage: 32
+    fireInterval: 0.31
+    attackRange: 7
+    skillId: 1016541911
+    description: "\uC9E7\uC740 \uC0AC\uAC70\uB9AC \uB0C9\uAE30 \uBD84\uC0AC. \uBE60\uB978
+      \uC5F0\uC0AC + \uB3D9\uC0C12."
+  - towerId: 906276462
+    code: I-0003
+    prefabKey: I-0003
+    towerName: "\uB208\uBCF4\uB77C \uD3EC\uB4DC"
+    targetMobility: "\uC9C0\uC0C1"
+    cost: 500
+    buildTime: 6
+    baseDamage: 64
+    fireInterval: 4.8
+    attackRange: 15
+    skillId: 999764292
+    description: "\uB208\uBCF4\uB77C \uD0C4 \uD22C\uCC99. \uCC29\uD0C4 \uBC94\uC704
+      \uB3D9\uC0C13."
+  - towerId: 956609319
+    code: I-0004
+    prefabKey: I-0004
+    towerName: "\uBE59\uD558 \uAD00\uD1B5\uD3EC"
+    targetMobility: "\uC9C0\uC0C1"
+    cost: 410
+    buildTime: 4
+    baseDamage: 24
+    fireInterval: 1.6
+    attackRange: 18
+    skillId: 982986673
+    description: "\uC5BC\uC74C \uCC3D 5\uAD00\uD1B5. \uB3D9\uC0C12."
+  - towerId: 939831700
+    code: I-0005
+    prefabKey: I-0005
+    towerName: "\uD55C\uD30C \uC885\uB8E8"
+    targetMobility: "\uC9C0\uC0C1"
+    cost: 480
+    buildTime: 5
+    baseDamage: 43
+    fireInterval: 6
+    attackRange: 18
+    skillId: 966209054
+    description: "\uD55C\uD30C \uC885\uD0D1\uC5D0\uC11C \uB208\uBCF4\uB77C \uC7A5\uD310.
+      \uB3D9\uC0C13."
+  - towerId: 1564832575
+    code: L-0003
+    prefabKey: L-0003
+    towerName: "\uC544\uD06C \uB9AC\uD53C\uD130"
+    targetMobility: "\uC9C0\uC0C1"
+    cost: 480
+    buildTime: 5
+    baseDamage: 56
+    fireInterval: 1.9
+    attackRange: 10
+    skillId: 883280021
+    description: "\uC720\uB3C4 \uC804\uB958\uD0C4. \uC801 \uADFC\uCC98 \uC5F0\uC1C4
+      \uAC10\uC8042."
+  - towerId: 1514499718
+    code: L-0004
+    prefabKey: L-0004
+    towerName: "\uCC9C\uB465 \uAD00\uD1B5\uCC3D"
+    targetMobility: "\uC9C0\uC0C1"
+    cost: 400
+    buildTime: 4
+    baseDamage: 30
+    fireInterval: 1.4
+    attackRange: 15
+    skillId: 765836688
+    description: "\uC804\uAE30 \uAD11\uC120 4\uAD00\uD1B5. \uAC10\uC8042."
+  - towerId: 1531277337
+    code: L-0005
+    prefabKey: L-0005
+    towerName: "\uC815\uC804\uAE30 \uB1CC\uC6B4"
+    targetMobility: "\uC9C0\uC0C1"
+    cost: 450
+    buildTime: 5
+    baseDamage: 65
+    fireInterval: 7.4
+    attackRange: 14
+    skillId: 782614307
+    description: "\uACF5\uC911 \uACE0\uC815 \uB1CC\uC6B0\uD0C4. \uBBF8\uC0AC\uC77C\uC5D0\uC11C
+      \uBC88\uAC1C. \uAC10\uC8043."
+  - towerId: 1480944480
+    code: L-0006
+    prefabKey: L-0006
+    towerName: "\uC544\uD06C \uC720\uB3C4\uAD6C"
+    targetMobility: "\uC9C0\uC0C1"
+    cost: 520
+    buildTime: 6
+    baseDamage: 50
+    fireInterval: 2.9
+    attackRange: 18
+    skillId: 799391926
+    description: "\uC720\uB3C4 \uC804\uAE30\uAD6C\uCCB4 + \uC804\uB958 \uC7A5\uD310.
+      \uAC10\uC8043."
+  - towerId: 1859750720
+    code: P-0002
+    prefabKey: P-0002
+    towerName: "\uB3C5\uC561 \uC2A4\uD504\uB808\uC774"
+    targetMobility: "\uC9C0\uC0C1"
+    cost: 360
+    buildTime: 4
+    baseDamage: 24
+    fireInterval: 0.4
+    attackRange: 7
+    skillId: 1986153446
+    description: "\uB3C5\uC561 \uBD84\uC0AC. \uBE60\uB978 \uC5F0\uC0AC + \uC911\uB3C52."
+  - towerId: 1876528339
+    code: P-0003
+    prefabKey: P-0003
+    towerName: "\uC5ED\uBCD1 \uD22C\uC11D\uAE30"
+    targetMobility: "\uC9C0\uC0C1"
+    cost: 500
+    buildTime: 6
+    baseDamage: 76
+    fireInterval: 4.4
+    attackRange: 14
+    skillId: 2002931065
+    description: "\uC5ED\uBCD1 \uAD6C\uB984\uD0C4. \uBC94\uC704 \uC911\uB3C53."
+  - towerId: 1960416434
+    code: P-0004
+    prefabKey: P-0004
+    towerName: "\uBD80\uC2DD \uC6C5\uB369\uC774"
+    targetMobility: "\uC9C0\uC0C1"
+    cost: 390
+    buildTime: 4
+    baseDamage: 40
+    fireInterval: 2.6
+    attackRange: 12
+    skillId: 2019708684
+    description: "\uC0B0\uC131 \uC6C5\uB369\uC774 \uC7A5\uD310. \uC911\uB3C52."
+  - towerId: 1977194053
+    code: P-0005
+    prefabKey: P-0005
+    towerName: "\uB3C5\uCE68 \uBC8C\uC9D1"
+    targetMobility: "\uC9C0\uC0C1"
+    cost: 370
+    buildTime: 4
+    baseDamage: 16
+    fireInterval: 0.51
+    attackRange: 10
+    skillId: 2036486303
+    description: "\uCD08\uC18D \uB3C5\uCE68 3\uAD00\uD1B5. \uC911\uB3C52."
+  - towerId: 1926861196
+    code: P-0006
+    prefabKey: P-0006
+    towerName: "\uC5ED\uBCD1 \uD3ED\uC6B0"
+    targetMobility: "\uC9C0\uC0C1"
+    cost: 530
+    buildTime: 6
+    baseDamage: 70
+    fireInterval: 5.1
+    attackRange: 16
+    skillId: 2053263922
+    description: "\uAD11\uC5ED \uC5ED\uBCD1 \uD3ED\uD0C4. \uC911\uB3C53."
+  - towerId: 973386938
+    code: I-0007
+    prefabKey: I-0007
+    towerName: "\uB514\uC544 \uC624\uBE0C"
+    targetMobility: "\uC9C0\uC0C1"
+    cost: 500
+    buildTime: 5
+    baseDamage: 34
+    fireInterval: 3.5
+    attackRange: 10
+    skillId: 932653816
+    description: "\uBE59\uACB0 \uC624\uBE0C\uAC00 \uB0A0\uC544\uAC00\uBA70 \uC0AC\uBC29\uC73C\uB85C
+      \uC5BC\uC74C \uD0C4\uD658\uC744 \uBFDC\uC2B5\uB2C8\uB2E4. \uB3D9\uC0C12."

@@ -1,0 +1,12 @@
+Burn	화상	Fire	Fire	2	10	0	화상: magnitude = 총 데미지 (2초에 100 → 초당 50)
+Frost	동상	Slow	Ice	3	5	0	동상: 적중마다 +1중첩 (magnitude 비우면 1)
+Shock	감전	Stun	Lightning	1	0	0	감전: duration = 기절 시간
+Poison	중독	Poison	Poison	5	5	8	중독: tickDamage = 중첩당 틱 데미지, magnitude = 중첩당 방어력 감소, duration=0 = 영구
+Burn2	화상2	Fire	Fire	3	18	0	2단계 화상 — magnitude=총 피해 18
+Burn3	화상3	Fire	Fire	4	28	0	3단계 화상 — magnitude=총 피해 28
+Frost2	동상2	Slow	Ice	3.5	8	0	2단계 동상 — 이동 감속 스택
+Frost3	동상3	Slow	Ice	4.5	12	0	3단계 동상 — 강한 이동 감속
+Shock2	감전2	Stun	Lightning	1.4	0	0	2단계 감전 — duration=기절 시간
+Shock3	감전3	Stun	Lightning	2	0	0	3단계 감전 — duration=기절 시간
+Poison2	중독2	Poison	Poison	5	6	12	2단계 중독 — tickDamage=틱 피해
+Poison3	중독3	Poison	Poison	6	8	18	3단계 중독 — tickDamage=틱 피해

@@ -1,0 +1,7 @@
+bossCode	monsterCode	immunityGroupCode	weaknessGroupCode	hp	attack	defense	attackSpeed
+BG-0001	MB-0001	BG-EG-E1-화염	BG-EG-E1-얼음	1000	100	80	6
+BG-0002	MB-0002	BG-EG-E1-얼음	BG-EG-E1-화염	1500	150	85	5
+BG-0003	MB-0001	BG-EG-E1-노멀	BG-EG-E1-독	2000	200	90	4
+BG-0004	MB-0002	BG-EG-E1-독	BG-EG-E1-얼음	2500	250	95	3
+BG-0005	MB-0001	BG-EG-E1-얼음	BG-EG-E1-전기	3000	300	100	2
+BG-0006	MB-0002	BG-EG-E2-전기-독	BG-EG-E2-노멀-화염	3500	350	105	1

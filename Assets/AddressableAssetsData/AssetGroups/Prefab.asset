@@ -1,0 +1,294 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Prefab
+  m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.AddressableAssetGroup
+  m_GroupName: Prefab
+  m_GUID: 2ca76779872ff0e42adcba767d1cf70d
+  m_SerializeEntries:
+  - m_GUID: 04f37fae1cdba894a9451fbd170c7332
+    m_Address: L-0005
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 091e14f20dd4df44eabaaeeb6fe82a47
+    m_Address: L-0003
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0ba0f6eee23032e4e83d421e739dc905
+    m_Address: Slime_01_MeltalHelmet
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 11eed2dfd1329ab4db9e7f27b8e628b7
+    m_Address: Slime_01_Viking
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 14c0d06eb45a08a48b5729d893378ba2
+    m_Address: N-0001
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 28d0a30d6aed6fc4c8ca473413f70c24
+    m_Address: Slime_01_King
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 28ed4be96de73e5439105aee390feda2
+    m_Address: F-0003
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3f3b831d9ffeb2f449856b793809af85
+    m_Address: I-0005
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4006afe4a1179a34bbe5f7058f9f77eb
+    m_Address: L-0002
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 412fa48baf396924c9e9d6fd9b994803
+    m_Address: P-0006
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 49792f1a9a3a2d8489b16e198544513c
+    m_Address: F-0005
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4d17135741b6b3c4cac9df56730d6319
+    m_Address: F-0004
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 515a8f19bee70434a8e82d3e3c2cf085
+    m_Address: I-0002
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 53b64ba9bef8fe34bb53ec49385b2875
+    m_Address: P-0002
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 54994aa167eb8a848a3a833b3e7b7241
+    m_Address: N-0003
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5f1d6c54252ad1f4d9ac63251df3d042
+    m_Address: F-0006
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 66ae442726d1cf4428dacb34edd61ac4
+    m_Address: Slime_03 Leaf
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 69a2cd75270541046a30ac6a5da3c5b5
+    m_Address: P-0001
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6b9f9a983b1246c4cb18b938c075d762
+    m_Address: Zone_StormArc
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6f0ec33cb4da1374c87b53fd5fff3eb7
+    m_Address: F-0001
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 72c47fdc43d84b243bdc109c284341d6
+    m_Address: Slime_02
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 78bd604d721e2624799e96ef73a2504b
+    m_Address: Zone_PoisonCloud
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 81dddffa177c07a46b32980313303779
+    m_Address: Zone_Blizzard
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 84c49cda73ce9ee4bbe938d4b6626015
+    m_Address: CloudBlack
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Effect
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8755ec6a4ca851447b7f6f29b3ca77da
+    m_Address: N-0002
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8760cc9eb30a2b340b14499b6e150dc4
+    m_Address: Slime_03 Sprout
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8b9245be18c103546bee1468892bb917
+    m_Address: L-0001
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8cd2a426221b73742a0bc913614b2a90
+    m_Address: P-0005
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 93df5c48d5e021040916b0e984d9b01a
+    m_Address: Slime_03 King
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a4fa79ef17b36764c88cce3293ba9e9d
+    m_Address: Zone_FlameGround
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a93084d2ad763dc4e9eaf48cc084ed31
+    m_Address: N-0004
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b9b4c3208bee9b740a8403a1fc0c506b
+    m_Address: I-0003
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bf3d19fe94123ec4ca8612d8a1330fee
+    m_Address: I-0004
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c54298e89f1abd1469815b9507974a8e
+    m_Address: L-0004
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c9f5a3b2049586731b4c5d6e7f8091a2
+    m_Address: Zone_BlizzardSnow
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cfe30780378c01c4a83047d87e6b3725
+    m_Address: F-0002
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d941199d4a58fcb45adc75ea8e37c42c
+    m_Address: Slime_01
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: db9a3d4f4dab6ac499ed3a78ea943e83
+    m_Address: I-0006
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: df08ce329b07f274992fc23c8e084e2b
+    m_Address: N-0005
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: df33c62ebf18f864b8e136b687a34af4
+    m_Address: L-0006
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e9fdc62e8211d2c4285a2da135c42d98
+    m_Address: P-0003
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f8ee95cc93ad96f498f437955cf48244
+    m_Address: I-0007
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fa12db7f8a3f0714799c08ee4da865d6
+    m_Address: Slime_03
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fa681105b1704b7499f38d0d02b70e47
+    m_Address: I-0001
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fd697e40e08c4ed4ba0d8672a43b012f
+    m_Address: P-0004
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: 81cba5592e8d9934bbb77e2ab281c5a4, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: 9411ec3d0d178864387a59f47b9f835d, type: 2}
+    - {fileID: 11400000, guid: f23cebfcc9e36c24c98b3bfb30c5055e, type: 2}

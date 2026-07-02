@@ -1,0 +1,155 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a7b6c5d4e3f2019384756a5b4c3d2e1, type: 3}
+  m_Name: MonsterDataSo
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterDataSo
+  list:
+  - code: MG-0001
+    prefabKey: SLIME-01
+    monsterType: "\uB6B1\uB6B1\uC774"
+    attackMethod: "\uADFC\uC811"
+    hp: 300
+    attack: 100
+    defense: 50
+    attackSpeed: 2
+    scale: 2
+    moveSpeed: 2.2
+  - code: MG-0002
+    prefabKey: SLIME-02
+    monsterType: "\uC77C\uBC18"
+    attackMethod: "\uADFC\uC811"
+    hp: 100
+    attack: 50
+    defense: 20
+    attackSpeed: 1
+    scale: 1
+    moveSpeed: 3.5
+  - code: MG-0003
+    prefabKey: SLIME-03-LEAF
+    monsterType: "\uB0A0\uB835\uC774"
+    attackMethod: "\uC790\uD3ED"
+    hp: 50
+    attack: 75
+    defense: 10
+    attackSpeed: 1
+    scale: 0.5
+    moveSpeed: 5.5
+  - code: MG-0004
+    prefabKey: SLIME-01
+    monsterType: "\uC77C\uBC18"
+    attackMethod: "\uADFC\uC811"
+    hp: 80
+    attack: 40
+    defense: 15
+    attackSpeed: 1.2
+    scale: 1
+    moveSpeed: 3.4
+  - code: MG-0005
+    prefabKey: SLIME-01-VIKING
+    monsterType: "\uB6B1\uB6B1\uC774"
+    attackMethod: "\uADFC\uC811"
+    hp: 220
+    attack: 90
+    defense: 45
+    attackSpeed: 1.5
+    scale: 2
+    moveSpeed: 2
+  - code: MG-0006
+    prefabKey: SLIME-01-METAL
+    monsterType: "\uB6B1\uB6B1\uC774"
+    attackMethod: "\uADFC\uC811"
+    hp: 280
+    attack: 70
+    defense: 75
+    attackSpeed: 1
+    scale: 2
+    moveSpeed: 1.8
+  - code: MG-0007
+    prefabKey: SLIME-03
+    monsterType: "\uC77C\uBC18"
+    attackMethod: "\uADFC\uC811"
+    hp: 120
+    attack: 55
+    defense: 22
+    attackSpeed: 1.3
+    scale: 1
+    moveSpeed: 3.6
+  - code: MG-0008
+    prefabKey: SLIME-03-SPROUT
+    monsterType: "\uB0A0\uB835\uC774"
+    attackMethod: "\uC790\uD3ED"
+    hp: 45
+    attack: 80
+    defense: 8
+    attackSpeed: 1.5
+    scale: 0.5
+    moveSpeed: 5.8
+  - code: MB-0001
+    prefabKey: SLIME-01-KING
+    monsterType: "\uBCF4\uC2A4"
+    attackMethod: "\uADFC\uC811"
+    hp: 1
+    attack: 1
+    defense: 1
+    attackSpeed: 1
+    scale: 3
+    moveSpeed: 2
+  - code: MB-0002
+    prefabKey: SLIME-03-KING
+    monsterType: "\uBCF4\uC2A4"
+    attackMethod: "\uADFC\uC811"
+    hp: 1
+    attack: 1
+    defense: 1
+    attackSpeed: 1
+    scale: 3
+    moveSpeed: 1.9
+  - code: MB-0003
+    prefabKey: SLIME-02
+    monsterType: "\uC77C\uBC18"
+    attackMethod: "\uADFC\uC811"
+    hp: 130
+    attack: 60
+    defense: 25
+    attackSpeed: 1.1
+    scale: 2.5
+    moveSpeed: 3.2
+  - code: MB-0004
+    prefabKey: SLIME-03
+    monsterType: "\uC77C\uBC18"
+    attackMethod: "\uADFC\uC811"
+    hp: 140
+    attack: 65
+    defense: 28
+    attackSpeed: 1.2
+    scale: 2.5
+    moveSpeed: 3.1
+  - code: MB-0005
+    prefabKey: SLIME-01-VIKING
+    monsterType: "\uB6B1\uB6B1\uC774"
+    attackMethod: "\uADFC\uC811"
+    hp: 250
+    attack: 95
+    defense: 50
+    attackSpeed: 1.4
+    scale: 2.5
+    moveSpeed: 2.1
+  - code: MB-0006
+    prefabKey: SLIME-01-METAL
+    monsterType: "\uB6B1\uB6B1\uC774"
+    attackMethod: "\uADFC\uC811"
+    hp: 300
+    attack: 80
+    defense: 70
+    attackSpeed: 1
+    scale: 2.5
+    moveSpeed: 1.9

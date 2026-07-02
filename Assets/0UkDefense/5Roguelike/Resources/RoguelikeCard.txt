@@ -1,0 +1,14 @@
+RC-P-001	날카로운 포탄	패시브	Red	타워 피해 +12%	TowerDamagePercent	12	None	0	None		10
+RC-P-002	장거리 조준	패시브	Red	타워 사거리 +10%	TowerRangePercent	10	None	0	None		10
+RC-P-003	과열 배럴	패시브	Red	타워 연사 +8%	TowerFireRatePercent	8	None	0	None		10
+RC-P-004	전리품 자금	패시브	Red	즉시 골드 +200 획득	GoldFlat	200	None	0	None		8
+RC-P-005	요새 증축	패시브	Red	넥서스 최대 체력 +500	NexusMaxHealthFlat	500	None	0	None		8
+RC-M-001	골드 폭풍	마법	Green	즉시 골드 +350 획득	MagicGoldBurst	350	None	0	Instant		8
+RC-M-002	응급 보강	마법	Green	넥서스 최대 체력 +800	MagicNexusMaxHealth	800	None	0	Instant		7
+RC-M-003	눈보라	마법	Blue	지면 조준 후 눈보라 장판	MagicSkill	28	None	0	GroundTarget	M-I-0003	8
+RC-M-004	유성 폭격	마법	Blue	지면 조준 후 유성 낙하	MagicSkill	36	None	0	GroundTarget	M-F-0003	7
+RC-M-005	번개 구름	마법	Blue	지면 조준 후 번개 구름	MagicSkill	24	None	0	GroundTarget	M-L-0002	7
+RC-C-001	사냥꾼의 맹세	조건	Yellow	적 40마리 처치 시 타워 피해 +15%	TowerDamagePercent	15	KillEnemies	40	None		7
+RC-C-002	요새 건축가	조건	Yellow	타워 4기 건설 시 사거리 +12%	TowerRangePercent	12	BuildTowers	4	None		7
+RC-C-003	자금 운용	조건	Yellow	골드 400 소비 시 연사 +10%	TowerFireRatePercent	10	SpendGold	400	None		7
+RC-C-004	전선 돌파	조건	Yellow	스테이지 3회 클리어 시 타워 피해 +10%	TowerDamagePercent	10	ClearStages	3	None		6

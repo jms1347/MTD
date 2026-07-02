@@ -1,0 +1,52 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &4082059903688393062
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 41082505609152522}
+  - component: {fileID: 775631045796108685}
+  m_Layer: 0
+  m_Name: SingletonLoader
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &41082505609152522
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4082059903688393062}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &775631045796108685
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4082059903688393062}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 00f26d5d29c736746a90f7a88260a1af, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SingletonLoader
+  dataManagerPrefab: {fileID: 8014268803784037043, guid: 4b5c6d7e8f901a2b3c4d5e6f708192ab, type: 3}
+  googlesheetManagerPrefab: {fileID: 3034103495671089719, guid: e24f11da0bbce1c4086cd3fdd0dd642a, type: 3}
+  gameManagerPrefab: {fileID: 5719332064251454405, guid: 1bb95b5090c57eb45a6fd760dad7ccc2, type: 3}
+  stageManagerPrefab: {fileID: 1675675564299063478, guid: d44e5f60718293a4b5c6d7e8f901a2b3, type: 3}
+  nextSceneName: TestScene
+  dataLoadTimeoutSeconds: 20

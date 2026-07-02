@@ -1,0 +1,511 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c8d7e6f5a4b39281706f5e4d3c2b1a0f, type: 3}
+  m_Name: DefenseSkillDataSo
+  m_EditorClassIdentifier: Assembly-CSharp::DefenseSkillDataSo
+  list:
+  - skillId: 425242029
+    skillCode: M-N-0001
+    skillName: "\uC77C\uBC18\uD0C4"
+    skillType: 0
+    moveType: 0
+    element: 0
+    speed: 35
+    expDuration: 0
+    damageMultiplier: 1
+    isHoming: 0
+    maxHit: 1
+    splashRadius: 0
+    effectGroupCode: 
+    summonPrefabKey: 
+    prefabKey: BulletSmallPinkOBJ
+    followUpSkillCode: 
+  - skillId: 2096646981
+    skillCode: M-F-0001
+    skillName: "\uB2E8\uC77C \uD654\uC5FC\uD0C4"
+    skillType: 0
+    moveType: 0
+    element: 1
+    speed: 35
+    expDuration: 0
+    damageMultiplier: 1
+    isHoming: 0
+    maxHit: 1
+    splashRadius: 0
+    effectGroupCode: Burn
+    summonPrefabKey: 
+    prefabKey: FireBallFireOBJ
+    followUpSkillCode: 
+  - skillId: 1033319530
+    skillCode: M-I-0001
+    skillName: "\uB2E8\uC77C \uC5BC\uC74C\uD0C4"
+    skillType: 0
+    moveType: 0
+    element: 3
+    speed: 35
+    expDuration: 0
+    damageMultiplier: 1
+    isHoming: 0
+    maxHit: 1
+    splashRadius: 0
+    effectGroupCode: Frost
+    summonPrefabKey: 
+    prefabKey: FrostMissileOBJ
+    followUpSkillCode: 
+  - skillId: 849724783
+    skillCode: M-L-0001
+    skillName: "\uB2E8\uC77C \uBC88\uAC1C\uD0C4"
+    skillType: 0
+    moveType: 0
+    element: 2
+    speed: 35
+    expDuration: 0
+    damageMultiplier: 1
+    isHoming: 0
+    maxHit: 1
+    splashRadius: 0
+    effectGroupCode: Shock
+    summonPrefabKey: 
+    prefabKey: LightningYellowOBJ
+    followUpSkillCode: 
+  - skillId: 1969375827
+    skillCode: M-P-0001
+    skillName: "\uB2E8\uC77C \uB3C5\uD0C4"
+    skillType: 0
+    moveType: 0
+    element: 5
+    speed: 35
+    expDuration: 0
+    damageMultiplier: 1
+    isHoming: 0
+    maxHit: 1
+    splashRadius: 0
+    effectGroupCode: Poison
+    summonPrefabKey: 
+    prefabKey: LiquidAcidOBJ
+    followUpSkillCode: 
+  - skillId: 374909172
+    skillCode: M-N-0002
+    skillName: "\uAC00\uD2C0\uB9C1 \uD0C4\uB9C9"
+    skillType: 0
+    moveType: 0
+    element: 0
+    speed: 50
+    expDuration: 0
+    damageMultiplier: 1
+    isHoming: 0
+    maxHit: 0
+    splashRadius: 0
+    effectGroupCode: 
+    summonPrefabKey: 
+    prefabKey: BulletFatPinkOBJ
+    followUpSkillCode: 
+  - skillId: 391686791
+    skillCode: M-N-0003
+    skillName: "\uACE0\uD3ED\uD0C4 \uD3EC\uD0C4"
+    skillType: 0
+    moveType: 1
+    element: 0
+    speed: 15
+    expDuration: 0
+    damageMultiplier: 1
+    isHoming: 0
+    maxHit: 0
+    splashRadius: 2.5
+    effectGroupCode: 
+    summonPrefabKey: 
+    prefabKey: NukePinkOBJ
+    followUpSkillCode: 
+  - skillId: 341353934
+    skillCode: M-N-0004
+    skillName: "\uB808\uC77C\uAC74 \uAD00\uD1B5\uD0C4"
+    skillType: 0
+    moveType: 0
+    element: 0
+    speed: 90
+    expDuration: 0
+    damageMultiplier: 1
+    isHoming: 0
+    maxHit: 3
+    splashRadius: 0
+    effectGroupCode: 
+    summonPrefabKey: 
+    prefabKey: LaserBlueOBJ
+    followUpSkillCode: 
+  - skillId: 358131553
+    skillCode: M-N-0005
+    skillName: "\uB530\uBC1C \uC989\uC2DC\uD0C4"
+    skillType: 0
+    moveType: 2
+    element: 0
+    speed: 0
+    expDuration: 0
+    damageMultiplier: 0.45
+    isHoming: 0
+    maxHit: 0
+    splashRadius: 0
+    effectGroupCode: 
+    summonPrefabKey: 
+    prefabKey: BulletFatPinkOBJ
+    followUpSkillCode: 
+  - skillId: 2046314124
+    skillCode: M-F-0002
+    skillName: "\uD654\uC5FC\uBC29\uC0AC"
+    skillType: 0
+    moveType: 0
+    element: 1
+    speed: 28
+    expDuration: 0
+    damageMultiplier: 1
+    isHoming: 0
+    maxHit: 0
+    splashRadius: 1.2
+    effectGroupCode: Burn2
+    summonPrefabKey: 
+    prefabKey: GasFireOBJ
+    followUpSkillCode: 
+  - skillId: 2063091743
+    skillCode: M-F-0003
+    skillName: "\uC720\uC131 \uD3ED\uACA9"
+    skillType: 0
+    moveType: 1
+    element: 1
+    speed: 12
+    expDuration: 0
+    damageMultiplier: 1
+    isHoming: 0
+    maxHit: 0
+    splashRadius: 3.5
+    effectGroupCode: Burn3
+    summonPrefabKey: 
+    prefabKey: NovaFireOBJ
+    followUpSkillCode: 
+  - skillId: 2012758886
+    skillCode: M-F-0004
+    skillName: "\uD654\uC0B0 \uBD84\uCD9C\uD0C4"
+    skillType: 0
+    moveType: 1
+    element: 1
+    speed: 18
+    expDuration: 0
+    damageMultiplier: 1
+    isHoming: 0
+    maxHit: 0
+    splashRadius: 2.2
+    effectGroupCode: Burn2
+    summonPrefabKey: 
+    prefabKey: FireBallFireOBJ
+    followUpSkillCode: 
+  - skillId: 265407196
+    skillCode: M-F-0004R
+    skillName: "\uD654\uC0B0 \uC6A9\uC554 \uB3CC"
+    skillType: 0
+    moveType: 0
+    element: 0
+    speed: 22
+    expDuration: 0.52
+    damageMultiplier: 0.38
+    isHoming: 1
+    maxHit: 6
+    splashRadius: 1
+    effectGroupCode: 
+    summonPrefabKey: 
+    prefabKey: NukeFireOBJ
+    followUpSkillCode: 
+  - skillId: 2029536505
+    skillCode: M-F-0005
+    skillName: "\uC720\uC131 \uB099\uD558 \uD45C\uC2DD"
+    skillType: 0
+    moveType: 1
+    element: 1
+    speed: 16
+    expDuration: 0
+    damageMultiplier: 1
+    isHoming: 0
+    maxHit: 0
+    splashRadius: 3.5
+    effectGroupCode: Burn3
+    summonPrefabKey: 
+    prefabKey: FireBallFireOBJ
+    followUpSkillCode: 
+  - skillId: 1979203648
+    skillCode: M-F-0006
+    skillName: "\uC9C0\uC625\uBD88 \uC720\uB3C4\uD0C4"
+    skillType: 0
+    moveType: 0
+    element: 1
+    speed: 22
+    expDuration: 0
+    damageMultiplier: 1
+    isHoming: 1
+    maxHit: 0
+    splashRadius: 1.8
+    effectGroupCode: Burn3
+    summonPrefabKey: 
+    prefabKey: LiquidLavaOBJ
+    followUpSkillCode: 
+  - skillId: 1016541911
+    skillCode: M-I-0002
+    skillName: "\uBE59\uACB0 \uBD84\uC0AC"
+    skillType: 0
+    moveType: 0
+    element: 3
+    speed: 26
+    expDuration: 0
+    damageMultiplier: 1
+    isHoming: 0
+    maxHit: 0
+    splashRadius: 1.2
+    effectGroupCode: Frost2
+    summonPrefabKey: 
+    prefabKey: FrostMissileOBJ
+    followUpSkillCode: 
+  - skillId: 999764292
+    skillCode: M-I-0003
+    skillName: "\uB208\uBCF4\uB77C \uD0C4"
+    skillType: 0
+    moveType: 1
+    element: 3
+    speed: 14
+    expDuration: 5
+    damageMultiplier: 1
+    isHoming: 0
+    maxHit: 6
+    splashRadius: 4.5
+    effectGroupCode: Frost
+    summonPrefabKey: Zone_BlizzardSnow
+    prefabKey: NovaBlueOBJ
+    followUpSkillCode: 
+  - skillId: 982986673
+    skillCode: M-I-0004
+    skillName: "\uBE59\uD558 \uAD00\uD1B5\uCC3D"
+    skillType: 0
+    moveType: 0
+    element: 3
+    speed: 48
+    expDuration: 0
+    damageMultiplier: 1
+    isHoming: 0
+    maxHit: 5
+    splashRadius: 0
+    effectGroupCode: Frost2
+    summonPrefabKey: 
+    prefabKey: FrostMissileOBJ
+    followUpSkillCode: 
+  - skillId: 966209054
+    skillCode: M-I-0005
+    skillName: "\uD55C\uD30C \uC885\uD0C4"
+    skillType: 0
+    moveType: 1
+    element: 3
+    speed: 11
+    expDuration: 0
+    damageMultiplier: 1
+    isHoming: 0
+    maxHit: 0
+    splashRadius: 2.5
+    effectGroupCode: Frost3
+    summonPrefabKey: 
+    prefabKey: NovaBlueOBJ
+    followUpSkillCode: 
+  - skillId: 949431435
+    skillCode: M-I-0006
+    skillName: "\uC11C\uB9AC \uC720\uB3C4\uBE44"
+    skillType: 0
+    moveType: 0
+    element: 3
+    speed: 30
+    expDuration: 0
+    damageMultiplier: 1
+    isHoming: 1
+    maxHit: 0
+    splashRadius: 1.6
+    effectGroupCode: Frost3
+    summonPrefabKey: 
+    prefabKey: FrostMissileOBJ
+    followUpSkillCode: 
+  - skillId: 866502402
+    skillCode: M-L-0002
+    skillName: "\uBC88\uAC1C\uAD6C\uB984"
+    skillType: 0
+    moveType: 1
+    element: 2
+    speed: 10
+    expDuration: -1
+    damageMultiplier: 1
+    isHoming: 0
+    maxHit: 0
+    splashRadius: 0
+    effectGroupCode: Shock
+    summonPrefabKey: 
+    prefabKey: StormMissileOBJ
+    followUpSkillCode: 
+  - skillId: 883280021
+    skillCode: M-L-0003
+    skillName: "\uC5F0\uC1C4 \uC804\uB958\uD0C4"
+    skillType: 0
+    moveType: 0
+    element: 2
+    speed: 42
+    expDuration: 0
+    damageMultiplier: 1
+    isHoming: 1
+    maxHit: 0
+    splashRadius: 0
+    effectGroupCode: Shock2
+    summonPrefabKey: 
+    prefabKey: LightningYellowOBJ
+    followUpSkillCode: 
+  - skillId: 765836688
+    skillCode: M-L-0004
+    skillName: "\uCC9C\uB465 \uAD00\uD1B5\uCC3D"
+    skillType: 0
+    moveType: 0
+    element: 2
+    speed: 46
+    expDuration: 0
+    damageMultiplier: 1
+    isHoming: 0
+    maxHit: 4
+    splashRadius: 0
+    effectGroupCode: Shock2
+    summonPrefabKey: 
+    prefabKey: LaserBlueOBJ
+    followUpSkillCode: 
+  - skillId: 782614307
+    skillCode: M-L-0005
+    skillName: "\uC815\uC804\uAE30 \uB1CC\uC6B0\uD0C4"
+    skillType: 0
+    moveType: 1
+    element: 2
+    speed: 9
+    expDuration: -1
+    damageMultiplier: 1
+    isHoming: 0
+    maxHit: 0
+    splashRadius: 0
+    effectGroupCode: Shock3
+    summonPrefabKey: 
+    prefabKey: StormMissileOBJ
+    followUpSkillCode: 
+  - skillId: 799391926
+    skillCode: M-L-0006
+    skillName: "\uC544\uD06C \uC720\uB3C4\uD575"
+    skillType: 0
+    moveType: 0
+    element: 2
+    speed: 34
+    expDuration: 0
+    damageMultiplier: 1
+    isHoming: 1
+    maxHit: 0
+    splashRadius: 0
+    effectGroupCode: Shock3
+    summonPrefabKey: 
+    prefabKey: LightningYellowOBJ
+    followUpSkillCode: 
+  - skillId: 1986153446
+    skillCode: M-P-0002
+    skillName: "\uB3C5\uC561 \uBD84\uC0AC"
+    skillType: 0
+    moveType: 0
+    element: 5
+    speed: 24
+    expDuration: 0
+    damageMultiplier: 1
+    isHoming: 0
+    maxHit: 0
+    splashRadius: 1.4
+    effectGroupCode: Poison2
+    summonPrefabKey: 
+    prefabKey: GasGreenOBJ
+    followUpSkillCode: 
+  - skillId: 2002931065
+    skillCode: M-P-0003
+    skillName: "\uC5ED\uBCD1 \uAD6C\uB984\uD0C4"
+    skillType: 0
+    moveType: 1
+    element: 5
+    speed: 13
+    expDuration: 0
+    damageMultiplier: 1
+    isHoming: 0
+    maxHit: 0
+    splashRadius: 2.8
+    effectGroupCode: Poison3
+    summonPrefabKey: 
+    prefabKey: SoulPurpleOBJ
+    followUpSkillCode: 
+  - skillId: 2019708684
+    skillCode: M-P-0004
+    skillName: "\uBD80\uC2DD \uC6C5\uB369\uC774\uD0C4"
+    skillType: 0
+    moveType: 1
+    element: 5
+    speed: 16
+    expDuration: 0
+    damageMultiplier: 1
+    isHoming: 0
+    maxHit: 0
+    splashRadius: 2
+    effectGroupCode: Poison2
+    summonPrefabKey: 
+    prefabKey: GasGreenOBJ
+    followUpSkillCode: 
+  - skillId: 2036486303
+    skillCode: M-P-0005
+    skillName: "\uB3C5\uCE68 \uC5F0\uC0AC"
+    skillType: 0
+    moveType: 0
+    element: 5
+    speed: 30
+    expDuration: 3
+    damageMultiplier: 1
+    isHoming: 1
+    maxHit: 1
+    splashRadius: 2.5
+    effectGroupCode: Poison2
+    summonPrefabKey: 
+    prefabKey: GasGreenOBJ
+    followUpSkillCode: 
+  - skillId: 2053263922
+    skillCode: M-P-0006
+    skillName: "\uC5ED\uBCD1 \uD3ED\uC6B0\uD0C4"
+    skillType: 0
+    moveType: 1
+    element: 5
+    speed: 10
+    expDuration: 0
+    damageMultiplier: 1
+    isHoming: 0
+    maxHit: 0
+    splashRadius: 3.2
+    effectGroupCode: Poison3
+    summonPrefabKey: 
+    prefabKey: LiquidAcidOBJ
+    followUpSkillCode: 
+  - skillId: 932653816
+    skillCode: M-I-0007
+    skillName: "\uB514\uC544 \uC624\uBE0C"
+    skillType: 0
+    moveType: 0
+    element: 3
+    speed: 8
+    expDuration: 0
+    damageMultiplier: 0.55
+    isHoming: 0
+    maxHit: 99
+    splashRadius: 0
+    effectGroupCode: Frost2
+    summonPrefabKey: 
+    prefabKey: FrozenOrbOBJ
+    followUpSkillCode: 

@@ -1,0 +1,473 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Missile
+  m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.AddressableAssetGroup
+  m_GroupName: Missile
+  m_GUID: 39737c551a9d3a34980056a01a0ffb48
+  m_SerializeEntries:
+  - m_GUID: 04332ddfc8612384e96b2ee753f33422
+    m_Address: BulletSmallPinkOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0de00afa5e12ea14197cf4a5dd756921
+    m_Address: GasGreenOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0eb4627efbccf234dbfeb66c7ed0fde2
+    m_Address: LaserGreenOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 15a2796f005d66243bcc02f9f6c94b87
+    m_Address: LightningYellowOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1a28c48e046090e4f944cdc2df24f20a
+    m_Address: BulletFatFireOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1b322944459c1eb4bac42a3e812c0757
+    m_Address: NovaSmallPinkOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 24d83fc5abc3e4c419faeea215137384
+    m_Address: RocketFireOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2657eb775c2f1e94cae71a7fb30547ae
+    m_Address: LiquidLavaOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 28f4d60d9c6d66542a6198b587a7e4bb
+    m_Address: FrozenOrbOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 29b23c6bc2854a44cbd9071c3aa3f52f
+    m_Address: LaserPinkOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2db55dc906d623f45add711a1b5f1dcd
+    m_Address: MagicSoftYellowOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 32670fb8a3244c14998e3c1e480f6822
+    m_Address: LiquidAcidOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 33267da829f0e544686e245481a4bc75
+    m_Address: SparkleMissilePinkOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4509c83b4be6c454a910af1911c902a2
+    m_Address: MagicGreenOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 471bfc037c6513e4b9e7315cb799c944
+    m_Address: BulletSmallFireOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4b84a9c5d0162c84dadb16d20c091a2c
+    m_Address: MysticPurpleOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4d08b1ddf88c65a4facd913e932ec5f8
+    m_Address: FireBallGreenOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4eb23f4648474bf4b875ca8207b838cd
+    m_Address: GrenadeBlueOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 59e0e98094738074f83b9aac28b475cc
+    m_Address: ShadowOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 60af2662f56fe6a43aeb8d7c5e7c4f36
+    m_Address: GasBlueOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6392380a92135284c861f5879cdb167b
+    m_Address: LightningGreenOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 678c2e215542cdf42b939f23a169e768
+    m_Address: LiquidOilOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6a8efa3c961fab149819a2dd4a7ca5d6
+    m_Address: SoulPurpleOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6ab24dea224d8b842ae316347b4a4e3a
+    m_Address: MagicPinkOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6b683a168b8b6614d95f9030dd0392f8
+    m_Address: FireBallBlueOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6be91826c324357478d82fa9c3c25a84
+    m_Address: MysticGreenOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6de3984542d819c49996fdf80b25e412
+    m_Address: RocketBlueOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7039aaef1e59e3f4aa54e6d2ef8ff424
+    m_Address: RocketPinkOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 70772aa6880c0d24b82c6e5d01283073
+    m_Address: RocketGreenOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 70f215e8ca958764d98650e11043e9ed
+    m_Address: GrenadeFireOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 75687afa916f5fd45bffff7bda8d3820
+    m_Address: SparkleMissileGreenOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7da1504feb7a37c42bb8336084f4c889
+    m_Address: GasFireOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7ed2682c7faf8ff4c865b1c7aab3a3ec
+    m_Address: FrostMissileOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7f3662b97df212c40a797a4e8b92866f
+    m_Address: MagicSoftGreenOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 89fa81ed061e48748baac7915f31e486
+    m_Address: GrenadePinkOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8ac4879dc3d888148a236c3ab19fdec1
+    m_Address: BulletFatGreenOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8bfc41e9c1e26a7479b0385993c276b5
+    m_Address: NukeGreenOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8c3305606afa83045b2292425281767a
+    m_Address: StormMissileOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8d0c9a653397a1f4a8b98539b80b7160
+    m_Address: NovaPinkOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 90186716b08d60c47897782560d86cfb
+    m_Address: LaserRedOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 91597bf988668fb4cbac05bf2c3a7d19
+    m_Address: BulletSmallBlueOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 98c1bc20278e218408415e986214758b
+    m_Address: SparkleMissileBlueOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9c3ebb65870d27642a890bb9a05d7e06
+    m_Address: SoulOrangeOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9dd6a2d88022f634baffb79312de9f06
+    m_Address: MysticOrangeOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9ecaaaf6bb59a7645bc9e6f01a959471
+    m_Address: NovaFireOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a1454cb19ae056a4c9da07c986455a08
+    m_Address: NukeBlueOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a880c57c5353d464faabc7113a9b631d
+    m_Address: BulletFatPinkOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a88a85cdc8dc2a6458878ef6e4032d43
+    m_Address: NovaSmallFireOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a9603342ecd21ad42a8de8a6e390aabb
+    m_Address: MagicSoftFireOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a99a57cf3a7bacc479881d230e99afc3
+    m_Address: FireBallFireOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ad5b5f015ac711340902a36c320b2869
+    m_Address: SoulCrimsonOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b504fe6f986133d44840fab156407516
+    m_Address: BulletSmallGreenOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b7390e77fe23c4a40b1910f57e152a7b
+    m_Address: FireBallPinkOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b7cc8ed8baec3d04db4cf2a3b4ddd0b9
+    m_Address: SparkleMissileYellowOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ba18f0508c8fbe54d8b40113b0594df0
+    m_Address: GasPinkOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bcfe4e1b5613125409a92786841ac64e
+    m_Address: LiquidWaterOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c381319d1b39d9e4da9530bd4d30d365
+    m_Address: LightningBlueOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c7ed7b2ed58d242459c9d51eb6af5d48
+    m_Address: MysticWhiteOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c86d0200e9ea33148a933816d12e85a1
+    m_Address: NovaGreenOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ca8f8b2e292c9ae409020304b27f1d66
+    m_Address: NovaSmallGreenOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cbda1bc6f78f60c47b56c12a3d20f75b
+    m_Address: MagicFireOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cd576bbb52c7d4e4cb3ff3548e2d0f4a
+    m_Address: NukeFireOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cd7529f360f97b744ac450e46f8e1e8e
+    m_Address: NovaSmallBlueOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d1952661920b70841858fc1009c6cfaa
+    m_Address: MagicSoftBlueOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d3d42c25113bf3b4c94e325a3ee0a4e9
+    m_Address: GrenadeGreenOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d912eeaae09494a4db744907e8948f4f
+    m_Address: SoulGreenOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: dc6c518404a31f046b8883c33c0c10e7
+    m_Address: MagicSoftPinkOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e439a6530c3a0ab439627b9455390cef
+    m_Address: NukePinkOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e5e96c927f8039447b54947662cb7a2b
+    m_Address: LightningPinkOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e7e149d4ac300df4b9330dac71c9fe9b
+    m_Address: LaserFireOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e80903749e1e30640863e7f394887574
+    m_Address: LaserBlueOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ea2c1089ac92f314ca5ded5483c16012
+    m_Address: NovaBlueOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f2be5e670ab9d2b4bbbf04cd0054fc75
+    m_Address: BulletFatBlueOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fd74df59b2e756442a2fdf0ddd436bf9
+    m_Address: MagicBlueOBJ
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 25a78a965241d084996f23857207e95f
+    m_Address: NukeMissileFire
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Prefab
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: 81cba5592e8d9934bbb77e2ab281c5a4, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: 97fa1219411b33048ac05f07e162ff1f, type: 2}
+    - {fileID: 11400000, guid: 28ba80e29b51a8c4b82be759652c4556, type: 2}

@@ -1,0 +1,56 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &8014268803784037043
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8348798562301652660}
+  - component: {fileID: 859555485294045612}
+  m_Layer: 0
+  m_Name: DataManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8348798562301652660
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8014268803784037043}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &859555485294045612
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8014268803784037043}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b8c9d0e1f2a30415263748596a7b8c9d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DataManager
+  monsterDataSo: {fileID: 11400000, guid: 31620b481961ffa46a40f64718ba59be, type: 2}
+  bossDataSo: {fileID: 11400000, guid: c0af66216a95b8b4c98ff90948239df6, type: 2}
+  bossElementGroupDataSo: {fileID: 11400000, guid: 63231ef6895aed240a8a97f140ad3081, type: 2}
+  towerDataSo: {fileID: 11400000, guid: 32e0cd0a2cb4ed34f8c358c068550ffd, type: 2}
+  skillDataSo: {fileID: 11400000, guid: e7f6a5b4c3d291807162534a5b4c3d2e, type: 2}
+  effectDataSo: {fileID: 11400000, guid: f1e2d3c4b5a697887766554433221100, type: 2}
+  effectGroupDataSo: {fileID: 11400000, guid: a1b2c3d4e5f6172839405060708090a1, type: 2}
+  stageDataSo: {fileID: 11400000, guid: e6f708192a3b4c5d6e7f8091a2b3c4d5, type: 2}
+  roguelikeCardDataSo: {fileID: 11400000, guid: c3a3c742818f27445b3681ea392cf642, type: 2}
+  addressableKeyDataSo: {fileID: 11400000, guid: e4f5a6b7c8d90123456789abcdef0401, type: 2}
