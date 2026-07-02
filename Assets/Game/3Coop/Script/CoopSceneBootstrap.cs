@@ -7,17 +7,12 @@ public class CoopSceneBootstrap : MonoBehaviour
     {
         CoopSoloPlayBootstrap.Ensure();
         CoopMapBootstrap.EnsureMainCamera();
+        CoopSlimeAssetCache.TryGetPrefab("SLIME-01", out _);
 
         if (FindFirstObjectByType<CoopMapBootstrap>() == null)
         {
             var mapObject = new GameObject("CoopMapBootstrap");
             mapObject.AddComponent<CoopMapBootstrap>();
-        }
-
-        if (FindFirstObjectByType<CoopBootstrapServices>() == null)
-        {
-            var servicesObject = new GameObject("CoopBootstrapServices");
-            servicesObject.AddComponent<CoopBootstrapServices>();
         }
 
         if (FindFirstObjectByType<CoopGameSession>() == null)

@@ -5,7 +5,8 @@ public class CoopMapBootstrap : MonoBehaviour
 {
     public static CoopMapBootstrap Instance { get; private set; }
 
-    [SerializeField] private float cameraOrthographicSize = 38f;
+    [SerializeField] private float cameraOrthographicSize = 14f;
+    [SerializeField] private float cameraDistance = 14f;
 
     public bool IsReady { get; private set; }
     public DefenseMapLayout MapLayout { get; private set; }
@@ -23,8 +24,19 @@ public class CoopMapBootstrap : MonoBehaviour
         Instance = this;
         EnsureMainCamera();
         EnsureSceneLighting();
-        BuildWorld();
-        IsReady = true;
+
+        try
+        {
+            BuildWorld();
+        }
+        catch (System.Exception exception)
+        {
+            Debug.LogError($"[CoopMapBootstrap] 맵 생성 실패: {exception}");
+        }
+        finally
+        {
+            IsReady = true;
+        }
     }
 
     private void OnDestroy()
@@ -112,10 +124,15 @@ public class CoopMapBootstrap : MonoBehaviour
             isoCamera = camera.gameObject.AddComponent<DefenseIsometricCamera>();
 
         isoCamera.SetFollowTarget(null, cameraOrthographicSize);
-        camera.transform.position = center + new Vector3(0f, 24f, -12f);
+        isoCamera.SetCameraDistance(cameraDistance);
+        camera.transform.position = center + new Vector3(0f, cameraDistance * 0.85f, -cameraDistance * 0.45f);
 
-        if (camera.GetComponent<DefenseCameraControlManager>() == null)
-            camera.gameObject.AddComponent<DefenseCameraControlManager>();
+        var legacyControl = camera.GetComponent<DefenseCameraControlManager>();
+        if (legacyControl != null)
+            Object.Destroy(legacyControl);
+
+        if (camera.GetComponent<CoopCameraControlManager>() == null)
+            camera.gameObject.AddComponent<CoopCameraControlManager>();
 
         camera.enabled = true;
     }

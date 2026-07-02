@@ -12,12 +12,9 @@ public class CoopWorldView : MonoBehaviour
         session = CoopGameSession.Instance;
         if (session == null)
         {
-            var sessionObject = new GameObject("CoopGameSession");
-            session = sessionObject.AddComponent<CoopGameSession>();
+            Debug.LogWarning("[CoopWorldView] CoopGameSession이 없습니다. CoopSceneBootstrap을 확인하세요.");
+            return;
         }
-
-        if (CoopMapBootstrap.Instance == null)
-            BuildFallbackArena();
 
         session.OnStateUpdated += Refresh;
         if (session.LatestState != null)
@@ -62,6 +59,13 @@ public class CoopWorldView : MonoBehaviour
 
             if (!mirroredTowers.TryGetValue(player.playerId, out var unit) || unit == null)
             {
+                if (session.TryGetLivingTower(player.playerId, out var existing) && existing != null)
+                {
+                    mirroredTowers[player.playerId] = existing;
+                    existing.ApplyState(player, snapPosition: false);
+                    continue;
+                }
+
                 unit = CoopPlayerTowerFactory.CreatePlayerTank(transform, player, i);
                 mirroredTowers[player.playerId] = unit;
             }
@@ -88,9 +92,7 @@ public class CoopWorldView : MonoBehaviour
                 new Vector3(enemy.x, y, enemy.z),
                 Time.deltaTime * 12f);
 
-            var hpRatio = enemy.maxHp > 0f ? enemy.hp / enemy.maxHp : 0f;
-            var scale = enemy.isBoss ? 2.2f : 1f;
-            view.localScale = Vector3.one * scale * Mathf.Lerp(0.6f, 1f, hpRatio);
+            view.localScale = Vector3.one;
         }
 
         RemoveMissingEnemies(activeIds);
@@ -106,7 +108,7 @@ public class CoopWorldView : MonoBehaviour
         var code = string.IsNullOrEmpty(enemy.monsterCode)
             ? CoopGameProtocol.EnemyVisualTypes[enemy.id % CoopGameProtocol.EnemyVisualTypes.Length]
             : enemy.monsterCode;
-        CoopEnemyVisualFactory.Create(root.transform, code, enemy.isBoss);
+        CoopSlimeVisualFactory.BuildMirrored(root.transform, code, enemy.speed, enemy.isBoss);
         mirroredEnemies[enemy.id] = root.transform;
         return root.transform;
     }

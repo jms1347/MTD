@@ -28,20 +28,6 @@ public static class CoopDefenseSceneSetup
             mapObject.AddComponent<CoopMapBootstrap>();
         }
 
-        if (Object.FindFirstObjectByType<CoopBootstrapServices>() == null)
-        {
-            var servicesObject = new GameObject("CoopBootstrapServices");
-            var services = servicesObject.AddComponent<CoopBootstrapServices>();
-            var dataPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(
-                "Assets/0UkDefense/1Data/Prefab/DataManager.prefab");
-            var missilePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(
-                "Assets/Game/2Game/Prefab/Defense/MissilePoolManager.prefab");
-            var serialized = new SerializedObject(services);
-            serialized.FindProperty("dataManagerPrefab").objectReferenceValue = dataPrefab;
-            serialized.FindProperty("missilePoolManagerPrefab").objectReferenceValue = missilePrefab;
-            serialized.ApplyModifiedPropertiesWithoutUndo();
-        }
-
         EnsureBuildSettings();
         EditorSceneManager.SaveScene(scene, ScenePath);
         AssetDatabase.SaveAssets();
@@ -52,9 +38,9 @@ public static class CoopDefenseSceneSetup
     {
         var scenes = new[]
         {
-            "Assets/Game/0Scene/SplashScene.unity",
             "Assets/Game/0Scene/LobbyScene.unity",
             ScenePath,
+            "Assets/Game/0Scene/SplashScene.unity",
             "Assets/Game/0Scene/TestScene.unity"
         };
 

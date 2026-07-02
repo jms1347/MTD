@@ -10,9 +10,13 @@ public class CoopEnemyActor : MonoBehaviour
 
     private Health health;
     private float moveSpeed = 3f;
+    private float contactDamage = 6f;
     private string monsterCode;
     private CoopGameSession session;
+    private CoopEnemySlimeVisual slimeVisual;
     private bool killedByCombat;
+
+    public float MoveSpeed => moveSpeed;
 
     public void Initialize(
         CoopGameSession gameSession,
@@ -23,7 +27,8 @@ public class CoopEnemyActor : MonoBehaviour
         float speed,
         bool isBoss,
         int goldReward,
-        string monsterCode)
+        string monsterCode,
+        float contactDamage = 6f)
     {
         session = gameSession;
         NetworkId = networkId;
@@ -31,6 +36,7 @@ public class CoopEnemyActor : MonoBehaviour
         GoldReward = goldReward;
         Defense = defense;
         moveSpeed = speed;
+        this.contactDamage = contactDamage;
         this.monsterCode = monsterCode;
 
         gameObject.tag = "Enemy";
@@ -42,8 +48,8 @@ public class CoopEnemyActor : MonoBehaviour
         health.Initialize(maxHp, 0.2f, defense);
         health.OnDeath += HandleDeath;
 
-        var visual = CoopEnemyVisualFactory.Create(transform, monsterCode, isBoss);
-        visual.transform.localPosition = Vector3.zero;
+        slimeVisual = CoopSlimeVisualFactory.Build(
+            transform, monsterCode, moveSpeed, isBoss, out _);
     }
 
     private void Update()
@@ -142,11 +148,13 @@ public class CoopEnemyActor : MonoBehaviour
             if (Vector3.Distance(tower.transform.position, transform.position) > 1.4f)
                 continue;
 
-            var health = tower.GetComponent<Health>();
-            if (health != null)
-                health.TakeDamage(IsBoss ? 12f : 6f);
+            slimeVisual?.PlayAttack();
+
+            var towerHealth = tower.GetComponent<Health>();
+            if (towerHealth != null)
+                towerHealth.TakeDamage(contactDamage);
             else
-                session?.DamagePlayerTower(tower.PlayerId, IsBoss ? 12f : 6f);
+                session?.DamagePlayerTower(tower.PlayerId, contactDamage);
             break;
         }
 

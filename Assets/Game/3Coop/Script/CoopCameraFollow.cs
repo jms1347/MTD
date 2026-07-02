@@ -2,7 +2,8 @@ using UnityEngine;
 
 public class CoopCameraFollow : MonoBehaviour
 {
-    [SerializeField] private float orthographicSize = 38f;
+    [SerializeField] private float orthographicSize = 14f;
+    [SerializeField] private float cameraDistance = 14f;
 
     private DefenseIsometricCamera isoCamera;
 
@@ -18,6 +19,7 @@ public class CoopCameraFollow : MonoBehaviour
             return;
 
         isoCamera.SetFollowTarget(target, orthographicSize);
+        isoCamera.SetCameraDistance(cameraDistance);
     }
 
     private void EnsureCamera()
@@ -30,8 +32,12 @@ public class CoopCameraFollow : MonoBehaviour
         if (isoCamera == null)
             isoCamera = camera.gameObject.AddComponent<DefenseIsometricCamera>();
 
-        if (camera.GetComponent<DefenseCameraControlManager>() == null)
-            camera.gameObject.AddComponent<DefenseCameraControlManager>();
+        var legacyControl = camera.GetComponent<DefenseCameraControlManager>();
+        if (legacyControl != null)
+            Destroy(legacyControl);
+
+        if (camera.GetComponent<CoopCameraControlManager>() == null)
+            camera.gameObject.AddComponent<CoopCameraControlManager>();
 
         camera.enabled = true;
     }

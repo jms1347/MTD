@@ -30,7 +30,7 @@ public static class LobbySceneSetup
         EditorSceneManager.SaveScene(scene, ScenePath);
         AssetDatabase.SaveAssets();
 
-        Debug.Log("[Multiplayer] LobbyScene 생성 완료. SplashScene → LobbyScene → CoopDefenseScene 흐름이 연결되었습니다.");
+        Debug.Log("[Multiplayer] LobbyScene 생성 완료. LobbyScene → CoopDefenseScene 흐름이 연결되었습니다.");
     }
 
     [MenuItem("Tools/Multiplayer/Setup LobbyScene", true)]
@@ -73,9 +73,9 @@ public static class LobbySceneSetup
     {
         var scenes = new[]
         {
-            "Assets/Game/0Scene/SplashScene.unity",
             ScenePath,
             "Assets/Game/0Scene/CoopDefenseScene.unity",
+            "Assets/Game/0Scene/SplashScene.unity",
             "Assets/Game/0Scene/TestScene.unity"
         };
 

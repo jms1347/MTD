@@ -40,6 +40,7 @@ public class CoopGameSession : MonoBehaviour
     private float announcementTimer;
     private bool gameOver;
     private bool useMapMode;
+    private bool isBootstrapped;
     private bool lastSyncedWaveActive;
     private bool farmGateOpen = true;
     private readonly System.Random random = new();
@@ -74,14 +75,10 @@ public class CoopGameSession : MonoBehaviour
             return;
         }
 
-        if (!lobby.IsInRoom)
-        {
-            Debug.LogWarning("[CoopGameSession] 방에 참여하지 않은 상태입니다. 솔로 호스트로 전환합니다.");
-            lobby.BeginSoloSession();
-        }
+        lobby.EnsureCoopHostAuthority();
 
         if (!lobby.IsHost)
-            SetAnnouncement("클라이언트 모드 — 이동·전투는 호스트가 처리합니다.");
+            SetAnnouncement("클라이언트 모드 — 이동·전투·몬스터는 호스트가 처리합니다.");
 
         lobby.OnCoopMessage += HandleCoopMessage;
         StartCoroutine(BootstrapWhenReady());
@@ -89,24 +86,43 @@ public class CoopGameSession : MonoBehaviour
 
     private IEnumerator BootstrapWhenReady()
     {
-        var timeout = 5f;
-        while (CoopMapBootstrap.Instance == null && timeout > 0f)
+        if (isBootstrapped)
+            yield break;
+
+        var mapTimeout = 8f;
+        while (CoopMapBootstrap.Instance == null && mapTimeout > 0f)
         {
-            timeout -= Time.unscaledDeltaTime;
+            mapTimeout -= Time.unscaledDeltaTime;
             yield return null;
         }
 
         if (CoopMapBootstrap.Instance != null)
-            yield return new WaitUntil(() => CoopMapBootstrap.Instance.IsReady);
+        {
+            mapTimeout = 8f;
+            while (!CoopMapBootstrap.Instance.IsReady && mapTimeout > 0f)
+            {
+                mapTimeout -= Time.unscaledDeltaTime;
+                yield return null;
+            }
+        }
 
-        useMapMode = CoopMapBootstrap.Instance != null && CoopMapBootstrap.Instance.MapLayout != null;
+        if (CoopMapBootstrap.Instance == null || !CoopMapBootstrap.Instance.IsReady)
+            Debug.LogWarning("[CoopGameSession] 맵 부트스트랩이 완료되지 않았습니다. 폴백 모드로 진행합니다.");
+
+        useMapMode = CoopMapBootstrap.Instance != null
+            && CoopMapBootstrap.Instance.IsReady
+            && CoopMapBootstrap.Instance.MapLayout != null;
 
         BootstrapPlayers();
 
         if (IsHostAuthority)
         {
-            monsterSpawner = gameObject.AddComponent<CoopMonsterSpawner>();
-            monsterSpawner.Initialize(this);
+            if (monsterSpawner == null)
+            {
+                monsterSpawner = gameObject.AddComponent<CoopMonsterSpawner>();
+                monsterSpawner.Initialize(this);
+            }
+
             SpawnRealTowers();
             RefreshFarmGates();
             BeginNextWave();
@@ -117,6 +133,10 @@ public class CoopGameSession : MonoBehaviour
             SpawnVisualTowersForClients();
             SetAnnouncement("호스트가 웨이브를 준비 중...");
         }
+
+        isBootstrapped = true;
+        Debug.Log(
+            $"[CoopGameSession] 부트스트랩 완료 — 호스트권한:{IsHostAuthority}, 플레이어:{players.Count}, 탱크:{liveTowers.Count}, 웨이브:{currentWave}, 맵:{useMapMode}");
     }
 
     private void SpawnVisualTowersForClients()
@@ -215,7 +235,8 @@ public class CoopGameSession : MonoBehaviour
 
         if (IsHostAuthority)
         {
-            ApplyOrder(playerId, orderType, target.x, target.z, attackTargetId);
+            var resolved = ResolveMoveTarget(playerId, target);
+            ApplyOrder(playerId, orderType, resolved.x, resolved.z, attackTargetId);
             return;
         }
 
@@ -557,7 +578,7 @@ public class CoopGameSession : MonoBehaviour
         return pushed;
     }
 
-    public bool TryGetLivingTower(string playerId, out CoopPlayerTowerUnit unit)
+    public bool TryFindEnemyInRangeForUnit(Vector3 origin, float range, out Vector3 enemyPosition)
     {
         return TryFindEnemyInRange(origin, range, out enemyPosition);
     }
@@ -678,23 +699,30 @@ public class CoopGameSession : MonoBehaviour
             ? CoopMapBootstrap.Instance.MapHalfExtent * 0.85f
             : 20f;
         var pos = new Vector3(Mathf.Cos(angle) * radius, 0f, Mathf.Sin(angle) * radius);
-        SpawnFallbackEnemyAt(pos, bossWave, currentWave);
+        var forceBoss = bossWave && random.NextDouble() < 0.35d;
+        SpawnFallbackEnemyAt(pos, forceBoss, currentWave);
     }
 
     public void SpawnFallbackEnemyAt(Vector3 position, bool boss, int wave)
     {
-        var maxHp = boss ? 180f + wave * 40f : 35f + wave * 8f;
-        var defense = boss ? 4 + wave / 2 : 1 + wave / 3;
-        var speed = boss ? 2.2f : 3.2f + wave * 0.08f;
-        var goldReward = boss ? 50 + wave * 8 : 10 + wave * 2;
-        var monsterCode = CoopGameProtocol.EnemyVisualTypes[wave % CoopGameProtocol.EnemyVisualTypes.Length];
+        var stats = CoopSlimeCatalog.Resolve(wave, boss, random);
         var id = nextEnemyId++;
 
         position = CoopMapSpawnUtility.SnapToWalkableWorld(position);
-        var enemyObject = new GameObject(boss ? $"Boss_{id}" : $"Enemy_{id}");
+        var enemyObject = new GameObject(stats.isBoss ? $"Boss_{id}" : $"Enemy_{id}");
         enemyObject.transform.SetParent(entityRoot, false);
         var actor = enemyObject.AddComponent<CoopEnemyActor>();
-        actor.Initialize(this, id, position, maxHp, defense, speed, boss, goldReward, monsterCode);
+        actor.Initialize(
+            this,
+            id,
+            position,
+            stats.maxHp,
+            stats.defense,
+            stats.moveSpeed,
+            stats.isBoss,
+            stats.goldReward,
+            stats.slimeKey,
+            stats.contactDamage);
         liveEnemies[id] = actor;
     }
 

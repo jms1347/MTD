@@ -77,18 +77,38 @@ public class LobbyNetworkManager : MonoBehaviour
 
     public void BeginSoloSession()
     {
-        if (IsInRoom)
+        if (IsInRoom && IsHost)
             return;
+
+        if (IsInRoom)
+            ShutdownNetwork();
 
         if (string.IsNullOrWhiteSpace(LocalPlayerName))
             LocalPlayerName = "Solo";
 
         IsHost = true;
         IsClient = false;
+        isRunning = false;
         players.Clear();
         players.Add(CreateLocalPlayer(isHost: true, ready: true));
         SetStatus("솔로 플레이");
         OnPlayerListChanged?.Invoke();
+    }
+
+    /// <summary>
+    /// 협동 씬에서 이동·몬스터·스킬이 동작하려면 호스트 시뮬레이션이 필요합니다.
+    /// 로비 없이 진입했거나, 끊긴 클라이언트 상태면 솔로 호스트로 전환합니다.
+    /// </summary>
+    public void EnsureCoopHostAuthority()
+    {
+        if (IsHost)
+            return;
+
+        if (IsClient && serverConnection != null && serverConnection.IsConnected)
+            return;
+
+        BeginSoloSession();
+        Debug.Log("[LobbyNetworkManager] 협동 플레이용 솔로 호스트 세션을 시작했습니다.");
     }
 
     public void HostRoom(int port, string playerName)
@@ -531,6 +551,8 @@ public class LobbyNetworkManager : MonoBehaviour
             this.client = client;
             stream = client.GetStream();
         }
+
+        public bool IsConnected => !disposed && client != null && client.Connected;
 
         public void StartReadLoop()
         {

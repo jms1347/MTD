@@ -12,7 +12,7 @@ public class CoopPlayerState
     public float towerHp;
     public float towerMaxHp;
     public float attack = 10f;
-    public float fireInterval = 5f;
+    public float fireInterval = 1.2f;
     public int penetration = 1;
     public int atkLevel;
     public int hpLevel;
@@ -128,7 +128,7 @@ public static class CoopGameProtocol
 
     public const float BaseAttack = 10f;
     public const float BaseHealth = 100f;
-    public const float BaseFireInterval = 5f;
+    public const float BaseFireInterval = 1.2f;
     public const int BasePenetration = 1;
     public const float NexusMaxHealth = 500f;
     public const float PlayerMoveSpeed = 5f;
@@ -141,7 +141,13 @@ public static class CoopGameProtocol
 
     public static readonly string[] EnemyVisualTypes =
     {
-        "grunt", "runner", "brute", "stalker", "swarm"
+        "SLIME-01",
+        "SLIME-03-SPROUT",
+        "SLIME-02",
+        "SLIME-03-LEAF",
+        "SLIME-03",
+        "SLIME-01-VIKING",
+        "SLIME-01-METAL"
     };
 }
 
@@ -175,7 +181,7 @@ public static class CoopUpgradeRules
                 break;
             case CoopGameProtocol.UpgradeSpeed:
                 player.spdLevel++;
-                player.fireInterval = Mathf.Max(0.6f, CoopGameProtocol.BaseFireInterval - player.spdLevel * 0.35f);
+                player.fireInterval = Mathf.Max(0.35f, CoopGameProtocol.BaseFireInterval - player.spdLevel * 0.12f);
                 break;
             case CoopGameProtocol.UpgradePenetration:
                 player.penLevel++;

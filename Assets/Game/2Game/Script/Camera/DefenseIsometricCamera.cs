@@ -74,6 +74,12 @@ public class DefenseIsometricCamera : MonoBehaviour
         ApplyOrthographicSize();
     }
 
+    public void SetCameraDistance(float height)
+    {
+        cameraHeight = Mathf.Max(4f, height);
+        ApplyCameraTransform();
+    }
+
     public void AdjustZoom(float delta)
     {
         zoomOrthographicSize = Mathf.Clamp(zoomOrthographicSize - delta, minOrthographicSize, maxOrthographicSize);

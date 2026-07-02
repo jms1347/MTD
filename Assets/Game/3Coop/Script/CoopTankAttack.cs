@@ -24,20 +24,13 @@ public class CoopTankAttack : MonoBehaviour
         if (!session.TryGetPlayer(tankUnit.PlayerId, out var player))
             return;
 
-        if (!ShouldAttack(player))
-            return;
-
         if (!TryFindTarget(session, player, out var target))
             return;
 
-        ApplyDamage(session, target, player);
-        var fireInterval = Mathf.Max(0.5f, player.fireInterval * CoopSkillBuffs.GetFireIntervalMultiplier(player.playerId));
+        FireMissile(session, target, player);
+        var fireInterval = Mathf.Max(0.35f, player.fireInterval * CoopSkillBuffs.GetFireIntervalMultiplier(player.playerId));
         nextFireTime = Time.time + fireInterval;
     }
-
-    private static bool ShouldAttack(CoopPlayerState player)
-        => player.orderType == CoopGameProtocol.OrderAttackMove
-            || player.orderType == CoopGameProtocol.OrderAttackTarget;
 
     private bool TryFindTarget(CoopGameSession session, CoopPlayerState player, out GameObject target)
     {
@@ -49,10 +42,9 @@ public class CoopTankAttack : MonoBehaviour
         if (player.orderType == CoopGameProtocol.OrderAttackTarget && player.attackTargetId >= 0)
         {
             if (TryFindEnemyById(player.attackTargetId, out target)
-                && DefenseEnemyQuery.IsLivingEnemy(target))
+                && DefenseEnemyQuery.IsLivingEnemy(target)
+                && IsWithinRange(origin, target.transform.position, range))
                 return true;
-
-            return false;
         }
 
         foreach (var enemy in GameObject.FindGameObjectsWithTag("Enemy"))
@@ -60,7 +52,7 @@ public class CoopTankAttack : MonoBehaviour
             if (!DefenseEnemyQuery.IsLivingEnemy(enemy))
                 continue;
 
-            var sqr = (enemy.transform.position - origin).sqrMagnitude;
+            var sqr = HorizontalDistanceSqr(origin, enemy.transform.position);
             if (sqr > best)
                 continue;
 
@@ -71,36 +63,55 @@ public class CoopTankAttack : MonoBehaviour
         return target != null;
     }
 
-    private void ApplyDamage(CoopGameSession session, GameObject target, CoopPlayerState player)
+    private void FireMissile(CoopGameSession session, GameObject target, CoopPlayerState player)
     {
+        var muzzle = firePoint != null ? firePoint : transform;
+        var look = target.transform.position - muzzle.position;
+        look.y = 0f;
+        var rotation = look.sqrMagnitude > 0.01f
+            ? Quaternion.LookRotation(look.normalized, Vector3.up)
+            : muzzle.rotation;
+
         if (firePoint != null)
-        {
-            var look = target.transform.position - firePoint.position;
-            look.y = 0f;
-            if (look.sqrMagnitude > 0.01f)
-                firePoint.rotation = Quaternion.LookRotation(look.normalized, Vector3.up);
-        }
+            firePoint.rotation = rotation;
 
         var damage = player.attack * CoopSkillBuffs.GetAttackMultiplier(player.playerId);
+        CoopTankMissile.Fire(
+            muzzle.position,
+            rotation,
+            target,
+            damage,
+            player.penetration,
+            tankUnit.PlayerId,
+            session);
+    }
+
+    public static void ApplyDamageToEnemy(
+        CoopGameSession session,
+        GameObject target,
+        float damage,
+        int penetration,
+        string attackerPlayerId)
+    {
         var synced = target.GetComponent<CoopSyncedMonster>();
         if (synced != null)
         {
-            synced.TakeDamage(damage, player.penetration, tankUnit.PlayerId);
+            synced.TakeDamage(damage, penetration, attackerPlayerId);
             return;
         }
 
         var actor = target.GetComponent<CoopEnemyActor>();
         if (actor != null)
         {
-            actor.TakeDamage(damage, player.penetration, tankUnit.PlayerId);
+            actor.TakeDamage(damage, penetration, attackerPlayerId);
             return;
         }
 
         var health = target.GetComponent<Health>();
         if (health != null && health.IsAlive)
         {
-            health.SetFlatDefenseReduction(player.penetration);
-            health.TakeDamage(damage);
+            health.SetFlatDefenseReduction(penetration);
+            health.TakeDamage(Mathf.Max(1f, damage));
         }
     }
 
@@ -125,5 +136,15 @@ public class CoopTankAttack : MonoBehaviour
         }
 
         return false;
+    }
+
+    private static bool IsWithinRange(Vector3 origin, Vector3 targetPosition, float range)
+        => HorizontalDistanceSqr(origin, targetPosition) <= range * range;
+
+    private static float HorizontalDistanceSqr(Vector3 a, Vector3 b)
+    {
+        var flat = b - a;
+        flat.y = 0f;
+        return flat.sqrMagnitude;
     }
 }

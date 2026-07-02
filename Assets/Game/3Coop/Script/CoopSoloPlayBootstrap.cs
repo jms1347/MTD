@@ -1,7 +1,7 @@
 using UnityEngine;
 
 /// <summary>
-/// 로비를 거치지 않고 협동 씬에 바로 들어온 경우 솔로 호스트 세션을 만듭니다.
+/// 협동 씬 진입 시 로비/호스트 상태를 보장합니다.
 /// </summary>
 public static class CoopSoloPlayBootstrap
 {
@@ -13,8 +13,6 @@ public static class CoopSoloPlayBootstrap
             lobbyObject.AddComponent<LobbyNetworkManager>();
         }
 
-        var lobby = LobbyNetworkManager.Instance;
-        if (lobby != null && !lobby.IsInRoom)
-            lobby.BeginSoloSession();
+        LobbyNetworkManager.Instance?.EnsureCoopHostAuthority();
     }
 }

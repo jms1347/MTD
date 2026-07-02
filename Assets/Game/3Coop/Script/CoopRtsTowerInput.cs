@@ -50,7 +50,7 @@ public class CoopRtsTowerInput : MonoBehaviour
         {
             if (rightMouseDown
                 && !IsPointerOverUi()
-                && !DefenseCameraControlManager.DidPanThisGesture
+                && !CoopCameraControlManager.DidPanThisGesture
                 && Vector2.Distance(rightMouseDownScreen, Input.mousePosition) <= clickDragThreshold)
             {
                 if (TryPickEnemy(Input.mousePosition, out var enemyId))
@@ -70,7 +70,7 @@ public class CoopRtsTowerInput : MonoBehaviour
             if (skillTargetingMode
                 && leftMouseDown
                 && !IsPointerOverUi()
-                && !DefenseCameraControlManager.DidPanThisGesture
+                && !CoopCameraControlManager.DidPanThisGesture
                 && Vector2.Distance(leftMouseDownScreen, Input.mousePosition) <= clickDragThreshold
                 && TryRaycastWorld(Input.mousePosition, out var skillPoint))
             {
@@ -80,7 +80,7 @@ public class CoopRtsTowerInput : MonoBehaviour
             else if (attackMoveMode
                 && leftMouseDown
                 && !IsPointerOverUi()
-                && !DefenseCameraControlManager.DidPanThisGesture
+                && !CoopCameraControlManager.DidPanThisGesture
                 && Vector2.Distance(leftMouseDownScreen, Input.mousePosition) <= clickDragThreshold)
             {
                 if (TryPickEnemy(Input.mousePosition, out var enemyId))
