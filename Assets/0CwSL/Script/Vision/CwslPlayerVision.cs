@@ -6,11 +6,18 @@ public class CwslPlayerVision : NetworkBehaviour
     public static CwslPlayerVision Local { get; private set; }
 
     private CwslPlayerCharacter playerCharacter;
+    private CwslLocalDarkVision darkVision;
     private LineRenderer visionRing;
     private float visionRadius = 14f;
     private bool localReady;
 
     public float VisionRadius => visionRadius;
+
+    /// <summary>시야 0 캐릭터도 발밑 짧은 반경은 보이게 하는 실제 판정/연출 반경.</summary>
+    public float EffectiveVisionRadius =>
+        darkVision != null ? darkVision.EffectiveVisionRadius :
+        visionRadius <= 0.01f ? 5f : visionRadius;
+
     public Vector3 VisionOrigin => transform.position;
 
     public override void OnNetworkSpawn()
@@ -45,7 +52,8 @@ public class CwslPlayerVision : NetworkBehaviour
 
         var flat = worldPosition - Local.VisionOrigin;
         flat.y = 0f;
-        return flat.sqrMagnitude <= Local.VisionRadius * Local.VisionRadius;
+        var radius = Local.EffectiveVisionRadius;
+        return flat.sqrMagnitude <= radius * radius;
     }
 
     private void TryInitializeLocal()
@@ -55,22 +63,30 @@ public class CwslPlayerVision : NetworkBehaviour
 
         localReady = true;
         Local = this;
+        EnsureDarkVision();
         EnsureVisionRing();
         EnsureVisionSystem();
-        ApplyRingRadius();
+        ApplyVisionRadius();
     }
 
     private void HandleCharacterChanged(CwslCharacterId characterId)
     {
         RefreshVisionRadius();
         if (IsOwner)
-            ApplyRingRadius();
+            ApplyVisionRadius();
     }
 
     private void RefreshVisionRadius()
     {
         var characterId = playerCharacter != null ? playerCharacter.CharacterId : CwslCharacterId.Tank;
         visionRadius = CwslCharacterCatalog.GetVisionRadius(characterId);
+    }
+
+    private void ApplyVisionRadius()
+    {
+        ApplyRingRadius();
+        if (darkVision != null)
+            darkVision.RefreshRadius(visionRadius);
     }
 
     private void LateUpdate()
@@ -81,6 +97,14 @@ public class CwslPlayerVision : NetworkBehaviour
         var origin = transform.position;
         origin.y = 0.08f;
         visionRing.transform.position = origin;
+    }
+
+    private void EnsureDarkVision()
+    {
+        darkVision = GetComponent<CwslLocalDarkVision>();
+        if (darkVision == null)
+            darkVision = gameObject.AddComponent<CwslLocalDarkVision>();
+        darkVision.Activate(visionRadius);
     }
 
     private void EnsureVisionSystem()
@@ -94,7 +118,6 @@ public class CwslPlayerVision : NetworkBehaviour
         if (visionRing != null)
             return;
 
-        // 기존에 남아 있을 수 있는 큰 시야 원판 제거
         var oldDisc = transform.Find("VisionDisc");
         if (oldDisc != null)
             Destroy(oldDisc.gameObject);
@@ -110,17 +133,22 @@ public class CwslPlayerVision : NetworkBehaviour
         visionRing = ringObject.AddComponent<LineRenderer>();
         visionRing.useWorldSpace = false;
         visionRing.loop = true;
-        visionRing.widthMultiplier = 0.08f;
+        visionRing.widthMultiplier = 0.1f;
         visionRing.positionCount = 72;
         visionRing.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
         visionRing.receiveShadows = false;
-        // 얇은 점선 느낌의 시야 경계 (방패와 구분)
-        visionRing.material = CreateRingMaterial(new Color(0.55f, 0.9f, 1f, 0.45f));
+        visionRing.material = CreateRingMaterial(new Color(1f, 0.85f, 0.45f, 0.55f));
     }
 
     private void ApplyRingRadius()
     {
         if (visionRing == null)
+            return;
+
+        // 시야 0이면 링 숨김 (본인만 보이는 캐릭터)
+        var showRing = visionRadius > 0.5f;
+        visionRing.enabled = showRing;
+        if (!showRing)
             return;
 
         const int segments = 72;

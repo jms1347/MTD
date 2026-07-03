@@ -29,7 +29,8 @@ public class CwslLocalVisionSystem : MonoBehaviour
     private void RefreshVisibility()
     {
         var origin = playerVision.VisionOrigin;
-        var radiusSqr = playerVision.VisionRadius * playerVision.VisionRadius;
+        var radius = playerVision.EffectiveVisionRadius;
+        var radiusSqr = radius * radius;
 
         RefreshMonsters(origin, radiusSqr);
         RefreshGold(origin, radiusSqr);

@@ -23,6 +23,9 @@ MonoBehaviour:
   playerMissileVfx: {fileID: 131070, guid: 4b21d8abf8d26b449b109c8edb5cc78a, type: 3}
   fortifyAuraVfx: {fileID: 1135644536747142, guid: c105577ec49dfb3408a7a89c3b7730be, type: 3}
   fortifyBlockVfx: {fileID: 1090678147105552, guid: bac6010fd61d72b419fb265a96000090, type: 3}
+  meteorFallVfx: {fileID: 113030, guid: 25a78a965241d084996f23857207e95f, type: 3}
+  meteorImpactVfx: {fileID: 130346, guid: 07bf9ced87963e24299c2c2a22bfeeb6, type: 3}
+  meteorBurnVfx: {fileID: 1027697777517218, guid: 628d050c815a3a3448ce1dcdf0578f21, type: 3}
   goldPickupSound: {fileID: 8300000, guid: bd7723e163262f04fb85ffc0537c0a58, type: 3}
   playerPrefab: {fileID: 6360497807503343767, guid: 5885e0e861be95e41b8318c7d2df905d, type: 3}
   rangedMonsterPrefab: {fileID: 5648177666945189405, guid: 7c47dd5b69da58e46b0228723bfc6e50, type: 3}

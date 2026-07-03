@@ -14,6 +14,9 @@ public class CwslGameAssets : ScriptableObject
     public GameObject playerMissileVfx;
     public GameObject fortifyAuraVfx;
     public GameObject fortifyBlockVfx;
+    public GameObject meteorFallVfx;
+    public GameObject meteorImpactVfx;
+    public GameObject meteorBurnVfx;
     public AudioClip goldPickupSound;
 
     public GameObject playerPrefab;

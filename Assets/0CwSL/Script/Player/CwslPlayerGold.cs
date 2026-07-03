@@ -66,7 +66,8 @@ public class CwslPlayerGold : NetworkBehaviour
     [ClientRpc]
     private void PlaySpendEffectClientRpc(int amount)
     {
-        CwslBlockCoinPop.SpawnSpend(transform.position, amount);
+        // 월드 코인 튀김 + GoldCoinBlast + coindrop.mp3 (UI 텍스트 효과 아님)
+        CwslGoldFeedback.PlaySpend(transform.position, amount);
     }
 
     private void HandleGoldChanged(int previous, int current)

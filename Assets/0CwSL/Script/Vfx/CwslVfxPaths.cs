@@ -35,4 +35,13 @@ public static class CwslVfxPaths
 
     public const string FortifyBlock =
         "Assets/Epic Toon FX/Prefabs/Combat/Sword/Hit/SwordHitMini/SwordHitMiniBlue.prefab";
+
+    public const string MeteorFall =
+        "Assets/Epic Toon FX/Prefabs/Combat/Missiles/Nuke/NukeMissileFire.prefab";
+
+    public const string MeteorImpact =
+        "Assets/Epic Toon FX/Prefabs/Combat/Explosions/NukeExplosion/NukeExplosionFire.prefab";
+
+    public const string MeteorBurn =
+        "Assets/Epic Toon FX/Prefabs/Combat/Decals/Explosion Decal/ExplosionDecalFire.prefab";
 }

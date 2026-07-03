@@ -269,6 +269,52 @@ public static class CwslMonsterVisualBuilder
         RemoveCollider(glowRing);
     }
 
+    public static void BuildRedMagePlayer(Transform root, Color accentColor)
+    {
+        var visualRoot = new GameObject("Visual");
+        visualRoot.transform.SetParent(root, false);
+
+        var robeColor = Color.Lerp(new Color(0.75f, 0.08f, 0.08f), accentColor, 0.25f);
+        var trimColor = new Color(0.95f, 0.75f, 0.2f);
+        var hoodColor = Color.Lerp(robeColor, Color.black, 0.25f);
+        var staffColor = new Color(0.35f, 0.22f, 0.12f);
+        var gemColor = new Color(1f, 0.35f, 0.1f);
+
+        var basePlate = CreatePrimitive(PrimitiveType.Cylinder, visualRoot.transform, new Vector3(0f, 0.05f, 0f),
+            new Vector3(0.95f, 0.04f, 0.95f), Color.Lerp(robeColor, Color.black, 0.4f));
+        var robe = CreatePrimitive(PrimitiveType.Capsule, visualRoot.transform, new Vector3(0f, 0.95f, 0f),
+            new Vector3(0.78f, 0.9f, 0.78f), robeColor);
+        var sash = CreatePrimitive(PrimitiveType.Cylinder, visualRoot.transform, new Vector3(0f, 0.85f, 0f),
+            new Vector3(0.82f, 0.08f, 0.82f), trimColor);
+        var hood = CreatePrimitive(PrimitiveType.Sphere, visualRoot.transform, new Vector3(0f, 1.55f, -0.05f),
+            new Vector3(0.55f, 0.48f, 0.55f), hoodColor);
+        var face = CreatePrimitive(PrimitiveType.Sphere, visualRoot.transform, new Vector3(0f, 1.48f, 0.12f),
+            new Vector3(0.28f, 0.28f, 0.22f), new Color(0.95f, 0.8f, 0.7f));
+        var shoulderL = CreatePrimitive(PrimitiveType.Sphere, visualRoot.transform, new Vector3(-0.42f, 1.2f, 0f),
+            new Vector3(0.28f, 0.24f, 0.28f), trimColor);
+        var shoulderR = CreatePrimitive(PrimitiveType.Sphere, visualRoot.transform, new Vector3(0.42f, 1.2f, 0f),
+            new Vector3(0.28f, 0.24f, 0.28f), trimColor);
+        var staff = CreatePrimitive(PrimitiveType.Cylinder, visualRoot.transform, new Vector3(0.55f, 1.1f, 0.15f),
+            new Vector3(0.08f, 1.05f, 0.08f), staffColor);
+        var orb = CreatePrimitive(PrimitiveType.Sphere, visualRoot.transform, new Vector3(0.55f, 2.05f, 0.15f),
+            new Vector3(0.28f, 0.28f, 0.28f), gemColor);
+        var cape = CreatePrimitive(PrimitiveType.Cube, visualRoot.transform, new Vector3(0f, 0.95f, -0.35f),
+            new Vector3(0.7f, 1.1f, 0.12f), Color.Lerp(robeColor, Color.black, 0.2f));
+
+        RemoveCollider(basePlate);
+        RemoveCollider(robe);
+        RemoveCollider(sash);
+        RemoveCollider(hood);
+        RemoveCollider(face);
+        RemoveCollider(shoulderL);
+        RemoveCollider(shoulderR);
+        RemoveCollider(staff);
+        RemoveCollider(orb);
+        RemoveCollider(cape);
+
+        CwslThreatLight.Ensure(orb.transform, gemColor, 3.5f, 2.2f, Vector3.zero);
+    }
+
     private static GameObject CreatePrimitive(PrimitiveType type, Transform parent, Vector3 localPosition, Vector3 localScale, Color color)
     {
         var go = GameObject.CreatePrimitive(type);

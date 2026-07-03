@@ -1,16 +1,12 @@
-using Unity.Netcode;
 using UnityEngine;
 
 /// <summary>
 /// Q 방패(골드 있을 때) 캐릭터를 감싸는 트리거 콜라이더.
-/// 근접/자폭 몬스터는 방패 밖으로 밀려납니다.
+/// 근접/미사일/자폭 공격은 들어오되, 데미지는 방패가 막습니다.
 /// </summary>
 [DefaultExecutionOrder(-50)]
 public class CwslPlayerShieldBubble : MonoBehaviour
 {
-    private const float PushSpeed = 14f;
-    private const float PushPadding = 0.2f;
-
     private SphereCollider bubbleCollider;
     private Transform bubbleRoot;
     private CwslTankFortifySkill fortifySkill;
@@ -34,14 +30,11 @@ public class CwslPlayerShieldBubble : MonoBehaviour
     private void LateUpdate()
     {
         var active = ShouldBeActive();
-        if (active != wasActive || bubbleCollider == null)
-        {
-            wasActive = active;
-            ApplyActive(active);
-        }
+        if (active == wasActive && bubbleCollider != null)
+            return;
 
-        if (active)
-            PushMonstersOut();
+        wasActive = active;
+        ApplyActive(active);
     }
 
     public bool TryBlockProjectileServer(Vector3 hitPosition, float damage)
@@ -50,59 +43,6 @@ public class CwslPlayerShieldBubble : MonoBehaviour
             return false;
 
         return playerHealth.TryBlockHitServer(hitPosition, damage);
-    }
-
-    private void PushMonstersOut()
-    {
-        if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsServer)
-            return;
-
-        var center = transform.position;
-        var radius = Radius + PushPadding;
-        var radiusSqr = radius * radius;
-
-        var monsters = FindObjectsByType<CwslMonsterBase>(FindObjectsSortMode.None);
-        foreach (var monster in monsters)
-        {
-            if (monster == null)
-                continue;
-
-            // 근접·자폭만 밀어냄 (원거리는 밖에서 쏘므로 제외)
-            if (monster is not CwslMeleeMonster && monster is not CwslSuicideMonster)
-                continue;
-
-            var health = monster.GetComponent<CwslMonsterHealth>();
-            if (health != null && !health.IsAlive)
-                continue;
-
-            var monsterPos = monster.transform.position;
-            var flat = monsterPos - center;
-            flat.y = 0f;
-            var distSqr = flat.sqrMagnitude;
-            if (distSqr >= radiusSqr)
-                continue;
-
-            Vector3 pushDir;
-            if (distSqr < 0.0001f)
-            {
-                pushDir = monster.transform.forward;
-                pushDir.y = 0f;
-                if (pushDir.sqrMagnitude < 0.0001f)
-                    pushDir = Vector3.forward;
-                pushDir.Normalize();
-            }
-            else
-            {
-                pushDir = flat.normalized;
-            }
-
-            var targetPos = center + pushDir * radius;
-            targetPos.y = monsterPos.y;
-            monster.transform.position = Vector3.MoveTowards(
-                monsterPos,
-                targetPos,
-                PushSpeed * Time.deltaTime);
-        }
     }
 
     private bool ShouldBeActive()

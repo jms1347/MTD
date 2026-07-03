@@ -18,7 +18,7 @@ public static class CwslGoldFeedback
         PlayCoinSound(worldPosition);
     }
 
-    private static void PlayBurst(Vector3 worldPosition)
+    public static void PlayBurst(Vector3 worldPosition)
     {
         if (goldBurstPrefab == null)
             return;
@@ -29,6 +29,13 @@ public static class CwslGoldFeedback
             Quaternion.identity);
         if (instance != null)
             Object.Destroy(instance, 4f);
+    }
+
+    public static void PlaySpend(Vector3 worldPosition, int amount = 1)
+    {
+        CwslBlockCoinPop.SpawnSpend(worldPosition, amount);
+        PlayBurst(worldPosition);
+        PlayCoinSound(worldPosition);
     }
 
     public static void PlayCoinSound(Vector3 worldPosition)

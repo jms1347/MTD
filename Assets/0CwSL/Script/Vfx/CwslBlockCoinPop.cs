@@ -37,22 +37,22 @@ public class CwslBlockCoinPop : MonoBehaviour
             Random.Range(-0.6f, 0.6f));
     }
 
-    /// <summary>스킬 골드 소모 — 코인이 캐릭터에서 떨어져 나갑니다.</summary>
+    /// <summary>스킬 골드 소모 — 코인이 캐릭터에서 튀어 나갑니다.</summary>
     public static void SpawnSpend(Vector3 playerPosition, int coinCount = 1)
     {
-        coinCount = Mathf.Clamp(coinCount, 1, 4);
+        coinCount = Mathf.Clamp(coinCount, 1, 5);
         for (var i = 0; i < coinCount; i++)
         {
-            var spawnPosition = playerPosition + Vector3.up * 1.2f;
+            var spawnPosition = playerPosition + Vector3.up * 1.35f;
             var pop = CreateCoin(spawnPosition);
             pop.mode = Mode.SpendFall;
             pop.lifetime = SpendLifetime;
             pop.startPosition = spawnPosition;
             pop.target = null;
             pop.velocity = new Vector3(
-                Random.Range(-3.2f, 3.2f),
-                Random.Range(4.5f, 7f),
-                Random.Range(-3.2f, 3.2f));
+                Random.Range(-4.5f, 4.5f),
+                Random.Range(5.5f, 8.5f),
+                Random.Range(-4.5f, 4.5f));
         }
     }
 

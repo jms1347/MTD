@@ -49,6 +49,9 @@ public static class CwslGameSceneSetup
         assets.playerMissileVfx = LoadPrefab(CwslVfxPaths.PlayerMissileVisual);
         assets.fortifyAuraVfx = LoadPrefab(CwslVfxPaths.FortifyAura);
         assets.fortifyBlockVfx = LoadPrefab(CwslVfxPaths.FortifyBlock);
+        assets.meteorFallVfx = LoadPrefab(CwslVfxPaths.MeteorFall);
+        assets.meteorImpactVfx = LoadPrefab(CwslVfxPaths.MeteorImpact);
+        assets.meteorBurnVfx = LoadPrefab(CwslVfxPaths.MeteorBurn);
         assets.suicideExplosionVfx = LoadPrefab(CwslVfxPaths.SuicideExplosion);
         assets.meleeHitVfx = LoadPrefab(CwslVfxPaths.MeleeHit);
         assets.enemyDeathVfx = LoadPrefab(CwslVfxPaths.EnemyDeath);
@@ -216,6 +219,7 @@ public static class CwslGameSceneSetup
         root.AddComponent<CwslPlayerCharacter>();
         root.AddComponent<CwslTankFortifySkill>();
         root.AddComponent<CwslMissileTankSkill>();
+        root.AddComponent<CwslRedMageMeteorSkill>();
         root.AddComponent<CwslPlayerCannonAim>();
         root.AddComponent<CwslPlayerShieldFortifyVisual>();
         root.AddComponent<CwslPlayerShieldBubble>();
@@ -392,7 +396,7 @@ public static class CwslGameSceneSetup
         plane.transform.localScale = new Vector3(8f, 1f, 8f);
         var planeRenderer = plane.GetComponent<Renderer>();
         if (planeRenderer != null)
-            planeRenderer.sharedMaterial = CwslMaterialUtil.CreateColored(new Color(0.22f, 0.32f, 0.24f));
+            planeRenderer.sharedMaterial = CwslMaterialUtil.CreateMatteColored(new Color(0.2f, 0.28f, 0.22f));
 
         var navMeshSurface = plane.AddComponent<NavMeshSurface>();
         navMeshSurface.center = new Vector3(0f, 0f, 0f);
@@ -402,8 +406,18 @@ public static class CwslGameSceneSetup
         var light = new GameObject("Directional Light");
         var directional = light.AddComponent<Light>();
         directional.type = LightType.Directional;
-        directional.intensity = 1.1f;
+        directional.intensity = 0.45f;
+        directional.color = new Color(0.45f, 0.5f, 0.65f);
         light.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
+
+        RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
+        RenderSettings.ambientLight = new Color(0.12f, 0.13f, 0.16f);
+        RenderSettings.fog = true;
+        RenderSettings.fogMode = FogMode.Linear;
+        RenderSettings.fogColor = new Color(0.02f, 0.03f, 0.05f);
+        // 카메라 거리(~24) 기준 — 플레이어 주변은 보이고 멀리만 어두움
+        RenderSettings.fogStartDistance = 26f;
+        RenderSettings.fogEndDistance = 40f;
 
         var networkRoot = new GameObject("NetworkManager");
         var networkManager = networkRoot.AddComponent<NetworkManager>();

@@ -1,4 +1,3 @@
-using System.Collections;
 using TMPro;
 using Unity.Netcode;
 using UnityEngine;
@@ -7,22 +6,10 @@ using UnityEngine.UI;
 
 public class CwslLocalPlayerHud : NetworkBehaviour
 {
-    private static readonly Color GoldNormalColor = new(1f, 0.92f, 0.4f);
-    private static readonly Color GoldSpendColor = new(1f, 0.45f, 0.45f);
-    private static readonly Color GoldGainColor = new(1f, 0.95f, 0.35f);
-    private const float GoldFlashDuration = 0.32f;
-    private const float GoldTweenSpeed = 22f;
-
     private CwslPlayerGold playerGold;
     private CwslPlayerCharacter playerCharacter;
     private TextMeshProUGUI goldLabel;
     private TextMeshProUGUI hintLabel;
-    private RectTransform goldLabelRect;
-    private RectTransform goldPanelRect;
-    private int actualGold;
-    private float displayedGold;
-    private int lastGoldValue;
-    private Coroutine flashRoutine;
 
     public override void OnNetworkSpawn()
     {
@@ -34,41 +21,23 @@ public class CwslLocalPlayerHud : NetworkBehaviour
         CreateHud();
         if (playerGold != null)
         {
-            actualGold = playerGold.Gold;
-            displayedGold = actualGold;
-            lastGoldValue = actualGold;
-            playerGold.OnGoldChanged += HandleGoldChanged;
-            RefreshGoldText(displayedGold);
+            playerGold.OnGoldChanged += RefreshGold;
+            RefreshGold(playerGold.Gold);
+        }
+
+        if (playerCharacter != null)
+        {
+            playerCharacter.OnCharacterChanged += RefreshHint;
+            RefreshHint(playerCharacter.CharacterId);
         }
     }
 
     public override void OnNetworkDespawn()
     {
         if (playerGold != null)
-            playerGold.OnGoldChanged -= HandleGoldChanged;
-    }
-
-    private void Update()
-    {
-        if (goldLabel == null)
-            return;
-
-        if (Mathf.Abs(actualGold - displayedGold) < 0.01f)
-        {
-            if (Mathf.RoundToInt(displayedGold) != actualGold)
-            {
-                displayedGold = actualGold;
-                RefreshGoldText(displayedGold);
-            }
-            return;
-        }
-
-        displayedGold = Mathf.MoveTowards(
-            displayedGold,
-            actualGold,
-            Mathf.Max(1f, Mathf.Abs(actualGold - displayedGold) * GoldTweenSpeed) * Time.deltaTime);
-
-        RefreshGoldText(displayedGold);
+            playerGold.OnGoldChanged -= RefreshGold;
+        if (playerCharacter != null)
+            playerCharacter.OnCharacterChanged -= RefreshHint;
     }
 
     private void CreateHud()
@@ -121,7 +90,17 @@ public class CwslLocalPlayerHud : NetworkBehaviour
             hintLabel.alignment = TextAlignmentOptions.MidlineLeft;
         }
 
-        hintLabel.text = CwslCharacterCatalog.Get(CwslCharacterId.Tank).ControlHint;
+        var characterId = playerCharacter != null ? playerCharacter.CharacterId : CwslCharacterId.Tank;
+        RefreshHint(characterId);
+    }
+
+    private void RefreshHint(CwslCharacterId characterId)
+    {
+        if (hintLabel == null)
+            return;
+
+        var entry = CwslCharacterCatalog.Get(characterId);
+        hintLabel.text = $"{entry.ControlHint} | C 캐릭터 변경";
     }
 
     private void EnsureGoldPanel(Transform canvasTransform)
@@ -129,61 +108,57 @@ public class CwslLocalPlayerHud : NetworkBehaviour
         var existing = canvasTransform.Find("CwslGoldPanel");
         if (existing != null)
         {
-            goldPanelRect = existing as RectTransform;
             goldLabel = existing.Find("Label")?.GetComponent<TextMeshProUGUI>();
+            return;
         }
-        else
+
+        var panelObject = new GameObject("CwslGoldPanel", typeof(RectTransform), typeof(Image));
+        panelObject.transform.SetParent(canvasTransform, false);
+        var panelRect = panelObject.GetComponent<RectTransform>();
+        panelRect.anchorMin = new Vector2(0.5f, 1f);
+        panelRect.anchorMax = new Vector2(0.5f, 1f);
+        panelRect.pivot = new Vector2(0.5f, 1f);
+        panelRect.anchoredPosition = new Vector2(0f, -18f);
+        panelRect.sizeDelta = new Vector2(360f, 68f);
+
+        var background = panelObject.GetComponent<Image>();
+        background.color = new Color(0.05f, 0.06f, 0.08f, 0.82f);
+        background.raycastTarget = false;
+
+        var accent = new GameObject("Accent", typeof(RectTransform), typeof(Image));
+        accent.transform.SetParent(panelObject.transform, false);
+        var accentRect = (RectTransform)accent.transform;
+        accentRect.anchorMin = new Vector2(0f, 0f);
+        accentRect.anchorMax = new Vector2(1f, 0f);
+        accentRect.pivot = new Vector2(0.5f, 0f);
+        accentRect.sizeDelta = new Vector2(-16f, 3f);
+        accentRect.anchoredPosition = new Vector2(0f, 4f);
+        accent.GetComponent<Image>().color = new Color(1f, 0.85f, 0.35f, 0.95f);
+        accent.GetComponent<Image>().raycastTarget = false;
+
+        goldLabel = CreateLabel(
+            panelObject.transform,
+            "Label",
+            new Vector2(0f, 0f),
+            new Vector2(1f, 1f),
+            new Vector2(0.5f, 0.5f),
+            Vector2.zero,
+            Vector2.zero,
+            36f);
+        goldLabel.alignment = TextAlignmentOptions.Center;
+        goldLabel.fontStyle = FontStyles.Bold;
+        goldLabel.color = new Color(1f, 0.92f, 0.4f);
+        var goldRect = goldLabel.rectTransform;
+        goldRect.anchorMin = Vector2.zero;
+        goldRect.anchorMax = Vector2.one;
+        goldRect.offsetMin = new Vector2(24f, 6f);
+        goldRect.offsetMax = new Vector2(-24f, -4f);
+
+        if (goldLabel.font != null)
         {
-            var panelObject = new GameObject("CwslGoldPanel", typeof(RectTransform), typeof(Image));
-            panelObject.transform.SetParent(canvasTransform, false);
-            goldPanelRect = panelObject.GetComponent<RectTransform>();
-            goldPanelRect.anchorMin = new Vector2(0.5f, 1f);
-            goldPanelRect.anchorMax = new Vector2(0.5f, 1f);
-            goldPanelRect.pivot = new Vector2(0.5f, 1f);
-            goldPanelRect.anchoredPosition = new Vector2(0f, -18f);
-            goldPanelRect.sizeDelta = new Vector2(360f, 68f);
-
-            var background = panelObject.GetComponent<Image>();
-            background.color = new Color(0.05f, 0.06f, 0.08f, 0.82f);
-            background.raycastTarget = false;
-
-            var accent = new GameObject("Accent", typeof(RectTransform), typeof(Image));
-            accent.transform.SetParent(panelObject.transform, false);
-            var accentRect = (RectTransform)accent.transform;
-            accentRect.anchorMin = new Vector2(0f, 0f);
-            accentRect.anchorMax = new Vector2(1f, 0f);
-            accentRect.pivot = new Vector2(0.5f, 0f);
-            accentRect.sizeDelta = new Vector2(-16f, 3f);
-            accentRect.anchoredPosition = new Vector2(0f, 4f);
-            accent.GetComponent<Image>().color = new Color(1f, 0.85f, 0.35f, 0.95f);
-            accent.GetComponent<Image>().raycastTarget = false;
-
-            goldLabel = CreateLabel(
-                panelObject.transform,
-                "Label",
-                new Vector2(0f, 0f),
-                new Vector2(1f, 1f),
-                new Vector2(0.5f, 0.5f),
-                Vector2.zero,
-                Vector2.zero,
-                36f);
-            goldLabel.alignment = TextAlignmentOptions.Center;
-            goldLabel.fontStyle = FontStyles.Bold;
-            goldLabel.color = GoldNormalColor;
-            var goldRect = goldLabel.rectTransform;
-            goldRect.anchorMin = Vector2.zero;
-            goldRect.anchorMax = Vector2.one;
-            goldRect.offsetMin = new Vector2(24f, 6f);
-            goldRect.offsetMax = new Vector2(-24f, -4f);
-
-            if (goldLabel.font != null)
-            {
-                goldLabel.outlineWidth = 0.15f;
-                goldLabel.outlineColor = new Color32(0, 0, 0, 200);
-            }
+            goldLabel.outlineWidth = 0.15f;
+            goldLabel.outlineColor = new Color32(0, 0, 0, 200);
         }
-
-        goldLabelRect = goldLabel != null ? goldLabel.rectTransform : null;
     }
 
     private void EnsureKarmaLabel(Transform canvasTransform)
@@ -192,28 +167,23 @@ public class CwslLocalPlayerHud : NetworkBehaviour
             return;
 
         var existing = canvasTransform.Find("KarmaLabel");
-        TextMeshProUGUI karmaLabel;
         if (existing != null)
-        {
-            karmaLabel = existing.GetComponent<TextMeshProUGUI>();
-        }
-        else
-        {
-            karmaLabel = CreateLabel(
-                canvasTransform,
-                "KarmaLabel",
-                new Vector2(0f, 1f),
-                new Vector2(0f, 1f),
-                new Vector2(0.5f, 1f),
-                new Vector2(24f, -56f),
-                new Vector2(640f, 40f),
-                24f);
-            karmaLabel.alignment = TextAlignmentOptions.MidlineLeft;
+            return;
 
-            var karmaUi = canvasTransform.gameObject.GetComponent<CwslKarmaUI>()
-                          ?? canvasTransform.gameObject.AddComponent<CwslKarmaUI>();
-            karmaUi.Bind(CwslKarmaSystem.Instance, karmaLabel);
-        }
+        var karmaLabel = CreateLabel(
+            canvasTransform,
+            "KarmaLabel",
+            new Vector2(0f, 1f),
+            new Vector2(0f, 1f),
+            new Vector2(0.5f, 1f),
+            new Vector2(24f, -56f),
+            new Vector2(640f, 40f),
+            24f);
+        karmaLabel.alignment = TextAlignmentOptions.MidlineLeft;
+
+        var karmaUi = canvasTransform.gameObject.GetComponent<CwslKarmaUI>()
+                      ?? canvasTransform.gameObject.AddComponent<CwslKarmaUI>();
+        karmaUi.Bind(CwslKarmaSystem.Instance, karmaLabel);
     }
 
     private static void EnsureMinimap(Transform canvasTransform)
@@ -260,57 +230,10 @@ public class CwslLocalPlayerHud : NetworkBehaviour
         eventSystem.AddComponent<StandaloneInputModule>();
     }
 
-    private void HandleGoldChanged(int gold)
-    {
-        actualGold = gold;
-
-        if (gold < lastGoldValue)
-            StartFlash(GoldSpendColor);
-        else if (gold > lastGoldValue)
-            StartFlash(GoldGainColor);
-
-        lastGoldValue = gold;
-    }
-
-    private void RefreshGoldText(float value)
+    private void RefreshGold(int gold)
     {
         if (goldLabel != null)
-            goldLabel.text = $"골드  {Mathf.RoundToInt(value)}";
-    }
-
-    private void StartFlash(Color flashColor)
-    {
-        if (goldLabel == null)
-            return;
-
-        if (flashRoutine != null)
-            StopCoroutine(flashRoutine);
-        flashRoutine = StartCoroutine(FlashRoutine(flashColor));
-    }
-
-    private IEnumerator FlashRoutine(Color flashColor)
-    {
-        var elapsed = 0f;
-        var baseScale = goldPanelRect != null ? goldPanelRect.localScale : Vector3.one;
-        while (elapsed < GoldFlashDuration)
-        {
-            elapsed += Time.deltaTime;
-            var t = Mathf.Clamp01(elapsed / GoldFlashDuration);
-            if (goldLabel != null)
-                goldLabel.color = Color.Lerp(flashColor, GoldNormalColor, t);
-            if (goldPanelRect != null)
-            {
-                var punch = 1f + 0.14f * (1f - t) * Mathf.Sin(t * Mathf.PI);
-                goldPanelRect.localScale = baseScale * punch;
-            }
-            yield return null;
-        }
-
-        if (goldLabel != null)
-            goldLabel.color = GoldNormalColor;
-        if (goldPanelRect != null)
-            goldPanelRect.localScale = baseScale;
-        flashRoutine = null;
+            goldLabel.text = $"골드  {gold}";
     }
 
     private static TextMeshProUGUI CreateLabel(

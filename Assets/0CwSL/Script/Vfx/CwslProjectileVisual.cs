@@ -52,6 +52,9 @@ public class CwslProjectileVisual : NetworkBehaviour
         missileVisual.transform.SetParent(transform, false);
         missileVisual.transform.localPosition = Vector3.zero;
         missileVisual.transform.localRotation = Quaternion.identity;
+
+        // 어둠 속에서 다가오는 미사일 빨간 불빛
+        CwslThreatLight.Ensure(transform, new Color(1f, 0.15f, 0.08f), 4.5f, 2.8f, Vector3.zero);
     }
 
     private static GameObject CreateFallbackVisual()

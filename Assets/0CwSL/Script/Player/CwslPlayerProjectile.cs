@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -7,6 +8,8 @@ public class CwslPlayerProjectile : NetworkBehaviour, ICwslPooledNetworkObject
 
     private static int monsterLayerMask = -1;
 
+    private readonly HashSet<ulong> hitMonsterIds = new();
+
     private Vector3 direction;
     private float speed;
     private float lifetime;
@@ -14,13 +17,15 @@ public class CwslPlayerProjectile : NetworkBehaviour, ICwslPooledNetworkObject
     private ulong ownerClientId;
     private float damage;
     private bool configured;
+    private bool pierce;
 
     public void Configure(
         Vector3 fireDirection,
         float projectileSpeed,
         float maxLifetime,
         ulong attackerClientId,
-        float projectileDamage)
+        float projectileDamage,
+        bool piercing = false)
     {
         direction = fireDirection.sqrMagnitude < 0.0001f ? Vector3.forward : fireDirection.normalized;
         speed = projectileSpeed;
@@ -28,19 +33,25 @@ public class CwslPlayerProjectile : NetworkBehaviour, ICwslPooledNetworkObject
         spawnTime = Time.time;
         ownerClientId = attackerClientId;
         damage = projectileDamage;
+        pierce = piercing;
         configured = true;
+        hitMonsterIds.Clear();
         transform.rotation = Quaternion.LookRotation(direction, Vector3.up);
     }
 
     public void OnSpawnedFromPool()
     {
         configured = false;
+        pierce = false;
         spawnTime = 0f;
+        hitMonsterIds.Clear();
     }
 
     public void OnReturnedToPool()
     {
         configured = false;
+        pierce = false;
+        hitMonsterIds.Clear();
     }
 
     private void Update()
@@ -85,9 +96,17 @@ public class CwslPlayerProjectile : NetworkBehaviour, ICwslPooledNetworkObject
         if (monsterHealth == null || !monsterHealth.IsAlive)
             return;
 
-        configured = false;
+        var networkObject = monsterHealth.NetworkObject;
+        if (networkObject != null && !hitMonsterIds.Add(networkObject.NetworkObjectId))
+            return;
+
         monsterHealth.DamageFromPlayer(ownerClientId, damage);
-        DespawnSelf();
+
+        if (!pierce)
+        {
+            configured = false;
+            DespawnSelf();
+        }
     }
 
     private void DespawnSelf()

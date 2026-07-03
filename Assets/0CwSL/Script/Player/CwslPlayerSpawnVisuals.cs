@@ -45,6 +45,8 @@ public class CwslPlayerSpawnVisuals : NetworkBehaviour
 
         if (characterId == CwslCharacterId.MissileTank)
             CwslMonsterVisualBuilder.BuildMissileTankPlayer(transform, color);
+        else if (characterId == CwslCharacterId.RedMage)
+            CwslMonsterVisualBuilder.BuildRedMagePlayer(transform, new Color(0.9f, 0.15f, 0.1f));
         else
             CwslMonsterVisualBuilder.BuildPlayer(transform, color);
     }

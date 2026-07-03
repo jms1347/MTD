@@ -101,7 +101,7 @@ public static class CwslDamagePopupPool
 
         var group = root.AddComponent<CanvasGroup>();
         var rect = root.GetComponent<RectTransform>();
-        rect.sizeDelta = new Vector2(100f, 44f);
+        rect.sizeDelta = new Vector2(160f, 72f);
 
         var textObject = new GameObject("Text", typeof(RectTransform), typeof(TextMeshProUGUI));
         textObject.transform.SetParent(root.transform, false);
@@ -115,7 +115,7 @@ public static class CwslDamagePopupPool
         var text = textObject.GetComponent<TextMeshProUGUI>();
         CwslTmpFontUtil.ApplyFont(text);
         text.alignment = TextAlignmentOptions.Center;
-        text.fontSize = 32f;
+        text.fontSize = 52f;
         text.fontStyle = FontStyles.Bold;
         text.raycastTarget = false;
         text.enableWordWrapping = false;

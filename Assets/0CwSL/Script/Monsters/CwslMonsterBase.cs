@@ -17,7 +17,22 @@ public abstract class CwslMonsterBase : NetworkBehaviour
         health = GetComponent<CwslMonsterHealth>();
         health?.Configure(type);
         EnsureMeleeLungeVisual();
+        EnsureThreatLight();
         CwslMonsterMaterialFix.Refresh(transform, type);
+    }
+
+    private void EnsureThreatLight()
+    {
+        if (MonsterType == CwslMonsterType.Suicide)
+        {
+            CwslThreatLight.Ensure(transform, new Color(1f, 0.2f, 0.05f), 5.5f, 3.2f, new Vector3(0f, 0.8f, 0f));
+            return;
+        }
+
+        if (MonsterType == CwslMonsterType.Ranged)
+        {
+            CwslThreatLight.Ensure(transform, new Color(0.7f, 0.25f, 1f), 3.2f, 1.4f, new Vector3(0f, 1.0f, 0f));
+        }
     }
 
     private void EnsureMeleeLungeVisual()

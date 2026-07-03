@@ -68,6 +68,16 @@ public class CwslPlayerCannonAim : NetworkBehaviour
         return transform.position + Vector3.up * 1.2f + transform.forward * 0.9f;
     }
 
+    public Vector3 GetMuzzleForward()
+    {
+        CacheTransforms();
+        if (muzzle != null)
+            return muzzle.forward;
+        if (cannonPivot != null)
+            return cannonPivot.forward;
+        return transform.forward;
+    }
+
     private void Update()
     {
         CacheTransforms();

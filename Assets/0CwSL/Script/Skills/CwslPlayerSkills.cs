@@ -1,12 +1,19 @@
+using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
 public class CwslPlayerSkills : NetworkBehaviour
 {
+    private const float MeteorDamage = 1f;
+    private const float MeteorRadius = 4.8f;
+    private const float MeteorFallDuration = 0.55f;
+    private const float MeteorCooldown = 0.85f;
+
     private readonly List<CwslPlayerSkillBase> skills = new();
     private CwslPlayerSkillBase chargedSkill;
     private CwslPlayerCharacter playerCharacter;
+    private float nextMeteorTime;
 
     public override void OnNetworkSpawn()
     {
@@ -68,6 +75,13 @@ public class CwslPlayerSkills : NetworkBehaviour
         if (!IsServer)
             return;
 
+        // 빨간 마법사 메테오 (프리팹에 스킬 컴포넌트가 없어도 동작)
+        if (playerCharacter != null && playerCharacter.CharacterId == CwslCharacterId.RedMage)
+        {
+            TryCastMeteor(senderClientId, worldPoint);
+            return;
+        }
+
         foreach (var skill in skills)
         {
             if (!IsSkillActiveForCharacter(skill))
@@ -76,10 +90,49 @@ public class CwslPlayerSkills : NetworkBehaviour
             if (skill.ActivationType != CwslSkillActivationType.GroundTarget)
                 continue;
 
+            if (!skill.CanCastServer(senderClientId))
+                continue;
+
             if (!TrySpendSkillCost())
                 return;
 
             skill.OnSkillGroundTargetServer(senderClientId, worldPoint);
+        }
+    }
+
+    private void TryCastMeteor(ulong senderClientId, Vector3 worldPoint)
+    {
+        if (Time.time < nextMeteorTime)
+            return;
+
+        if (!TrySpendSkillCost())
+            return;
+
+        nextMeteorTime = Time.time + MeteorCooldown;
+        var impactPoint = worldPoint;
+        impactPoint.y = 0f;
+
+        PlayMeteorFxClientRpc(impactPoint);
+        StartCoroutine(ApplyMeteorDamage(impactPoint, senderClientId));
+    }
+
+    private IEnumerator ApplyMeteorDamage(Vector3 impactPoint, ulong attackerClientId)
+    {
+        yield return new WaitForSeconds(MeteorFallDuration);
+
+        var monsters = FindObjectsByType<CwslMonsterHealth>(FindObjectsSortMode.None);
+        var radiusSqr = MeteorRadius * MeteorRadius;
+        foreach (var monster in monsters)
+        {
+            if (monster == null || !monster.IsAlive)
+                continue;
+
+            var flat = monster.transform.position - impactPoint;
+            flat.y = 0f;
+            if (flat.sqrMagnitude > radiusSqr)
+                continue;
+
+            monster.DamageFromPlayer(attackerClientId, MeteorDamage);
         }
     }
 
@@ -109,5 +162,18 @@ public class CwslPlayerSkills : NetworkBehaviour
             return true;
 
         return gold.TrySpendGoldServer(CwslGameConstants.SkillGoldCost);
+    }
+
+    [ClientRpc]
+    public void PlayMeteorFxClientRpc(Vector3 impactPoint)
+    {
+        var runner = new GameObject("CwslMeteorEffect");
+        runner.transform.position = impactPoint;
+        runner.AddComponent<CwslMeteorEffectRunner>().Play(
+            impactPoint,
+            18f,
+            MeteorFallDuration,
+            3.2f,
+            MeteorRadius);
     }
 }
