@@ -12,6 +12,7 @@ TagManager:
   - Player
   - FarmSoil
   - Obstacle
+  - Missile
   layers:
   - Default
   - TransparentFX
@@ -21,10 +22,10 @@ TagManager:
   - UI
   - 
   - 
-  - 
-  - 
-  - 
-  - 
+  - CwslPlayer
+  - CwslMonster
+  - CwslProjectile
+  - CwslGold
   - 
   - 
   - 

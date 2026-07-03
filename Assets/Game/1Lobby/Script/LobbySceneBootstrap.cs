@@ -13,6 +13,8 @@ public class LobbySceneBootstrap : MonoBehaviour
             managerObject.AddComponent<LobbyNetworkManager>();
         }
 
+        LobbyNetworkManager.Instance.GameSceneName = CwslGameConstants.GameSceneName;
+
         if (FindFirstObjectByType<LobbyUIController>() == null)
         {
             var uiObject = new GameObject("LobbyUI");

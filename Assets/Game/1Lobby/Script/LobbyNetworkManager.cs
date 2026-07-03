@@ -13,13 +13,22 @@ using UnityEngine.SceneManagement;
 
 /// <summary>
 /// IP 직접 연결 TCP 로비. 호스트는 서버, 클라이언트는 호스트 IP로 접속합니다.
+/// 게임 씬이 준비되면 <see cref="GameSceneName"/>에 씬 이름을 설정하세요.
 /// </summary>
 public class LobbyNetworkManager : MonoBehaviour
 {
     public const int DefaultPort = 7777;
-    public const string GameSceneName = "CoopDefenseScene";
+    public const string GameMessageTypePrefix = "game_";
 
     public static LobbyNetworkManager Instance { get; private set; }
+
+    [SerializeField] private string gameSceneName = string.Empty;
+
+    public string GameSceneName
+    {
+        get => gameSceneName;
+        set => gameSceneName = value ?? string.Empty;
+    }
 
     public bool IsHost { get; private set; }
     public bool IsClient { get; private set; }
@@ -35,7 +44,8 @@ public class LobbyNetworkManager : MonoBehaviour
     public event Action<string> OnError;
     public event Action OnLeftRoom;
     public event Action OnGameStarting;
-    public event Action<string, string> OnCoopMessage;
+    /// <summary>호스트: 클라이언트 playerId, 클라이언트: string.Empty</summary>
+    public event Action<string, string> OnGameMessage;
 
     private readonly List<LobbyPlayerData> players = new();
     private readonly ConcurrentQueue<Action> mainThreadActions = new();
@@ -93,22 +103,6 @@ public class LobbyNetworkManager : MonoBehaviour
         players.Add(CreateLocalPlayer(isHost: true, ready: true));
         SetStatus("솔로 플레이");
         OnPlayerListChanged?.Invoke();
-    }
-
-    /// <summary>
-    /// 협동 씬에서 이동·몬스터·스킬이 동작하려면 호스트 시뮬레이션이 필요합니다.
-    /// 로비 없이 진입했거나, 끊긴 클라이언트 상태면 솔로 호스트로 전환합니다.
-    /// </summary>
-    public void EnsureCoopHostAuthority()
-    {
-        if (IsHost)
-            return;
-
-        if (IsClient && serverConnection != null && serverConnection.IsConnected)
-            return;
-
-        BeginSoloSession();
-        Debug.Log("[LobbyNetworkManager] 협동 플레이용 솔로 호스트 세션을 시작했습니다.");
     }
 
     public void HostRoom(int port, string playerName)
@@ -189,7 +183,7 @@ public class LobbyNetworkManager : MonoBehaviour
 
             serverConnection = new ClientConnection(client);
             serverConnection.OnMessageReceived += HandleClientMessage;
-            serverConnection.OnCoopMessageReceived += HandleClientCoopMessage;
+            serverConnection.OnGameMessageReceived += HandleClientGameMessage;
             serverConnection.OnDisconnected += HandleServerDisconnected;
             serverConnection.StartReadLoop();
 
@@ -250,6 +244,12 @@ public class LobbyNetworkManager : MonoBehaviour
             return;
         }
 
+        if (string.IsNullOrWhiteSpace(GameSceneName))
+        {
+            ReportError("게임 씬이 설정되지 않았습니다. LobbyNetworkManager.GameSceneName을 지정하세요.");
+            return;
+        }
+
         Broadcast(LobbyMessage.Start());
         BeginGameSceneLoad();
     }
@@ -257,6 +257,9 @@ public class LobbyNetworkManager : MonoBehaviour
     public bool CanStartGame()
     {
         if (!IsHost || players.Count == 0)
+            return false;
+
+        if (string.IsNullOrWhiteSpace(GameSceneName))
             return false;
 
         foreach (var player in players)
@@ -268,7 +271,7 @@ public class LobbyNetworkManager : MonoBehaviour
         return true;
     }
 
-    public void SendCoopToAll(string json)
+    public void SendGameToAll(string json)
     {
         if (!IsHost || string.IsNullOrEmpty(json))
             return;
@@ -277,7 +280,7 @@ public class LobbyNetworkManager : MonoBehaviour
             connection.SendRaw(json);
     }
 
-    public void SendCoopToHost(string json)
+    public void SendGameToHost(string json)
     {
         if (!IsClient || string.IsNullOrEmpty(json))
             return;
@@ -313,7 +316,7 @@ public class LobbyNetworkManager : MonoBehaviour
         }
 
         connection.OnMessageReceived += HandleHostSideClientMessage;
-        connection.OnCoopMessageReceived += HandleHostSideCoopMessage;
+        connection.OnGameMessageReceived += HandleHostSideGameMessage;
         connection.OnDisconnected += () => HandleClientDisconnected(connection);
         connection.StartReadLoop();
     }
@@ -383,21 +386,21 @@ public class LobbyNetworkManager : MonoBehaviour
         }
     }
 
-    private void HandleHostSideCoopMessage(ClientConnection connection, string json)
+    private void HandleHostSideGameMessage(ClientConnection connection, string json)
     {
         if (!IsHost)
             return;
 
         var senderId = string.IsNullOrEmpty(connection.PlayerId) ? LocalPlayerId : connection.PlayerId;
-        EnqueueMain(() => OnCoopMessage?.Invoke(senderId, json));
+        EnqueueMain(() => OnGameMessage?.Invoke(senderId, json));
     }
 
-    private void HandleClientCoopMessage(ClientConnection connection, string json)
+    private void HandleClientGameMessage(ClientConnection connection, string json)
     {
         if (IsHost)
             return;
 
-        EnqueueMain(() => OnCoopMessage?.Invoke(string.Empty, json));
+        EnqueueMain(() => OnGameMessage?.Invoke(string.Empty, json));
     }
 
     private void HandleClientDisconnected(ClientConnection connection)
@@ -538,7 +541,7 @@ public class LobbyNetworkManager : MonoBehaviour
     {
         public string PlayerId { get; set; }
         public event Action<ClientConnection, LobbyMessage> OnMessageReceived;
-        public event Action<ClientConnection, string> OnCoopMessageReceived;
+        public event Action<ClientConnection, string> OnGameMessageReceived;
         public event Action OnDisconnected;
 
         private readonly TcpClient client;
@@ -598,9 +601,9 @@ public class LobbyNetworkManager : MonoBehaviour
                         break;
 
                     var json = Encoding.UTF8.GetString(payload);
-                    if (json.Contains("\"type\":\"coop_"))
+                    if (IsGameMessage(json))
                     {
-                        OnCoopMessageReceived?.Invoke(this, json);
+                        OnGameMessageReceived?.Invoke(this, json);
                         continue;
                     }
 
@@ -621,6 +624,9 @@ public class LobbyNetworkManager : MonoBehaviour
                     OnDisconnected?.Invoke();
             }
         }
+
+        private static bool IsGameMessage(string json)
+            => json.Contains($"\"type\":\"{GameMessageTypePrefix}");
 
         private bool ReadExact(byte[] buffer, int size)
         {

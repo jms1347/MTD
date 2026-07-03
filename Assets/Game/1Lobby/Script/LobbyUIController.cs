@@ -247,6 +247,14 @@ public class LobbyUIController : MonoBehaviour
 
         startButton.gameObject.SetActive(network.IsHost);
         startButton.interactable = network.CanStartGame();
+
+        var label = startButton.GetComponentInChildren<TextMeshProUGUI>();
+        if (label != null)
+        {
+            label.text = string.IsNullOrWhiteSpace(network.GameSceneName)
+                ? "게임 씬 미설정"
+                : "게임 시작";
+        }
     }
 
     private void SetStatus(string status)

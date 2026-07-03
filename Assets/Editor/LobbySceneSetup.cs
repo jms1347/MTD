@@ -11,7 +11,6 @@ using UnityEngine.EventSystems;
 public static class LobbySceneSetup
 {
     private const string ScenePath = "Assets/Game/0Scene/LobbyScene.unity";
-    private const string SingletonLoaderPath = "Assets/0UkDefense/0Core/Prefab/SingletonLoader.prefab";
 
     [MenuItem("Tools/Multiplayer/Setup LobbyScene", false, 0)]
     public static void SetupLobbyScene()
@@ -25,12 +24,11 @@ public static class LobbySceneSetup
         EnsureEventSystem();
         EnsureLobbyBootstrap();
         EnsureBuildSettings();
-        WireSingletonLoaderToLobby();
 
         EditorSceneManager.SaveScene(scene, ScenePath);
         AssetDatabase.SaveAssets();
 
-        Debug.Log("[Multiplayer] LobbyScene 생성 완료. LobbyScene → CoopDefenseScene 흐름이 연결되었습니다.");
+        Debug.Log("[Multiplayer] LobbyScene 생성 완료.");
     }
 
     [MenuItem("Tools/Multiplayer/Setup LobbyScene", true)]
@@ -74,36 +72,17 @@ public static class LobbySceneSetup
         var scenes = new[]
         {
             ScenePath,
-            "Assets/Game/0Scene/CoopDefenseScene.unity",
+            "Assets/0CwSL/Scenes/CwslGameScene.unity",
             "Assets/Game/0Scene/SplashScene.unity",
+            "Assets/Game/0Scene/LoadingScene.unity",
             "Assets/Game/0Scene/TestScene.unity"
         };
 
         var buildScenes = new EditorBuildSettingsScene[scenes.Length];
         for (var i = 0; i < scenes.Length; i++)
-        {
-            buildScenes[i] = new EditorBuildSettingsScene(scenes[i], true);
-        }
+            buildScenes[i] = new EditorBuildSettingsScene(scenes[i], i <= 1);
 
         EditorBuildSettings.scenes = buildScenes;
-    }
-
-    private static void WireSingletonLoaderToLobby()
-    {
-        var loaderPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(SingletonLoaderPath);
-        if (loaderPrefab == null)
-        {
-            Debug.LogWarning("[Multiplayer] SingletonLoader 프리팹을 찾을 수 없습니다.");
-            return;
-        }
-
-        var loader = loaderPrefab.GetComponent<SingletonLoader>();
-        if (loader == null)
-            return;
-
-        loader.nextSceneName = "LobbyScene";
-        EditorUtility.SetDirty(loaderPrefab);
-        PrefabUtility.SavePrefabAsset(loaderPrefab);
     }
 }
 #endif
