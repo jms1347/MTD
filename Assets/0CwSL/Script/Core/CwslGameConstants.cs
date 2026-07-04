@@ -35,6 +35,11 @@ public static class CwslGameConstants
     public const float PlayerBulletSpawnMinOffset = 0.02f;
     public const float PlayerArrowMinHitDistance = 0.03f;
     public const float PlayerArrowMinHitDelay = 0.02f;
+    public const float PlayerBulletHitRadius = 0.55f;
+    public const float PlayerBulletHomingStrength = 14f;
+    public const float MonsterHitCenterY = 1.05f;
+    public const float MonsterHitHeight = 2.1f;
+    public const float MonsterHitMinRadius = 0.58f;
     public const float FortifyBodyScale = 1.12f;
     public const float FortifyShieldScale = 3.4f;
     public const float FortifyShieldBlockRadius = 2.8f;

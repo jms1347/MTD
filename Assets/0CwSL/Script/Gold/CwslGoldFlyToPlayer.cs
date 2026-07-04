@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 
 using AssetKits.ParticleImage;
@@ -17,8 +18,10 @@ public static class CwslGoldFlyToPlayer
 {
 
     private const float FlyCoinStartSize = 20f;
-
     private const float FlyCoinEmitterSize = 36f;
+    internal const float SpreadDuration = 0.22f;
+    private const float SpreadRadius = 16f;
+    private const float FlyEmitRadius = 3f;
 
     private static readonly Vector3 PlayerTargetOffset = new(0f, 1.1f, 0f);
 
@@ -74,7 +77,11 @@ public static class CwslGoldFlyToPlayer
 
 
 
-    public static void BeginMagnetFly(ulong sessionId, Vector3 worldPosition, Transform playerTarget, int amount)
+    public static void BeginMagnetFly(
+        ulong sessionId,
+        Vector3 worldPosition,
+        Transform playerTarget,
+        int amount)
 
     {
 
@@ -108,6 +115,8 @@ public static class CwslGoldFlyToPlayer
 
 
 
+        attractor.RefreshPosition();
+
         GameObject particleObject = null;
 
         if (flyParticleTemplate == null)
@@ -123,13 +132,9 @@ public static class CwslGoldFlyToPlayer
             var particle = TryCreateConfiguredParticle(startLocal, out particleObject);
 
             if (particle != null)
-
             {
-
-                ConfigureMagnetParticle(particle, attractor.Rect, amount);
-
-                particle.Play();
-
+                var runner = particleObject.AddComponent<CwslGoldMagnetFlyRunner>();
+                runner.BeginMagnet(particle, attractor, amount, sessionId);
             }
 
             else
@@ -177,6 +182,7 @@ public static class CwslGoldFlyToPlayer
 
 
         session.Attractor.SetTarget(playerTarget);
+        session.Attractor.RefreshPosition();
 
     }
 
@@ -204,6 +210,37 @@ public static class CwslGoldFlyToPlayer
 
         magnetSessions.Remove(sessionId);
 
+    }
+
+
+
+    /// <summary>
+    /// 자석 연출 중 수집 시 — 새로 터뜨리지 않고 기존 코인이 플레이어 쪽으로 마무리.
+    /// </summary>
+    public static bool TryCompleteMagnetFly(ulong sessionId, Vector3 worldPosition, int amount)
+    {
+        if (!magnetSessions.TryGetValue(sessionId, out var session))
+            return false;
+
+        CwslGoldFeedback.PlayCoinSound(worldPosition);
+
+        if (session.ParticleObject == null)
+        {
+            EndMagnetFly(sessionId);
+            return true;
+        }
+
+        var particle = session.ParticleObject.GetComponent<ParticleImage>();
+        if (particle != null)
+        {
+            var runner = session.ParticleObject.GetComponent<CwslGoldMagnetFlyRunner>();
+            if (runner != null)
+                runner.FinishMagnet(particle);
+            else
+                particle.loop = false;
+        }
+
+        return true;
     }
 
 
@@ -260,6 +297,8 @@ public static class CwslGoldFlyToPlayer
 
         }
 
+        attractor.RefreshPosition();
+
 
 
         var particle = TryCreateConfiguredParticle(startLocal, out var particleObject);
@@ -284,50 +323,11 @@ public static class CwslGoldFlyToPlayer
 
 
 
-        ConfigureCollectParticle(particle, attractor.Rect, amount);
-
         if (playSound)
-
             CwslGoldFeedback.PlayCoinSound(worldPosition);
 
-
-
-        var completed = false;
-
-        void CompleteOnce()
-
-        {
-
-            if (completed)
-
-                return;
-
-
-
-            completed = true;
-
-            if (particleObject != null)
-
-                Object.Destroy(particleObject);
-
-            if (attractor != null)
-
-                Object.Destroy(attractor.gameObject);
-
-        }
-
-
-
-        particle.onLastParticleFinished.RemoveAllListeners();
-
-        particle.onParticleStop.RemoveAllListeners();
-
-        particle.onLastParticleFinished.AddListener(CompleteOnce);
-
-        particle.onParticleStop.AddListener(CompleteOnce);
-
-        particle.Play();
-
+        var runner = particleObject.AddComponent<CwslGoldMagnetFlyRunner>();
+        runner.BeginOneShot(particle, attractor, amount, particleObject, attractor.gameObject);
     }
 
 
@@ -425,86 +425,34 @@ public static class CwslGoldFlyToPlayer
 
 
 
-    private static void ConfigureCollectParticle(ParticleImage particle, RectTransform attractor, int amount)
-
+    internal static void ConfigureSpreadParticle(ParticleImage particle, int amount)
     {
-
         var coinCount = Mathf.Clamp(amount, 1, 6);
 
-
-
         ResetParticleBeforeConfigure(particle);
-
         particle.raycastTarget = false;
-
         particle.loop = false;
-
-        particle.duration = 0.05f;
-
+        particle.duration = 0.08f;
         particle.rateOverTime = 0f;
-
         particle.rateOverLifetime = 0f;
-
         particle.rateOverDistance = 0f;
-
-        particle.circleRadius = 6f;
-
+        particle.circleRadius = SpreadRadius;
         particle.rectWidth = FlyCoinEmitterSize;
-
         particle.rectHeight = FlyCoinEmitterSize;
-
         particle.startSize = new SeparatedMinMaxCurve(FlyCoinStartSize);
-
-        particle.attractorEnabled = true;
-
-        particle.attractorTarget = attractor;
-
+        particle.attractorEnabled = false;
+        particle.attractorTarget = null;
         particle.AddBurst(0f, coinCount);
-
     }
 
 
 
-    private static void ConfigureMagnetParticle(ParticleImage particle, RectTransform attractor, int amount)
-
+    internal static void EnableFlyPhase(ParticleImage particle, RectTransform attractor, bool loop)
     {
-
-        var coinCount = Mathf.Clamp(amount, 1, 4);
-
-
-
-        ResetParticleBeforeConfigure(particle);
-
-        particle.raycastTarget = false;
-
-        particle.loop = true;
-
-        particle.duration = 0.05f;
-
-        particle.rateOverTime = 0f;
-
-        particle.rateOverLifetime = 0f;
-
-        particle.rateOverDistance = 0f;
-
-        particle.circleRadius = 6f;
-
-        particle.rectWidth = FlyCoinEmitterSize;
-
-        particle.rectHeight = FlyCoinEmitterSize;
-
-        particle.startSize = new SeparatedMinMaxCurve(FlyCoinStartSize * 0.85f);
-
+        particle.loop = loop;
+        particle.circleRadius = FlyEmitRadius;
         particle.attractorEnabled = true;
-
         particle.attractorTarget = attractor;
-
-        particle.AddBurst(0f, coinCount);
-
-        particle.AddBurst(0.18f, 1);
-
-        particle.AddBurst(0.36f, 1);
-
     }
 
 
@@ -659,7 +607,7 @@ public static class CwslGoldFlyToPlayer
 
 
 
-    private static bool TryWorldToCanvasLocal(Vector3 worldPosition, out Vector2 localPoint)
+    internal static bool TryWorldToCanvasLocal(Vector3 worldPosition, out Vector2 localPoint)
 
     {
 
@@ -697,6 +645,171 @@ public static class CwslGoldFlyToPlayer
 
     }
 
+}
+
+
+
+internal class CwslGoldMagnetFlyRunner : MonoBehaviour
+{
+    private ParticleImage particle;
+    private CwslGoldFlyAttractor attractor;
+    private ulong sessionId;
+    private bool isMagnetSession;
+    private GameObject particleObject;
+    private GameObject attractorObject;
+    private Coroutine routine;
+    private bool flyPhaseActive;
+    private float flyBurstTimer;
+    private const float FlyTrailBurstInterval = 0.28f;
+
+    public void BeginMagnet(ParticleImage p, CwslGoldFlyAttractor att, int amount, ulong sid)
+    {
+        particle = p;
+        attractor = att;
+        sessionId = sid;
+        isMagnetSession = true;
+        particleObject = p.gameObject;
+        routine = StartCoroutine(RunMagnetPhases(amount));
+    }
+
+    public void BeginOneShot(
+        ParticleImage p,
+        CwslGoldFlyAttractor att,
+        int amount,
+        GameObject particleGo,
+        GameObject attractorGo)
+    {
+        particle = p;
+        attractor = att;
+        isMagnetSession = false;
+        particleObject = particleGo;
+        attractorObject = attractorGo;
+        routine = StartCoroutine(RunOneShotPhases(amount));
+    }
+
+    public void FinishMagnet(ParticleImage p)
+    {
+        if (routine != null)
+        {
+            StopCoroutine(routine);
+            routine = null;
+        }
+
+        flyPhaseActive = false;
+
+        if (p == null)
+        {
+            if (isMagnetSession)
+                CwslGoldFlyToPlayer.EndMagnetFly(sessionId);
+            else
+                CleanupOneShot();
+            return;
+        }
+
+        if (attractor != null)
+        {
+            attractor.RefreshPosition();
+            p.attractorEnabled = true;
+            p.attractorTarget = attractor.Rect;
+        }
+
+        p.loop = false;
+        RegisterCompletion(() =>
+        {
+            if (isMagnetSession)
+                CwslGoldFlyToPlayer.EndMagnetFly(sessionId);
+            else
+                CleanupOneShot();
+        });
+    }
+
+    private IEnumerator RunMagnetPhases(int amount)
+    {
+        attractor?.RefreshPosition();
+        CwslGoldFlyToPlayer.ConfigureSpreadParticle(particle, amount);
+        particle.Play();
+
+        yield return new WaitForSeconds(CwslGoldFlyToPlayer.SpreadDuration);
+
+        if (particle == null)
+            yield break;
+
+        attractor?.RefreshPosition();
+        CwslGoldFlyToPlayer.EnableFlyPhase(particle, attractor.Rect, loop: true);
+        flyPhaseActive = true;
+        flyBurstTimer = FlyTrailBurstInterval;
+        routine = null;
+    }
+
+    private IEnumerator RunOneShotPhases(int amount)
+    {
+        attractor?.RefreshPosition();
+        CwslGoldFlyToPlayer.ConfigureSpreadParticle(particle, amount);
+        particle.Play();
+
+        yield return new WaitForSeconds(CwslGoldFlyToPlayer.SpreadDuration);
+
+        if (particle == null)
+            yield break;
+
+        attractor?.RefreshPosition();
+        CwslGoldFlyToPlayer.EnableFlyPhase(particle, attractor.Rect, loop: false);
+
+        routine = null;
+        RegisterCompletion(CleanupOneShot);
+    }
+
+    private void Update()
+    {
+        if (!flyPhaseActive || !isMagnetSession || particle == null)
+            return;
+
+        flyBurstTimer += Time.deltaTime;
+        if (flyBurstTimer < FlyTrailBurstInterval)
+            return;
+
+        flyBurstTimer = 0f;
+        particle.AddBurst(0f, 1);
+    }
+
+    private void RegisterCompletion(System.Action onComplete)
+    {
+        if (particle == null)
+        {
+            onComplete?.Invoke();
+            return;
+        }
+
+        var completed = false;
+        void CompleteOnce()
+        {
+            if (completed)
+                return;
+
+            completed = true;
+            onComplete?.Invoke();
+        }
+
+        particle.onLastParticleFinished.RemoveAllListeners();
+        particle.onParticleStop.RemoveAllListeners();
+        particle.onLastParticleFinished.AddListener(CompleteOnce);
+        particle.onParticleStop.AddListener(CompleteOnce);
+    }
+
+    private void CleanupOneShot()
+    {
+        if (particleObject != null)
+            Destroy(particleObject);
+        if (attractorObject != null)
+            Destroy(attractorObject);
+        Destroy(this);
+    }
+
+    private void OnDestroy()
+    {
+        if (routine != null)
+            StopCoroutine(routine);
+    }
 }
 
 

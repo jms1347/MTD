@@ -171,33 +171,13 @@ public class CwslGoldPickup : NetworkBehaviour, ICwslPooledNetworkObject
     [ClientRpc]
     private void PlayCollectFlyClientRpc(ulong playerNetworkObjectId, Vector3 position, int amount)
     {
-        CwslGoldFlyToPlayer.EndMagnetFly(NetworkObjectId);
+        if (CwslGoldFlyToPlayer.TryCompleteMagnetFly(NetworkObjectId, position, amount))
+            return;
 
         if (!TryResolvePlayer(playerNetworkObjectId, out var playerTransform))
             return;
 
-        var start = ResolveVisibleFlyStart(position, playerTransform.position);
-        CwslGoldFlyToPlayer.Play(start, playerTransform, amount);
-    }
-
-    private static Vector3 ResolveVisibleFlyStart(Vector3 collectPosition, Vector3 playerPosition)
-    {
-        var flat = collectPosition - playerPosition;
-        flat.y = 0f;
-
-        if (flat.sqrMagnitude >= 1.5f * 1.5f)
-            return collectPosition + Vector3.up * 0.6f;
-
-        var dir = flat.sqrMagnitude > 0.01f ? flat.normalized : Vector3.forward;
-        var side = Vector3.Cross(Vector3.up, dir);
-        if (side.sqrMagnitude < 0.01f)
-            side = Vector3.right;
-        side.Normalize();
-
-        return playerPosition
-               + dir * 1.8f
-               + side * Random.Range(-0.6f, 0.6f)
-               + Vector3.up * Random.Range(1.0f, 1.6f);
+        CwslGoldFlyToPlayer.Play(position, playerTransform, amount);
     }
 
     private static bool TryResolvePlayer(ulong playerNetworkObjectId, out Transform playerTransform)

@@ -63,7 +63,7 @@ public class CwslMissileTankSkill : CwslPlayerSkillBase
             return;
 
         var hasTarget = TryResolveTarget(out var target);
-        var aimPoint = hasTarget ? target.transform.position + Vector3.up * 1.1f : transform.position + transform.forward;
+        var aimPoint = hasTarget ? target.GetAimPoint() : transform.position + transform.forward;
         var poseMode = ResolveCombatPoseMode(hasTarget);
         var inCombat = hasTarget && (combat == null || !combat.IsPureMoveMode);
 
@@ -193,44 +193,52 @@ public class CwslMissileTankSkill : CwslPlayerSkillBase
         if (!playerGold.TrySpendGoldServer(dualCost))
             return false;
 
-        if (!TryPrepareShot(out var aimPoint, out var fireDirection))
+        if (!TryPrepareShot(out var aimPoint, out var fireDirection, out var shotTarget))
             return false;
 
-        FireProjectileServer(fireDirection, piercing: false, useLeftMuzzle: false);
-        FireProjectileServer(fireDirection, piercing: false, useLeftMuzzle: true);
+        FireProjectileServer(fireDirection, piercing: false, useLeftMuzzle: false, shotTarget);
+        FireProjectileServer(fireDirection, piercing: false, useLeftMuzzle: true, shotTarget);
         PlayDualFireClientRpc(aimPoint);
         return true;
     }
 
     private void FireFromGun(GunSide gun)
     {
-        if (!TryPrepareShot(out var aimPoint, out var fireDirection))
+        if (!TryPrepareShot(out var aimPoint, out var fireDirection, out var shotTarget))
             return;
 
         var useLeftGun = gun == GunSide.Left;
-        FireProjectileServer(fireDirection, piercing: false, useLeftGun);
+        FireProjectileServer(fireDirection, piercing: false, useLeftGun, shotTarget);
         PlayFireClientRpc(aimPoint, useLeftGun);
     }
 
-    private bool TryPrepareShot(out Vector3 aimPoint, out Vector3 fireDirection)
+    private bool TryPrepareShot(out Vector3 aimPoint, out Vector3 fireDirection, out CwslMonsterHealth shotTarget)
     {
         aimPoint = transform.position + transform.forward * 10f;
         fireDirection = transform.forward;
+        shotTarget = null;
 
-        if (!TryResolveTarget(out var target))
+        if (!TryResolveTarget(out shotTarget))
             return false;
 
-        aimPoint = target.transform.position + Vector3.up * 1.1f;
+        aimPoint = shotTarget.GetAimPoint();
         FaceFireDirectionServer(aimPoint - transform.position);
         cannonAim?.SnapAimServer(aimPoint);
-        fireDirection = cannonAim != null ? cannonAim.GetMuzzleForward() : transform.forward;
 
-        var flat = aimPoint - transform.position;
-        flat.y = 0f;
-        if (flat.sqrMagnitude > 0.0001f && fireDirection.sqrMagnitude > 0.0001f)
-            return true;
+        var muzzle = cannonAim != null
+            ? cannonAim.GetMuzzlePosition()
+            : transform.position + Vector3.up * 1.2f + transform.forward * 0.9f;
 
-        fireDirection = flat.sqrMagnitude > 0.0001f ? flat.normalized : transform.forward;
+        var toAim = aimPoint - muzzle;
+        if (toAim.sqrMagnitude > 0.0001f)
+            fireDirection = toAim.normalized;
+        else
+        {
+            var flat = aimPoint - transform.position;
+            flat.y = 0f;
+            fireDirection = flat.sqrMagnitude > 0.0001f ? flat.normalized : transform.forward;
+        }
+
         return true;
     }
 
@@ -311,7 +319,11 @@ public class CwslMissileTankSkill : CwslPlayerSkillBase
         return flat.magnitude <= CwslGameConstants.MissileTankRange;
     }
 
-    private void FireProjectileServer(Vector3 fireDirection, bool piercing, bool useLeftMuzzle)
+    private void FireProjectileServer(
+        Vector3 fireDirection,
+        bool piercing,
+        bool useLeftMuzzle,
+        CwslMonsterHealth homingTarget)
     {
         var session = CwslGameSession.Instance;
         if (session == null || session.Assets.playerMissilePrefab == null)
@@ -322,7 +334,7 @@ public class CwslMissileTankSkill : CwslPlayerSkillBase
         if (fireDirection.sqrMagnitude < 0.0001f)
             fireDirection = transform.forward;
 
-        var spawnOffset = ResolveSpawnOffset(muzzle, fireDirection);
+        var spawnOffset = ResolveSpawnOffset(muzzle, homingTarget);
         var spawnPosition = muzzle + fireDirection.normalized * spawnOffset;
 
         var networkObject = CwslNetworkPoolService.Instance?.Get(
@@ -340,7 +352,8 @@ public class CwslMissileTankSkill : CwslPlayerSkillBase
             OwnerClientId,
             MissileDamage,
             piercing,
-            NetworkObject);
+            NetworkObject,
+            homingTarget);
     }
 
     private Vector3 ResolveMuzzlePosition(bool useLeftMuzzle)
@@ -353,13 +366,13 @@ public class CwslMissileTankSkill : CwslPlayerSkillBase
             : cannonAim.GetMuzzlePosition();
     }
 
-    private float ResolveSpawnOffset(Vector3 muzzle, Vector3 fireDirection)
+    private float ResolveSpawnOffset(Vector3 muzzle, CwslMonsterHealth target)
     {
         var maxOffset = CwslGameConstants.PlayerArrowSpawnForwardOffset;
-        if (!TryResolveTarget(out var target))
+        if (target == null)
             return maxOffset;
 
-        var toTarget = target.transform.position + Vector3.up * 1.1f - muzzle;
+        var toTarget = target.GetAimPoint() - muzzle;
         if (toTarget.sqrMagnitude < 0.0001f)
             return maxOffset;
 

@@ -1,6 +1,8 @@
-using AssetKits.ParticleImage;
 using UnityEngine;
 
+/// <summary>
+/// UI 파티클의 종착점 — 월드 플레이어 위치를 캔버스 좌표로 매 프레임 갱신.
+/// </summary>
 public class CwslGoldFlyAttractor : MonoBehaviour
 {
     private RectTransform rect;
@@ -13,15 +15,21 @@ public class CwslGoldFlyAttractor : MonoBehaviour
     public void Initialize(RectTransform canvas, Transform target, Vector3 offset)
     {
         canvasRect = canvas;
-        worldTarget = target;
+        worldTarget = ResolveAttractTarget(target);
         worldOffset = offset;
         rect = GetComponent<RectTransform>();
-        UpdatePosition();
+        RefreshPosition();
     }
 
     public void SetTarget(Transform target)
     {
-        worldTarget = target;
+        worldTarget = ResolveAttractTarget(target);
+        RefreshPosition();
+    }
+
+    public void RefreshPosition()
+    {
+        UpdatePosition();
     }
 
     private void LateUpdate()
@@ -29,30 +37,17 @@ public class CwslGoldFlyAttractor : MonoBehaviour
         UpdatePosition();
     }
 
+    private static Transform ResolveAttractTarget(Transform player) => player;
+
     private void UpdatePosition()
     {
         if (rect == null || canvasRect == null || worldTarget == null)
             return;
 
-        var canvas = canvasRect.GetComponent<Canvas>();
-        var worldCam = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay
-            ? canvas.worldCamera ?? Camera.main
-            : Camera.main;
-
-        if (worldCam == null)
-            return;
-
         var worldPosition = worldTarget.position + worldOffset;
-        var viewport = worldCam.WorldToViewportPoint(worldPosition);
-        if (viewport.z <= 0f)
+        if (!CwslGoldFlyToPlayer.TryWorldToCanvasLocal(worldPosition, out var localPoint))
             return;
 
-        var screenPoint = RectTransformUtility.WorldToScreenPoint(worldCam, worldPosition);
-        var eventCam = canvas != null && canvas.renderMode == RenderMode.ScreenSpaceOverlay
-            ? null
-            : worldCam;
-
-        if (RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, screenPoint, eventCam, out var localPoint))
-            rect.anchoredPosition = localPoint;
+        rect.anchoredPosition = localPoint;
     }
 }

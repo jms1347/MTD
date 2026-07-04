@@ -300,9 +300,9 @@ public static class CwslGameSceneSetup
         root.layer = LayerMask.NameToLayer(CwslGameConstants.LayerMonster);
 
         var collider = root.AddComponent<CapsuleCollider>();
-        collider.height = radius * 2.4f;
-        collider.radius = radius;
-        collider.center = new Vector3(0f, radius * 1.1f, 0f);
+        collider.height = CwslGameConstants.MonsterHitHeight;
+        collider.radius = Mathf.Max(radius, CwslGameConstants.MonsterHitMinRadius);
+        collider.center = new Vector3(0f, CwslGameConstants.MonsterHitCenterY, 0f);
         collider.isTrigger = true;
 
         if (type == CwslMonsterType.Suicide)
@@ -380,7 +380,7 @@ public static class CwslGameSceneSetup
         root.layer = LayerMask.NameToLayer(CwslGameConstants.LayerProjectile);
 
         var collider = root.AddComponent<SphereCollider>();
-        collider.radius = 0.22f;
+        collider.radius = 0.35f;
         collider.isTrigger = true;
 
         var rb = root.AddComponent<Rigidbody>();
