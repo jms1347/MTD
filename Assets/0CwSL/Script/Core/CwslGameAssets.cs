@@ -12,6 +12,7 @@ public class CwslGameAssets : ScriptableObject
     public GameObject goldBurstVfx;
     public GameObject goldMagnetTrailVfx;
     public GameObject playerMissileVfx;
+    public GameObject gunMuzzleVfx;
     public GameObject fortifyAuraVfx;
     public GameObject fortifyBlockVfx;
     public GameObject meteorFallVfx;

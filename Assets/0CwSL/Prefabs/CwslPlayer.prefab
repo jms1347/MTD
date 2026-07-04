@@ -25,6 +25,8 @@ GameObject:
   - component: {fileID: 2072339752510913828}
   - component: {fileID: 8211382486950668908}
   - component: {fileID: 502652676472628478}
+  - component: {fileID: 8372615235669053322}
+  - component: {fileID: 9123456789012345678}
   - component: {fileID: 4445350762902779960}
   - component: {fileID: 2144746113197687642}
   - component: {fileID: 3232006767510867830}
@@ -115,7 +117,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 2027618898
+  GlobalObjectIdHash: 58793645
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -329,6 +331,32 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 28d74f8aa88617446889a4ae395c50fc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CwslMissileTankSkill
+  ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &8372615235669053322
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6360497807503343767}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e66079ab44f48f74d8937d937e4ae243, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CwslRedMageMeteorSkill
+  ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &9123456789012345678
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6360497807503343767}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f3a8b2c1d4e5f6a7890b1c2d3e4f5a6b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CwslMomentumRammerSkill
   ShowTopMostFoldoutHeaderGroup: 1
 --- !u!114 &4445350762902779960
 MonoBehaviour:

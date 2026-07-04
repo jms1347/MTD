@@ -17,6 +17,7 @@ public class CwslPlayerHealth : NetworkBehaviour
     private CwslPlayerCharacter playerCharacter;
     private CwslPlayerSkills playerSkills;
     private CwslPlayerMovement movement;
+    private CwslMomentumRammerSkill momentumRammerSkill;
     private CwslPlayerGold playerGold;
     private CwslPlayerGrave playerGrave;
     private CwslPlayerVisualScale visualScale;
@@ -35,6 +36,7 @@ public class CwslPlayerHealth : NetworkBehaviour
         playerCharacter = GetComponent<CwslPlayerCharacter>();
         playerSkills = GetComponent<CwslPlayerSkills>();
         movement = GetComponent<CwslPlayerMovement>();
+        momentumRammerSkill = GetComponent<CwslMomentumRammerSkill>();
         playerGold = GetComponent<CwslPlayerGold>();
         playerGrave = GetComponent<CwslPlayerGrave>();
         visualScale = GetComponent<CwslPlayerVisualScale>();
@@ -194,6 +196,7 @@ public class CwslPlayerHealth : NetworkBehaviour
         var goldAtDeath = playerGold != null ? playerGold.Gold : 0;
 
         playerSkills?.ReleaseSkillServer(OwnerClientId);
+        momentumRammerSkill?.StopOnDeathServer();
         visualScale?.SetScaleServer(1f);
         movement?.SetAgentEnabled(false);
         playerGold?.SetGoldServer(0);

@@ -120,31 +120,7 @@ public static class CwslGoldFlyToPlayer
 
         {
 
-            particleObject = Object.Instantiate(flyParticleTemplate, canvasRect);
-
-            particleObject.name = "CwslGoldMagnetFlyParticle";
-
-
-
-            var rect = particleObject.GetComponent<RectTransform>();
-
-            if (rect != null)
-
-            {
-
-                rect.SetAsLastSibling();
-
-                rect.anchoredPosition = startLocal;
-
-                rect.localScale = Vector3.one;
-
-                rect.sizeDelta = new Vector2(FlyCoinEmitterSize, FlyCoinEmitterSize);
-
-            }
-
-
-
-            var particle = particleObject.GetComponent<ParticleImage>();
+            var particle = TryCreateConfiguredParticle(startLocal, out particleObject);
 
             if (particle != null)
 
@@ -286,31 +262,7 @@ public static class CwslGoldFlyToPlayer
 
 
 
-        var particleObject = Object.Instantiate(flyParticleTemplate, canvasRect);
-
-        particleObject.name = "CwslGoldCoinFlyParticle";
-
-
-
-        var rect = particleObject.GetComponent<RectTransform>();
-
-        if (rect != null)
-
-        {
-
-            rect.SetAsLastSibling();
-
-            rect.anchoredPosition = startLocal;
-
-            rect.localScale = Vector3.one;
-
-            rect.sizeDelta = new Vector2(FlyCoinEmitterSize, FlyCoinEmitterSize);
-
-        }
-
-
-
-        var particle = particleObject.GetComponent<ParticleImage>();
+        var particle = TryCreateConfiguredParticle(startLocal, out var particleObject);
 
         if (particle == null)
 
@@ -388,13 +340,86 @@ public static class CwslGoldFlyToPlayer
 
         attractorObject.transform.SetParent(canvasRect, false);
 
-
+        var attractorRect = attractorObject.GetComponent<RectTransform>();
+        attractorRect.anchorMin = new Vector2(0.5f, 0.5f);
+        attractorRect.anchorMax = new Vector2(0.5f, 0.5f);
+        attractorRect.pivot = new Vector2(0.5f, 0.5f);
+        attractorRect.sizeDelta = Vector2.zero;
 
         var attractor = attractorObject.GetComponent<CwslGoldFlyAttractor>();
 
         attractor.Initialize(canvasRect, playerTarget, PlayerTargetOffset);
 
         return attractor;
+
+    }
+
+
+
+    private static ParticleImage TryCreateConfiguredParticle(Vector2 startLocal, out GameObject particleObject)
+
+    {
+
+        particleObject = Object.Instantiate(flyParticleTemplate, canvasRect);
+
+        particleObject.name = "CwslGoldCoinFlyParticle";
+
+
+
+        var rect = particleObject.GetComponent<RectTransform>();
+
+        if (rect != null)
+
+        {
+
+            rect.SetAsLastSibling();
+
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+
+            rect.pivot = new Vector2(0.5f, 0.5f);
+
+            rect.anchoredPosition = startLocal;
+
+            rect.localScale = Vector3.one;
+
+            rect.sizeDelta = new Vector2(FlyCoinEmitterSize, FlyCoinEmitterSize);
+
+        }
+
+
+
+        var particle = particleObject.GetComponent<ParticleImage>();
+
+        if (particle == null)
+        {
+            Object.Destroy(particleObject);
+            particleObject = null;
+            return null;
+        }
+
+
+
+        ResetParticleBeforeConfigure(particle);
+
+        return particle;
+
+    }
+
+
+
+    private static void ResetParticleBeforeConfigure(ParticleImage particle)
+
+    {
+
+        particle.Stop(true);
+
+        particle.PlayMode = ParticlePlayMode.None;
+
+        particle.attractorEnabled = false;
+
+        particle.attractorTarget = null;
 
     }
 
@@ -408,9 +433,9 @@ public static class CwslGoldFlyToPlayer
 
 
 
-        particle.raycastTarget = false;
+        ResetParticleBeforeConfigure(particle);
 
-        particle.PlayMode = ParticlePlayMode.None;
+        particle.raycastTarget = false;
 
         particle.loop = false;
 
@@ -448,9 +473,9 @@ public static class CwslGoldFlyToPlayer
 
 
 
-        particle.raycastTarget = false;
+        ResetParticleBeforeConfigure(particle);
 
-        particle.PlayMode = ParticlePlayMode.None;
+        particle.raycastTarget = false;
 
         particle.loop = true;
 
@@ -538,6 +563,22 @@ public static class CwslGoldFlyToPlayer
 
 
 
+        var hudCanvas = GameObject.Find("CwslGameHudCanvas");
+
+        if (hudCanvas != null)
+
+        {
+
+            canvasRect = hudCanvas.GetComponent<RectTransform>();
+
+            if (canvasRect != null)
+
+                return;
+
+        }
+
+
+
         var existing = GameObject.Find("CwslGoldFlyCanvas");
 
         if (existing != null)
@@ -545,6 +586,8 @@ public static class CwslGoldFlyToPlayer
         {
 
             canvasRect = existing.GetComponent<RectTransform>();
+
+            ConfigureOverlayCanvasRect(canvasRect);
 
             return;
 
@@ -580,9 +623,37 @@ public static class CwslGoldFlyToPlayer
 
         scaler.referenceResolution = new Vector2(1920f, 1080f);
 
+        scaler.matchWidthOrHeight = 0.5f;
+
 
 
         canvasRect = canvasObject.GetComponent<RectTransform>();
+
+        ConfigureOverlayCanvasRect(canvasRect);
+
+    }
+
+
+
+    private static void ConfigureOverlayCanvasRect(RectTransform rect)
+
+    {
+
+        if (rect == null)
+
+            return;
+
+
+
+        rect.anchorMin = Vector2.zero;
+
+        rect.anchorMax = Vector2.one;
+
+        rect.offsetMin = Vector2.zero;
+
+        rect.offsetMax = Vector2.zero;
+
+        rect.pivot = new Vector2(0.5f, 0.5f);
 
     }
 
@@ -601,25 +672,27 @@ public static class CwslGoldFlyToPlayer
 
 
         var canvas = canvasRect.GetComponent<Canvas>();
-
-        var cam = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay
-
+        var worldCam = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay
             ? canvas.worldCamera ?? Camera.main
-
             : Camera.main;
 
+        if (worldCam == null)
+            return false;
 
+        var viewport = worldCam.WorldToViewportPoint(worldPosition);
 
-        var screenPoint = RectTransformUtility.WorldToScreenPoint(cam, worldPosition);
+        if (viewport.z <= 0f)
+            return false;
+
+        var screenPoint = RectTransformUtility.WorldToScreenPoint(worldCam, worldPosition);
+        var eventCam = canvas != null && canvas.renderMode == RenderMode.ScreenSpaceOverlay
+            ? null
+            : worldCam;
 
         return RectTransformUtility.ScreenPointToLocalPointInRectangle(
-
             canvasRect,
-
             screenPoint,
-
-            cam,
-
+            eventCam,
             out localPoint);
 
     }

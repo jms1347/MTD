@@ -7,7 +7,8 @@ public class CwslPlayerInput : NetworkBehaviour
     {
         CwslCharacterId.Tank,
         CwslCharacterId.MissileTank,
-        CwslCharacterId.RedMage
+        CwslCharacterId.RedMage,
+        CwslCharacterId.MomentumRammer
     };
 
     private Camera playerCamera;
@@ -257,6 +258,20 @@ public class CwslPlayerInput : NetworkBehaviour
             return;
         }
 
+        if (characterId == CwslCharacterId.MomentumRammer)
+        {
+            if (skillHeld)
+            {
+                skillHeld = false;
+                ReleaseSkillServerRpc();
+            }
+
+            if (Input.GetKeyDown(KeyCode.Q) || Input.GetKeyDown(KeyCode.Space))
+                PressSkillServerRpc();
+
+            return;
+        }
+
         CancelGroundTargeting();
 
         if (characterId == CwslCharacterId.MissileTank)
@@ -267,9 +282,9 @@ public class CwslPlayerInput : NetworkBehaviour
                 ReleaseSkillServerRpc();
             }
 
-            // Q = 멀티샷 (즉시)
+            // Q = 양손 쌍타 (즉시)
             if (Input.GetKeyDown(KeyCode.Q) || Input.GetKeyDown(KeyCode.Space))
-                AttackSelectedServerRpc(fanMode: true);
+                AttackSelectedServerRpc(dualWieldMode: true);
 
             return;
         }
@@ -316,7 +331,10 @@ public class CwslPlayerInput : NetworkBehaviour
     [ServerRpc]
     private void MoveToServerRpc(Vector3 destination)
     {
-        movement?.RequestMoveTo(destination);
+        if (combat != null)
+            combat.RequestMoveServer(destination);
+        else
+            movement?.RequestMoveTo(destination);
     }
 
     [ServerRpc]
@@ -335,9 +353,9 @@ public class CwslPlayerInput : NetworkBehaviour
     }
 
     [ServerRpc]
-    private void AttackSelectedServerRpc(bool fanMode)
+    private void AttackSelectedServerRpc(bool dualWieldMode)
     {
-        combat?.AttackSelectedTarget(fanMode);
+        combat?.AttackSelectedTarget(dualWieldMode);
     }
 
     [ServerRpc]

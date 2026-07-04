@@ -35,16 +35,22 @@ public static class CwslCharacterCatalog
             14f),
         new(
             CwslCharacterId.MissileTank,
-            "미사일 탱크",
-            "A+클릭 어택땅/유닛(골드1) | Q 멀티샷(최대12, 발수만큼 골드) / 시야 넓음",
-            "우클릭 이동 | 좌클릭 적선택 | A+클릭 어택 | Q 멀티샷 | G 골드 선물/부활",
-            22f),
+            "총잡이",
+            "어택/추적 중 1초 쿨 자동 사격(골드1) | Q 양손 동시 2발(골드2, 쿨무시) / 시야=사거리",
+            "우클릭 이동 | 좌클릭 적선택 | A+클릭 어택 | Q 양손 동시 | G 골드 선물/부활",
+            CwslGameConstants.MissileTankRange),
         new(
             CwslCharacterId.RedMage,
             "빨간 마법사",
             "Q 후 지면 클릭 — 메테오 낙하 광역 피해 (골드 1) / 시야 본인만",
             "우클릭 이동 | 좌클릭 적선택 | A+클릭 어택 | Q 메테오(지면) | G 골드 선물/부활",
-            0f)
+            0f),
+        new(
+            CwslCharacterId.MomentumRammer,
+            "질주자",
+            "이동 중 점점 가속 · 고속 충돌 시 피해 / 멈추면 일반 이동 · Q 긴급 제동(골드 1)",
+            "우클릭 이동(관성) | 좌클릭 적선택 | A+클릭 어택 | Q 긴급 제동 | G 골드 선물/부활",
+            16f)
     };
 
     public static IReadOnlyList<Entry> All => Entries;

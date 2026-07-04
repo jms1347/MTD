@@ -302,10 +302,11 @@ public class CwslLocalDarkVision : MonoBehaviour
         light.transform.position = worldPos;
         light.transform.rotation = camera.transform.rotation;
 
-        // 시야 반경이 화면에 원형으로 담기도록 각도 여유
-        light.range = lightDistance + currentRadius * 2.2f;
-        light.spotAngle = isBlindVision ? 42f : 58f;
-        light.innerSpotAngle = isBlindVision ? 14f : 22f;
+        // 시야 반경이 화면에 원형으로 담기도록 각도·범위를 반경에 맞춤
+        var radiusT = Mathf.InverseLerp(8f, 28f, currentRadius);
+        light.range = lightDistance + currentRadius * 2.4f;
+        light.spotAngle = isBlindVision ? 42f : Mathf.Lerp(52f, 82f, radiusT);
+        light.innerSpotAngle = isBlindVision ? 14f : Mathf.Lerp(18f, 34f, radiusT);
     }
 
     private static void ApplyCameraBackground()

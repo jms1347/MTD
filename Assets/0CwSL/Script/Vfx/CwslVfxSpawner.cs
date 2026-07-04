@@ -98,6 +98,19 @@ public static class CwslVfxSpawner
         return spawned;
     }
 
+    public static GameObject SpawnGunMuzzleFlash(Vector3 position, Quaternion rotation)
+    {
+        var spawned = Spawn(
+            CwslGameSession.Instance?.Assets?.gunMuzzleVfx,
+            position,
+            rotation,
+            0.45f,
+            0.55f);
+        if (spawned == null)
+            CwslSimpleVfx.SpawnBurst(position, new Color(1f, 0.85f, 0.35f), 0.35f, 0.2f);
+        return spawned;
+    }
+
     public static GameObject TryInstantiate(GameObject prefab, Vector3 position, Quaternion rotation)
     {
         if (prefab == null)

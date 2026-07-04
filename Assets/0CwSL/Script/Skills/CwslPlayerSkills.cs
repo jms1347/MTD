@@ -113,6 +113,7 @@ public class CwslPlayerSkills : NetworkBehaviour
         impactPoint.y = 0f;
 
         PlayMeteorFxClientRpc(impactPoint);
+        PlayMageCastClientRpc();
         StartCoroutine(ApplyMeteorDamage(impactPoint, senderClientId));
     }
 
@@ -175,5 +176,12 @@ public class CwslPlayerSkills : NetworkBehaviour
             MeteorFallDuration,
             3.2f,
             MeteorRadius);
+    }
+
+    [ClientRpc]
+    private void PlayMageCastClientRpc()
+    {
+        var visual = transform.Find("Visual");
+        visual?.GetComponent<CwslPlayerStaffCastVisual>()?.PlayCast();
     }
 }

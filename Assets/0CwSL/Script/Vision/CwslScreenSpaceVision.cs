@@ -64,12 +64,12 @@ public class CwslScreenSpaceVision : MonoBehaviour
         var delta = edge - center;
         delta.x *= aspect;
         var radiusViewport = delta.magnitude;
-        radiusViewport = Mathf.Clamp(radiusViewport, 0.04f, 0.7f);
+        radiusViewport = Mathf.Clamp(radiusViewport, 0.04f, 0.98f);
 
         // 안쪽은 밝고, 바깥으로 smoothstep 페이드
         // 시야 없는 캐릭터는 더 타이트하게
-        var inner = isBlindVision ? radiusViewport * 0.25f : radiusViewport * 0.45f;
-        var outer = isBlindVision ? radiusViewport * 1.15f : radiusViewport * 1.35f;
+        var inner = isBlindVision ? radiusViewport * 0.25f : radiusViewport * 0.58f;
+        var outer = isBlindVision ? radiusViewport * 1.15f : radiusViewport * 1.28f;
 
         vignetteMaterial.SetVector("_Center", new Vector4(center.x, center.y, 0f, 0f));
         vignetteMaterial.SetFloat("_InnerRadius", inner);

@@ -4,7 +4,10 @@ public static class CwslVfxPaths
         "Assets/Epic Toon FX/Prefabs/Combat/Missiles/Shadow/ShadowMissile.prefab";
 
     public const string PlayerMissileVisual =
-        "Assets/Epic Toon FX/Prefabs/Combat/Missiles/Rocket/RocketMissileFire.prefab";
+        "Assets/Epic Toon FX/Prefabs/Combat/Missiles/Bullet/BulletSmallBlue.prefab";
+
+    public const string GunMuzzleFlash =
+        "Assets/Epic Toon FX/Prefabs/Combat/Muzzleflash/- Misc/GunFire/GunFireYellow.prefab";
 
     public const string SuicideExplosion =
         "Assets/Epic Toon FX/Prefabs/Combat/Explosions/NukeExplosion/NukeExplosionFire.prefab";

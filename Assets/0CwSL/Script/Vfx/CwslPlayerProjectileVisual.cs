@@ -33,18 +33,40 @@ public class CwslPlayerProjectileVisual : NetworkBehaviour
         ClearProjectileVisual();
 
         var prefab = CwslGameSession.Instance?.Assets?.playerMissileVfx;
-        if (prefab == null)
-            return;
+        if (prefab != null)
+        {
+            missileVisual = CwslVfxSpawner.TryInstantiate(prefab, transform.position, transform.rotation);
+            if (missileVisual != null)
+            {
+                DisablePhysicsOnly(missileVisual);
+                missileVisual.transform.SetParent(transform, false);
+                missileVisual.transform.localPosition = Vector3.zero;
+                missileVisual.transform.localRotation = Quaternion.identity;
+                missileVisual.transform.localScale = Vector3.one * VisualScale;
+                return;
+            }
+        }
 
-        missileVisual = CwslVfxSpawner.TryInstantiate(prefab, transform.position, transform.rotation);
-        if (missileVisual == null)
-            return;
+        missileVisual = BuildFallbackBulletVisual();
+    }
 
-        DisablePhysicsOnly(missileVisual);
-        missileVisual.transform.SetParent(transform, false);
-        missileVisual.transform.localPosition = Vector3.zero;
-        missileVisual.transform.localRotation = Quaternion.identity;
-        missileVisual.transform.localScale = Vector3.one * VisualScale;
+    private GameObject BuildFallbackBulletVisual()
+    {
+        var root = new GameObject("FallbackBullet");
+        root.transform.SetParent(transform, false);
+        root.transform.localPosition = Vector3.zero;
+        root.transform.localRotation = Quaternion.identity;
+
+        var bullet = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        bullet.transform.SetParent(root.transform, false);
+        bullet.transform.localPosition = new Vector3(0f, 0f, 0.08f);
+        bullet.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+        bullet.transform.localScale = new Vector3(0.08f, 0.12f, 0.08f);
+        Object.Destroy(bullet.GetComponent<Collider>());
+        CwslMaterialUtil.ApplyColor(bullet.GetComponent<Renderer>(), new Color(0.55f, 0.72f, 0.95f));
+
+        root.transform.localScale = Vector3.one * VisualScale;
+        return root;
     }
 
     private static void DisablePhysicsOnly(GameObject visualRoot)

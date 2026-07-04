@@ -1,34 +1,49 @@
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.AI;
 
 /// <summary>
-/// 미사일 탱크 전투.
-/// A — 미사일 1발 (선택/가까운 적, 없으면 포신 방향) / 골드 1
-/// Q — 최대 12발 부채꼴 관통 (포신 방향, 타겟 없어도 발사) / 발 수만큼 골드
+/// 총잡이 전투.
+/// 어택/추적/선택 적 — 1초 쿨 자동 사격 / Q — 골드 2 이상 시 양손 동시(쿨 무시)
 /// </summary>
 public class CwslMissileTankSkill : CwslPlayerSkillBase
 {
-    private const float MissileRange = 24f;
-    private const float FireCooldown = 0.45f;
-    private const float FanCooldown = 0.7f;
+    private const float GunCooldown = 1f;
     private const float MissileSpeed = 18f;
     private const float MissileLifetime = 7f;
     private const float MissileDamage = 1f;
-    private const int MaxFanMissiles = 12;
-    private const float FanAngleDegrees = 56f;
 
-    private float nextFireTime;
+    private enum GunSide
+    {
+        Right,
+        Left
+    }
+
+    private float nextRightFireTime;
+    private CwslMonsterHealth focusedTarget;
+    private bool lastCombatPoseActive;
+    private CwslGunCombatPoseMode lastCombatPoseMode;
+    private Vector3 lastSyncedAimPoint;
     private CwslPlayerCharacter playerCharacter;
     private CwslPlayerSelection selection;
     private CwslPlayerCannonAim cannonAim;
     private CwslPlayerGold playerGold;
+    private CwslPlayerMovement movement;
+    private CwslPlayerCombat combat;
+    private NavMeshAgent navAgent;
+    private bool manualCombatFacing;
+
+    public float AttackRange => CwslGameConstants.MissileTankRange;
+
+    public bool HasEnemyInRange() => TryGetNearestMonsterInRange(out _);
+
+    public void ClearAttackFocus() => focusedTarget = null;
 
     public override CwslSkillActivationType ActivationType => CwslSkillActivationType.Instant;
 
     public override bool IsActiveForCharacter(CwslCharacterId characterId) =>
         characterId == CwslCharacterId.MissileTank;
 
-    // Q 발사는 TryFireAttackServer(true)로 직접 처리
     public override bool CanCastServer(ulong senderClientId) => false;
 
     public override void OnNetworkSpawn()
@@ -37,6 +52,9 @@ public class CwslMissileTankSkill : CwslPlayerSkillBase
         selection = GetComponent<CwslPlayerSelection>();
         cannonAim = GetComponent<CwslPlayerCannonAim>();
         playerGold = GetComponent<CwslPlayerGold>();
+        movement = GetComponent<CwslPlayerMovement>();
+        combat = GetComponent<CwslPlayerCombat>();
+        navAgent = GetComponent<NavMeshAgent>();
     }
 
     private void Update()
@@ -44,73 +62,189 @@ public class CwslMissileTankSkill : CwslPlayerSkillBase
         if (!IsServer || playerCharacter == null || playerCharacter.CharacterId != CwslCharacterId.MissileTank)
             return;
 
-        // 적이 있으면 포신이 따라봄 (없어도 발사 가능)
-        if (TryResolveTarget(out var target))
-            cannonAim?.SetAimServer(target.transform.position + Vector3.up * 1.1f);
+        var hasTarget = TryResolveTarget(out var target);
+        var aimPoint = hasTarget ? target.transform.position + Vector3.up * 1.1f : transform.position + transform.forward;
+        var poseMode = ResolveCombatPoseMode(hasTarget);
+        var inCombat = hasTarget && (combat == null || !combat.IsPureMoveMode);
+
+        UpdateCombatFacing(aimPoint, inCombat);
+
+        if (inCombat)
+            cannonAim?.SetAimServer(aimPoint);
+        else
+            cannonAim?.ResetAimServer();
+
+        if (poseMode != CwslGunCombatPoseMode.Off)
+        {
+            if (!lastCombatPoseActive ||
+                poseMode != lastCombatPoseMode ||
+                Vector3.Distance(aimPoint, lastSyncedAimPoint) > 0.2f)
+            {
+                lastCombatPoseActive = true;
+                lastCombatPoseMode = poseMode;
+                lastSyncedAimPoint = aimPoint;
+                SyncCombatPoseClientRpc(aimPoint, poseMode);
+            }
+        }
+        else if (lastCombatPoseActive)
+        {
+            lastCombatPoseActive = false;
+            lastCombatPoseMode = CwslGunCombatPoseMode.Off;
+            SyncCombatPoseClientRpc(Vector3.zero, CwslGunCombatPoseMode.Off);
+        }
+
+        if (hasTarget && ShouldAutoFire())
+            TryFireAttackServer(dualWieldMode: false);
     }
 
-    /// <param name="fanMode">false=A 단발, true=Q 멀티샷</param>
-    public bool TryFireAttackServer(bool fanMode)
+    private void UpdateCombatFacing(Vector3 aimPoint, bool inCombat)
+    {
+        if (!inCombat)
+        {
+            if (manualCombatFacing && navAgent != null)
+                navAgent.updateRotation = true;
+            manualCombatFacing = false;
+            return;
+        }
+
+        if (navAgent != null && navAgent.enabled)
+        {
+            navAgent.updateRotation = false;
+            manualCombatFacing = true;
+        }
+
+        var flat = aimPoint - transform.position;
+        flat.y = 0f;
+        if (flat.sqrMagnitude < 0.0001f)
+            return;
+
+        var desired = Quaternion.LookRotation(flat.normalized, Vector3.up);
+        transform.rotation = Quaternion.RotateTowards(
+            transform.rotation,
+            desired,
+            900f * Time.deltaTime);
+    }
+
+    private CwslGunCombatPoseMode ResolveCombatPoseMode(bool hasTarget)
+    {
+        if (!hasTarget || combat == null || combat.IsPureMoveMode)
+            return CwslGunCombatPoseMode.Off;
+
+        if (movement != null && movement.IsMoving)
+            return CwslGunCombatPoseMode.AttackMove;
+
+        return CwslGunCombatPoseMode.Hold;
+    }
+
+    private bool ShouldAutoFire()
+    {
+        if (playerGold == null || playerGold.Gold < CwslGameConstants.SkillGoldCost)
+            return false;
+
+        if (combat != null && combat.IsPureMoveMode)
+            return false;
+
+        if (combat != null && (combat.IsAttackMoveActive || combat.HasChaseTarget))
+            return true;
+
+        if (selection != null &&
+            selection.TryGetSelectedTarget(out var selected) &&
+            selected != null)
+        {
+            var health = selected.GetComponent<CwslMonsterHealth>();
+            if (health != null && health.IsAlive && IsInRange(selected.transform.position))
+                return true;
+        }
+
+        return false;
+    }
+
+    /// <param name="dualWieldMode">false=오른쪽 총, true=Q 양손 동시(골드2, 쿨 무시)</param>
+    public bool TryFireAttackServer(bool dualWieldMode)
     {
         if (!IsServer || playerCharacter == null || playerCharacter.CharacterId != CwslCharacterId.MissileTank)
             return false;
 
-        if (Time.time < nextFireTime)
+        if (!TryResolveTarget(out _))
             return false;
 
-        if (playerGold == null || playerGold.Gold < 1)
+        return dualWieldMode ? TryFireDualWieldServer() : TryFireSingleServer();
+    }
+
+    private bool TryFireSingleServer()
+    {
+        if (Time.time < nextRightFireTime)
             return false;
 
-        var centerDirection = ResolveFireDirection(out var aimPoint);
-        cannonAim?.SetAimServer(aimPoint);
-
-        if (fanMode)
-        {
-            var missileCount = Mathf.Min(MaxFanMissiles, playerGold.Gold);
-            if (missileCount < 1)
-                return false;
-
-            if (!playerGold.TrySpendGoldServer(missileCount))
-                return false;
-
-            nextFireTime = Time.time + FanCooldown;
-            FireFanServer(centerDirection, missileCount);
-            PlayFireClientRpc();
-            return true;
-        }
-
-        if (!playerGold.TrySpendGoldServer(CwslGameConstants.SkillGoldCost))
+        if (playerGold == null || !playerGold.TrySpendGoldServer(CwslGameConstants.SkillGoldCost))
             return false;
 
-        nextFireTime = Time.time + FireCooldown;
-        FireProjectileServer(centerDirection, piercing: false);
-        PlayFireClientRpc();
+        FireFromGun(GunSide.Right);
+        nextRightFireTime = Time.time + GunCooldown;
         return true;
     }
 
-    private Vector3 ResolveFireDirection(out Vector3 aimPoint)
+    private bool TryFireDualWieldServer()
     {
-        var muzzle = cannonAim != null
-            ? cannonAim.GetMuzzlePosition()
-            : transform.position + Vector3.up * 1.2f + transform.forward * 0.9f;
+        var dualCost = CwslGameConstants.SkillGoldCost * 2;
+        if (playerGold == null || playerGold.Gold < dualCost)
+            return false;
 
-        // 선택/가까운 적이 있으면 그쪽, 없으면 현재 포신 방향
-        if (TryResolveTarget(out var target))
-        {
-            aimPoint = target.transform.position + Vector3.up * 1.1f;
-            var toTarget = aimPoint - muzzle;
-            if (toTarget.sqrMagnitude > 0.0001f)
-                return toTarget.normalized;
-        }
+        if (!playerGold.TrySpendGoldServer(dualCost))
+            return false;
 
-        var forward = cannonAim != null ? cannonAim.GetMuzzleForward() : transform.forward;
-        if (forward.sqrMagnitude < 0.0001f)
-            forward = transform.forward;
+        if (!TryPrepareShot(out var aimPoint, out var fireDirection))
+            return false;
 
-        forward.Normalize();
-        aimPoint = muzzle + forward * 10f;
-        return forward;
+        FireProjectileServer(fireDirection, piercing: false, useLeftMuzzle: false);
+        FireProjectileServer(fireDirection, piercing: false, useLeftMuzzle: true);
+        PlayDualFireClientRpc(aimPoint);
+        return true;
     }
+
+    private void FireFromGun(GunSide gun)
+    {
+        if (!TryPrepareShot(out var aimPoint, out var fireDirection))
+            return;
+
+        var useLeftGun = gun == GunSide.Left;
+        FireProjectileServer(fireDirection, piercing: false, useLeftGun);
+        PlayFireClientRpc(aimPoint, useLeftGun);
+    }
+
+    private bool TryPrepareShot(out Vector3 aimPoint, out Vector3 fireDirection)
+    {
+        aimPoint = transform.position + transform.forward * 10f;
+        fireDirection = transform.forward;
+
+        if (!TryResolveTarget(out var target))
+            return false;
+
+        aimPoint = target.transform.position + Vector3.up * 1.1f;
+        FaceFireDirectionServer(aimPoint - transform.position);
+        cannonAim?.SnapAimServer(aimPoint);
+        fireDirection = cannonAim != null ? cannonAim.GetMuzzleForward() : transform.forward;
+
+        var flat = aimPoint - transform.position;
+        flat.y = 0f;
+        if (flat.sqrMagnitude > 0.0001f && fireDirection.sqrMagnitude > 0.0001f)
+            return true;
+
+        fireDirection = flat.sqrMagnitude > 0.0001f ? flat.normalized : transform.forward;
+        return true;
+    }
+
+    private static void FaceFireDirectionServer(Transform actor, Vector3 direction)
+    {
+        direction.y = 0f;
+        if (direction.sqrMagnitude < 0.0001f)
+            return;
+
+        actor.rotation = Quaternion.LookRotation(direction.normalized, Vector3.up);
+    }
+
+    private void FaceFireDirectionServer(Vector3 direction) =>
+        FaceFireDirectionServer(transform, direction);
 
     private bool TryResolveTarget(out CwslMonsterHealth target)
     {
@@ -125,15 +259,29 @@ public class CwslMissileTankSkill : CwslPlayerSkillBase
                 selectedHealth.IsAlive &&
                 IsInRange(selected.transform.position))
             {
+                focusedTarget = selectedHealth;
                 target = selectedHealth;
                 return true;
             }
         }
 
-        return TryGetNearestMonster(out target);
+        if (focusedTarget != null &&
+            focusedTarget.IsAlive &&
+            IsInRange(focusedTarget.transform.position))
+        {
+            target = focusedTarget;
+            return true;
+        }
+
+        focusedTarget = null;
+        if (!TryGetNearestMonsterInRange(out target))
+            return false;
+
+        focusedTarget = target;
+        return true;
     }
 
-    private bool TryGetNearestMonster(out CwslMonsterHealth target)
+    private bool TryGetNearestMonsterInRange(out CwslMonsterHealth target)
     {
         target = null;
         var bestDistance = float.MaxValue;
@@ -146,7 +294,7 @@ public class CwslMissileTankSkill : CwslPlayerSkillBase
             var flat = monster.transform.position - transform.position;
             flat.y = 0f;
             var distance = flat.magnitude;
-            if (distance > MissileRange || distance >= bestDistance)
+            if (distance > CwslGameConstants.MissileTankRange || distance >= bestDistance)
                 continue;
 
             bestDistance = distance;
@@ -160,58 +308,94 @@ public class CwslMissileTankSkill : CwslPlayerSkillBase
     {
         var flat = worldPosition - transform.position;
         flat.y = 0f;
-        return flat.magnitude <= MissileRange;
+        return flat.magnitude <= CwslGameConstants.MissileTankRange;
     }
 
-    private void FireFanServer(Vector3 centerDirection, int missileCount)
-    {
-        if (missileCount == 1)
-        {
-            FireProjectileServer(centerDirection, piercing: true);
-            return;
-        }
-
-        var halfSpread = FanAngleDegrees * 0.5f;
-        for (var i = 0; i < missileCount; i++)
-        {
-            var t = i / (float)(missileCount - 1);
-            var yaw = Mathf.Lerp(-halfSpread, halfSpread, t);
-            var direction = Quaternion.AngleAxis(yaw, Vector3.up) * centerDirection;
-            direction.y = centerDirection.y;
-            if (direction.sqrMagnitude > 0.0001f)
-                direction.Normalize();
-            FireProjectileServer(direction, piercing: true);
-        }
-    }
-
-    private void FireProjectileServer(Vector3 fireDirection, bool piercing)
+    private void FireProjectileServer(Vector3 fireDirection, bool piercing, bool useLeftMuzzle)
     {
         var session = CwslGameSession.Instance;
         if (session == null || session.Assets.playerMissilePrefab == null)
             return;
 
-        var muzzle = cannonAim != null
-            ? cannonAim.GetMuzzlePosition()
-            : transform.position + Vector3.up * 1.2f + transform.forward * 0.9f;
+        var muzzle = ResolveMuzzlePosition(useLeftMuzzle);
 
         if (fireDirection.sqrMagnitude < 0.0001f)
             fireDirection = transform.forward;
 
+        var spawnOffset = ResolveSpawnOffset(muzzle, fireDirection);
+        var spawnPosition = muzzle + fireDirection.normalized * spawnOffset;
+
         var networkObject = CwslNetworkPoolService.Instance?.Get(
             session.Assets.playerMissilePrefab,
-            muzzle,
+            spawnPosition,
             Quaternion.LookRotation(fireDirection, Vector3.up));
         if (networkObject == null)
             return;
 
         var projectile = networkObject.GetComponent<CwslPlayerProjectile>();
-        projectile?.Configure(fireDirection, MissileSpeed, MissileLifetime, OwnerClientId, MissileDamage, piercing);
+        projectile?.Configure(
+            fireDirection,
+            MissileSpeed,
+            MissileLifetime,
+            OwnerClientId,
+            MissileDamage,
+            piercing,
+            NetworkObject);
+    }
+
+    private Vector3 ResolveMuzzlePosition(bool useLeftMuzzle)
+    {
+        if (cannonAim == null)
+            return transform.position + Vector3.up * 1.2f + transform.forward * 0.9f;
+
+        return useLeftMuzzle
+            ? cannonAim.GetLeftMuzzlePosition()
+            : cannonAim.GetMuzzlePosition();
+    }
+
+    private float ResolveSpawnOffset(Vector3 muzzle, Vector3 fireDirection)
+    {
+        var maxOffset = CwslGameConstants.PlayerArrowSpawnForwardOffset;
+        if (!TryResolveTarget(out var target))
+            return maxOffset;
+
+        var toTarget = target.transform.position + Vector3.up * 1.1f - muzzle;
+        if (toTarget.sqrMagnitude < 0.0001f)
+            return maxOffset;
+
+        var distance = toTarget.magnitude;
+        var leadRoom = 0.12f;
+        return Mathf.Clamp(distance - leadRoom, CwslGameConstants.PlayerBulletSpawnMinOffset, maxOffset);
     }
 
     [ClientRpc]
-    private void PlayFireClientRpc()
+    private void SyncCombatPoseClientRpc(Vector3 aimPoint, CwslGunCombatPoseMode mode)
     {
         var visual = transform.Find("Visual");
+        visual?.GetComponent<CwslPlayerGunShootVisual>()?.SetCombatPose(aimPoint, mode);
+    }
+
+    [ClientRpc]
+    private void PlayFireClientRpc(Vector3 aimPoint, bool useLeftGun)
+    {
+        cannonAim?.SnapAimClient(aimPoint);
+
+        var visual = transform.Find("Visual");
+        var gunVisual = visual?.GetComponent<CwslPlayerGunShootVisual>();
+        if (gunVisual != null)
+        {
+            gunVisual.PlayShoot(aimPoint, useLeftGun);
+            return;
+        }
+
         visual?.GetComponent<CwslPlayerCannonRecoilVisual>()?.PlayFire();
+    }
+
+    [ClientRpc]
+    private void PlayDualFireClientRpc(Vector3 aimPoint)
+    {
+        cannonAim?.SnapAimClient(aimPoint);
+        var visual = transform.Find("Visual");
+        visual?.GetComponent<CwslPlayerGunShootVisual>()?.PlayDualShoot(aimPoint);
     }
 }

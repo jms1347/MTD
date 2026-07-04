@@ -18,9 +18,23 @@ public static class CwslGameConstants
     public const float GiftGoldAccelDuration = 3f;
 
     public const float BaseMoveSpeed = 6.5f;
+    public const float RammerMaxSpeed = 17f;
+    public const float RammerAccelPerSecond = 4.2f;
+    public const float RammerDecelPerSecond = 9f;
+    public const float RammerStopSpeed = 0.85f;
+    public const float RammerDamageSpeedThreshold = 9.5f;
+    public const float RammerCollisionDamage = 1f;
+    public const float RammerCollisionCooldown = 0.45f;
+    public const float RammerBrakeCooldown = 2.5f;
+    public const float RammerBrakeTurnBoostDuration = 1.4f;
     public const float AttackRange = 2.8f;
+    public const float MissileTankRange = 24f;
     public const float AttackCooldown = 0.45f;
     public const float AttackDamage = 1f;
+    public const float PlayerArrowSpawnForwardOffset = 0.55f;
+    public const float PlayerBulletSpawnMinOffset = 0.02f;
+    public const float PlayerArrowMinHitDistance = 0.03f;
+    public const float PlayerArrowMinHitDelay = 0.02f;
     public const float FortifyBodyScale = 1.12f;
     public const float FortifyShieldScale = 3.4f;
     public const float FortifyShieldBlockRadius = 2.8f;

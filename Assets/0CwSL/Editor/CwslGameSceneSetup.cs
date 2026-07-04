@@ -5,6 +5,7 @@ using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
 using UnityEditor;
 using UnityEditor.SceneManagement;
+using AssetKits.ParticleImage;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -47,6 +48,7 @@ public static class CwslGameSceneSetup
         assets.graveVisualPrefab = graveVisualPrefab;
         assets.darkMissileVfx = LoadPrefab(CwslVfxPaths.RangedProjectileVisual);
         assets.playerMissileVfx = LoadPrefab(CwslVfxPaths.PlayerMissileVisual);
+        assets.gunMuzzleVfx = LoadPrefab(CwslVfxPaths.GunMuzzleFlash);
         assets.fortifyAuraVfx = LoadPrefab(CwslVfxPaths.FortifyAura);
         assets.fortifyBlockVfx = LoadPrefab(CwslVfxPaths.FortifyBlock);
         assets.meteorFallVfx = LoadPrefab(CwslVfxPaths.MeteorFall);
@@ -95,8 +97,15 @@ public static class CwslGameSceneSetup
         const string outputPath = RootFolder + "/Resources/CwslGold/CoinFlyParticle.prefab";
         const string sourcePath = "Assets/AssetKits/ParticleImage/Demo/Prefabs/CoinAttraction.prefab";
 
-        if (AssetDatabase.LoadAssetAtPath<GameObject>(outputPath) != null)
+        var existing = AssetDatabase.LoadAssetAtPath<GameObject>(outputPath);
+        if (existing != null)
+        {
+            var tempExisting = (GameObject)PrefabUtility.InstantiatePrefab(existing);
+            SanitizeCoinFlyPrefab(tempExisting);
+            PrefabUtility.SaveAsPrefabAsset(tempExisting, outputPath);
+            Object.DestroyImmediate(tempExisting);
             return;
+        }
 
         var source = AssetDatabase.LoadAssetAtPath<GameObject>(sourcePath);
         if (source == null)
@@ -114,8 +123,20 @@ public static class CwslGameSceneSetup
 
         var temp = Object.Instantiate(particle.gameObject);
         temp.name = "CoinFlyParticle";
+        SanitizeCoinFlyPrefab(temp);
         PrefabUtility.SaveAsPrefabAsset(temp, outputPath);
         Object.DestroyImmediate(temp);
+    }
+
+    private static void SanitizeCoinFlyPrefab(GameObject root)
+    {
+        var particle = root.GetComponent<ParticleImage>();
+        if (particle == null)
+            return;
+
+        particle.PlayMode = AssetKits.ParticleImage.Enumerations.PlayMode.None;
+        particle.attractorEnabled = false;
+        particle.attractorTarget = null;
     }
 
     private static void EnsureLayers()
@@ -220,6 +241,7 @@ public static class CwslGameSceneSetup
         root.AddComponent<CwslTankFortifySkill>();
         root.AddComponent<CwslMissileTankSkill>();
         root.AddComponent<CwslRedMageMeteorSkill>();
+        root.AddComponent<CwslMomentumRammerSkill>();
         root.AddComponent<CwslPlayerCannonAim>();
         root.AddComponent<CwslPlayerShieldFortifyVisual>();
         root.AddComponent<CwslPlayerShieldBubble>();
@@ -358,17 +380,33 @@ public static class CwslGameSceneSetup
         root.layer = LayerMask.NameToLayer(CwslGameConstants.LayerProjectile);
 
         var collider = root.AddComponent<SphereCollider>();
-        collider.radius = 0.28f;
+        collider.radius = 0.22f;
         collider.isTrigger = true;
 
         var rb = root.AddComponent<Rigidbody>();
         rb.isKinematic = true;
         rb.useGravity = false;
 
+        var shaft = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        shaft.name = "ArrowShaft";
+        shaft.transform.SetParent(root.transform, false);
+        shaft.transform.localPosition = new Vector3(0f, 0f, 0.18f);
+        shaft.transform.localScale = new Vector3(0.1f, 0.1f, 0.42f);
+        Object.DestroyImmediate(shaft.GetComponent<Collider>());
+        CwslMaterialUtil.ApplyColor(shaft.GetComponent<Renderer>(), new Color(0.85f, 0.72f, 0.35f));
+
+        var head = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        head.name = "ArrowHead";
+        head.transform.SetParent(root.transform, false);
+        head.transform.localPosition = new Vector3(0f, 0f, 0.44f);
+        head.transform.localScale = new Vector3(0.14f, 0.14f, 0.12f);
+        Object.DestroyImmediate(head.GetComponent<Collider>());
+        CwslMaterialUtil.ApplyColor(head.GetComponent<Renderer>(), new Color(0.72f, 0.76f, 0.82f));
+
         var visual = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         visual.name = "HitProxy";
         visual.transform.SetParent(root.transform, false);
-        visual.transform.localScale = Vector3.one * 0.22f;
+        visual.transform.localScale = Vector3.one * 0.12f;
         Object.DestroyImmediate(visual.GetComponent<Collider>());
         visual.GetComponent<Renderer>().enabled = false;
 

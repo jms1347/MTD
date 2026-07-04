@@ -35,13 +35,24 @@ public class CwslGoldFlyAttractor : MonoBehaviour
             return;
 
         var canvas = canvasRect.GetComponent<Canvas>();
-        var cam = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay
+        var worldCam = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay
             ? canvas.worldCamera ?? Camera.main
             : Camera.main;
 
+        if (worldCam == null)
+            return;
+
         var worldPosition = worldTarget.position + worldOffset;
-        var screenPoint = RectTransformUtility.WorldToScreenPoint(cam, worldPosition);
-        if (RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, screenPoint, cam, out var localPoint))
+        var viewport = worldCam.WorldToViewportPoint(worldPosition);
+        if (viewport.z <= 0f)
+            return;
+
+        var screenPoint = RectTransformUtility.WorldToScreenPoint(worldCam, worldPosition);
+        var eventCam = canvas != null && canvas.renderMode == RenderMode.ScreenSpaceOverlay
+            ? null
+            : worldCam;
+
+        if (RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, screenPoint, eventCam, out var localPoint))
             rect.anchoredPosition = localPoint;
     }
 }

@@ -20,7 +20,8 @@ MonoBehaviour:
   playerDeathVfx: {fileID: 1631042304284920, guid: 94c74d51bcada5249a6520831c0f6e9b, type: 3}
   goldBurstVfx: {fileID: 143964, guid: 09d9de58ef3bf5444ac94afa0e6013cb, type: 3}
   goldMagnetTrailVfx: {fileID: 118250, guid: a79f8048fa75d6c449d730e96bb836fa, type: 3}
-  playerMissileVfx: {fileID: 131070, guid: 4b21d8abf8d26b449b109c8edb5cc78a, type: 3}
+  playerMissileVfx: {fileID: 135146, guid: b79841d82f4b1f6499d7f44697afdcbd, type: 3}
+  gunMuzzleVfx: {fileID: 195376, guid: 346f3bf3686d682498113714ee132099, type: 3}
   fortifyAuraVfx: {fileID: 1135644536747142, guid: c105577ec49dfb3408a7a89c3b7730be, type: 3}
   fortifyBlockVfx: {fileID: 1090678147105552, guid: bac6010fd61d72b419fb265a96000090, type: 3}
   meteorFallVfx: {fileID: 113030, guid: 25a78a965241d084996f23857207e95f, type: 3}

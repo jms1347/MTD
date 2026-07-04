@@ -153,7 +153,7 @@ MonoBehaviour:
   _loop: 0
   _prewarm: 0
   _duration: 0.3
-  _playMode: 2
+  _playMode: 0
   _startSize:
     separable: 1
     separated: 0
@@ -1122,7 +1122,7 @@ MonoBehaviour:
     m_ConstantMax: -9.81
   _targetModule:
     enabled: 1
-  _attractorTarget: {fileID: 813211192727349144, guid: 787e53981f0584fa08a05b1cc3eba0fb, type: 3}
+  _attractorTarget: {fileID: 0}
   _toTarget:
     m_Mode: 2
     m_CurveMultiplier: 1
