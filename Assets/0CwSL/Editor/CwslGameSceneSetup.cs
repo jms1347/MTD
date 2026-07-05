@@ -63,6 +63,42 @@ public static class CwslGameSceneSetup
         assets.gatherMaxReadyVfx = LoadPrefab(CwslVfxPaths.GatherMaxReady);
         assets.gatherPullVortexVfx = LoadPrefab(CwslVfxPaths.GatherPullVortex);
         assets.gatherPullBurstVfx = LoadPrefab(CwslVfxPaths.GatherPullBurst);
+        assets.gatherSlowEnchantVfx = LoadPrefab(CwslVfxPaths.GatherSlowEnchant);
+        assets.bossTeleportDepartVfx = LoadPrefab(CwslVfxPaths.BossTeleportDepart);
+        assets.bossTeleportArriveVfx = LoadPrefab(CwslVfxPaths.BossTeleportArrive);
+        assets.bossPhaseTransitionVfx = LoadPrefab(CwslVfxPaths.BossPhaseTransition);
+        assets.fightZoneAuraVfx = LoadPrefab(CwslVfxPaths.FightZoneAura);
+        assets.teamBallVisualVfx = LoadPrefab(CwslVfxPaths.TeamBallVisual);
+        assets.teamBallTrailVfx = LoadPrefab(CwslVfxPaths.TeamBallTrail);
+        assets.teamBallHitVfx = LoadPrefab(CwslVfxPaths.TeamBallHit);
+        assets.cornerStoneBreakVfx = LoadPrefab(CwslVfxPaths.CornerStoneBreak);
+        assets.karmaMilestoneVfx = LoadPrefab(CwslVfxPaths.KarmaMilestone);
+        assets.silhouetteAuraVfx = LoadPrefab(CwslVfxPaths.SilhouetteAura);
+        assets.pressConferenceRingVfx = LoadPrefab(CwslVfxPaths.PressConferenceRing);
+        assets.finalPhaseRingVfx = LoadPrefab(CwslVfxPaths.FinalPhaseRing);
+        assets.fogZoneHeavyVfx = LoadPrefab(CwslVfxPaths.FogZoneHeavy);
+        assets.fogZoneLivelyVfx = LoadPrefab(CwslVfxPaths.FogZoneLively);
+        assets.fogZoneLocalVfx = LoadPrefab(CwslVfxPaths.FogZoneLocal);
+        assets.blackHoleVortexVfx = LoadPrefab(CwslVfxPaths.BlackHoleVortex);
+        assets.trapPadAuraVfx = LoadPrefab(CwslVfxPaths.TrapPadAura);
+        assets.trapPadTriggerVfx = LoadPrefab(CwslVfxPaths.TrapPadTrigger);
+        assets.karmaHalfZoneAuraVfx = LoadPrefab(CwslVfxPaths.KarmaHalfZoneAura);
+        assets.tianyuanAuraVfx = LoadPrefab(CwslVfxPaths.TianyuanAura);
+        assets.lighthouseGlowVfx = LoadPrefab(CwslVfxPaths.LighthouseGlow);
+        assets.watchGlareVfx = LoadPrefab(CwslVfxPaths.WatchGlare);
+        assets.watchSparkleVfx = LoadPrefab(CwslVfxPaths.WatchSparkle);
+        assets.bossFightShieldVfx = LoadPrefab(CwslVfxPaths.BossFightShield);
+        assets.fakeGoldExplosionVfx = LoadPrefab(CwslVfxPaths.FakeGoldExplosion);
+        assets.badGrassAuraVfx = LoadPrefab(CwslVfxPaths.BadGrassAura);
+        assets.donationPadGlowVfx = LoadPrefab(CwslVfxPaths.DonationPadGlow);
+        assets.offsideLaserMissileVfx = LoadPrefab(CwslVfxPaths.OffsideLaserMissile);
+        assets.lightningStrikeVfx = LoadPrefab(CwslVfxPaths.LightningStrike);
+        assets.lightningOrbVfx = LoadPrefab(CwslVfxPaths.LightningOrb);
+        assets.lightningMissileVfx = LoadPrefab(CwslVfxPaths.LightningMissile);
+        assets.lightningZoneAuraVfx = LoadPrefab(CwslVfxPaths.LightningZoneAura);
+        assets.hazardAcidPadVfx = LoadPrefab(CwslVfxPaths.HazardAcidPad);
+        assets.hazardLavaPadVfx = LoadPrefab(CwslVfxPaths.HazardLavaPad);
+        assets.hazardWaterPadVfx = LoadPrefab(CwslVfxPaths.HazardWaterPad);
         assets.suicideExplosionVfx = LoadPrefab(CwslVfxPaths.SuicideExplosion);
         assets.meleeHitVfx = LoadPrefab(CwslVfxPaths.MeleeHit);
         assets.enemyDeathVfx = LoadPrefab(CwslVfxPaths.EnemyDeath);
@@ -73,6 +109,18 @@ public static class CwslGameSceneSetup
         assets.goldPickupSound = AssetDatabase.LoadAssetAtPath<AudioClip>(CwslVfxPaths.CoinDropSound);
         assets.horseGallopSound = AssetDatabase.LoadAssetAtPath<AudioClip>(CwslVfxPaths.HorseGallopSound);
         assets.rammerStunSound = AssetDatabase.LoadAssetAtPath<AudioClip>(CwslVfxPaths.RammerStunSound);
+        assets.bossTeleportCastSound = AssetDatabase.LoadAssetAtPath<AudioClip>(CwslVfxPaths.BossTeleportCastSound);
+        assets.bossTeleportArriveSound = AssetDatabase.LoadAssetAtPath<AudioClip>(CwslVfxPaths.BossTeleportArriveSound);
+        assets.bossPhaseShiftSound = AssetDatabase.LoadAssetAtPath<AudioClip>(CwslVfxPaths.BossPhaseShiftSound);
+        assets.teamBallRollSound = AssetDatabase.LoadAssetAtPath<AudioClip>(CwslVfxPaths.TeamBallRollSound);
+        assets.teamBallHitSound = AssetDatabase.LoadAssetAtPath<AudioClip>(CwslVfxPaths.TeamBallHitSound);
+        assets.cornerStoneBreakSound = AssetDatabase.LoadAssetAtPath<AudioClip>(CwslVfxPaths.CornerStoneBreakSound);
+        assets.bossWatchStartSound = AssetDatabase.LoadAssetAtPath<AudioClip>(CwslVfxPaths.BossWatchStartSound);
+        assets.gatherChargeCastSound = AssetDatabase.LoadAssetAtPath<AudioClip>(CwslVfxPaths.GatherChargeCastSound);
+        assets.gatherChargeLoopSound = AssetDatabase.LoadAssetAtPath<AudioClip>(CwslVfxPaths.GatherChargeLoopSound);
+        assets.gatherChargeEndSound = AssetDatabase.LoadAssetAtPath<AudioClip>(CwslVfxPaths.GatherChargeEndSound);
+        assets.skillGoldFailSound = AssetDatabase.LoadAssetAtPath<AudioClip>(CwslVfxPaths.SkillGoldFailSound);
+        assets.offsideHornSound = AssetDatabase.LoadAssetAtPath<AudioClip>(CwslVfxPaths.OffsideHornSound);
         EditorUtility.SetDirty(assets);
 
         var networkPrefabs = EnsureNetworkPrefabsList();
@@ -334,6 +382,7 @@ public static class CwslGameSceneSetup
         root.AddComponent<CwslPlayerSpawnVisuals>();
         root.AddComponent<CwslPlayerSpawnOffset>();
         root.AddComponent<CwslPlayerVision>();
+        root.AddComponent<CwslPlayerVisionDebuff>();
         root.AddComponent<CwslLocalPlayerHud>();
 
         return SavePrefab(root, $"{PrefabFolder}/CwslPlayer.prefab");
@@ -364,6 +413,7 @@ public static class CwslGameSceneSetup
         if (renderer != null)
             renderer.sharedMaterial = CwslMaterialUtil.CreateColored(new Color(1f, 0.84f, 0.12f));
         coin.AddComponent<CwslGoldCoinWorldVisual>();
+        coin.AddComponent<CwslFakeGoldVisual>();
         coin.AddComponent<CwslGoldCoinMaterialFix>();
 
         root.AddComponent<NetworkObject>();
@@ -549,6 +599,7 @@ public static class CwslGameSceneSetup
         transport.ConnectionData.Port = CwslGameConstants.GamePort;
         networkManager.NetworkConfig.PlayerPrefab = assets.playerPrefab;
         networkManager.NetworkConfig.NetworkTransport = transport;
+        networkManager.NetworkConfig.ConnectionApproval = true;
         if (networkManager.NetworkConfig.Prefabs.NetworkPrefabsLists == null)
             networkManager.NetworkConfig.Prefabs.NetworkPrefabsLists = new System.Collections.Generic.List<NetworkPrefabsList>();
         networkManager.NetworkConfig.Prefabs.NetworkPrefabsLists.Clear();
@@ -566,6 +617,10 @@ public static class CwslGameSceneSetup
         systems.AddComponent<CwslGameSession>();
         systems.AddComponent<CwslGameFlow>();
         systems.AddComponent<CwslNetworkPoolService>();
+        systems.AddComponent<CwslBossWatchState>();
+        systems.AddComponent<CwslArenaGimmickSystem>();
+        systems.AddComponent<CwslArenaTrapSystem>();
+        systems.AddComponent<CwslArenaHazardPadSystem>();
 
         var session = systems.GetComponent<CwslGameSession>();
         var sessionSerialized = new SerializedObject(session);

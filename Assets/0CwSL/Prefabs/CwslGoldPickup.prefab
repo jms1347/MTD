@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 1853613776079300702}
   - component: {fileID: 297034113880140100}
   - component: {fileID: 9012345678901234567}
+  - component: {fileID: 8642745240900708049}
   - component: {fileID: 841066103690781665}
   m_Layer: 0
   m_Name: Coin
@@ -104,6 +105,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b4e8c1d92f7a4e648a0b3c5d6e7f8091, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CwslGoldCoinWorldVisual
+--- !u!114 &8642745240900708049
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4292198305277045562}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 505daf9f92f1e7a418ed657977363393, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CwslFakeGoldVisual
 --- !u!114 &841066103690781665
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -213,7 +226,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 2242786561
+  GlobalObjectIdHash: 2343774479
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1

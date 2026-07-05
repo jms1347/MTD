@@ -13,6 +13,8 @@ public class CwslMonsterProjectile : NetworkBehaviour, ICwslPooledNetworkObject
     private float spawnTime;
     private bool configured;
 
+    public bool IsActiveProjectile => configured && IsSpawned;
+
     public void Configure(Vector3 fireDirection, float projectileSpeed, float maxLifetime)
     {
         direction = fireDirection.sqrMagnitude < 0.0001f ? Vector3.forward : fireDirection.normalized;
@@ -47,7 +49,7 @@ public class CwslMonsterProjectile : NetworkBehaviour, ICwslPooledNetworkObject
             return;
         }
 
-        transform.position += direction * (speed * Time.deltaTime);
+        transform.position += direction * (speed * (GetComponent<CwslSlowModifier>()?.SpeedMultiplier ?? 1f) * Time.deltaTime);
         TryHitPlayers();
     }
 

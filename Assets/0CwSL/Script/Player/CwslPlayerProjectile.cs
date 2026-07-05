@@ -20,6 +20,8 @@ public class CwslPlayerProjectile : NetworkBehaviour, ICwslPooledNetworkObject
     private bool pierce;
     private CwslMonsterHealth homingTarget;
 
+    public bool IsActiveProjectile => configured && IsSpawned;
+
     public void Configure(
         Vector3 fireDirection,
         float projectileSpeed,
@@ -75,7 +77,7 @@ public class CwslPlayerProjectile : NetworkBehaviour, ICwslPooledNetworkObject
             return;
         }
 
-        var step = speed * Time.deltaTime;
+        var step = speed * (GetComponent<CwslSlowModifier>()?.SpeedMultiplier ?? 1f) * Time.deltaTime;
         ApplyTargetHoming();
         var from = transform.position;
         var to = from + direction * step;

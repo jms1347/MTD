@@ -6,5 +6,6 @@ public enum CwslDamagePopupKind
     Player,
     Monster,
     Projectile,
-    Blocked
+    Blocked,
+    Poison
 }

@@ -112,17 +112,13 @@ public class CwslGameSidePanel : MonoBehaviour
 
 
         if (playerCharacter != null)
-
         {
-
             playerCharacter.OnCharacterChanged += HandleCharacterChanged;
-
+            CwslPlayerCharacter.OnAnyCharacterChanged += HandleAnyCharacterChanged;
             RefreshSelection(playerCharacter.CharacterId);
-
             RefreshHint(playerCharacter.CharacterId);
-
+            RefreshTakenStates();
         }
-
     }
 
 
@@ -134,6 +130,8 @@ public class CwslGameSidePanel : MonoBehaviour
         if (playerCharacter != null)
 
             playerCharacter.OnCharacterChanged -= HandleCharacterChanged;
+
+        CwslPlayerCharacter.OnAnyCharacterChanged -= HandleAnyCharacterChanged;
 
     }
 
@@ -455,23 +453,8 @@ public class CwslGameSidePanel : MonoBehaviour
 
         var id = entry.Id;
 
-        button.onClick.AddListener(() =>
-
-        {
-
-            if (playerCharacter == null)
-
-                return;
-
-
-
-            playerCharacter.RequestSelect(id);
-
-            RefreshSelection(id);
-
-            RefreshHint(id);
-
-        });
+        button.interactable = false;
+        button.onClick.AddListener(() => { });
 
 
 
@@ -665,6 +648,13 @@ public class CwslGameSidePanel : MonoBehaviour
 
         RefreshHint(characterId);
 
+        RefreshTakenStates();
+
+    }
+
+    private void HandleAnyCharacterChanged()
+    {
+        RefreshTakenStates();
     }
 
 
@@ -681,8 +671,6 @@ public class CwslGameSidePanel : MonoBehaviour
 
             card.Background.color = isSelected ? CardSelectedColor : CardIdleColor;
 
-            card.StatusLabel.gameObject.SetActive(isSelected);
-
             if (card.AccentBar != null)
 
                 card.AccentBar.gameObject.SetActive(isSelected);
@@ -693,6 +681,34 @@ public class CwslGameSidePanel : MonoBehaviour
 
         }
 
+    }
+
+    private void RefreshTakenStates()
+    {
+        if (playerCharacter == null)
+            return;
+
+        var ownerId = playerCharacter.OwnerClientId;
+        var selected = playerCharacter.CharacterId;
+
+        foreach (var card in characterCards)
+        {
+            var takenByOther = CwslCharacterRegistry.IsTakenByOther(card.Id, ownerId);
+            var isSelected = card.Id == selected;
+            card.Button.interactable = !takenByOther || isSelected;
+
+            if (card.StatusLabel != null)
+            {
+                if (isSelected)
+                    card.StatusLabel.text = "배정됨";
+                else if (takenByOther)
+                    card.StatusLabel.text = "다른 플레이어";
+                else
+                    card.StatusLabel.text = string.Empty;
+
+                card.StatusLabel.gameObject.SetActive(isSelected || takenByOther);
+            }
+        }
     }
 
 

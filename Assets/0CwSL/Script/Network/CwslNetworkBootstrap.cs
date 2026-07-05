@@ -29,8 +29,31 @@ public class CwslNetworkBootstrap : MonoBehaviour
             return;
         }
 
+        var networkManager = NetworkManager.Singleton;
+        networkManager.NetworkConfig.ConnectionApproval = true;
+        networkManager.ConnectionApprovalCallback = ApproveConnection;
+
         if (gameAssets != null && gameAssets.playerPrefab != null)
-            NetworkManager.Singleton.NetworkConfig.PlayerPrefab = gameAssets.playerPrefab;
+            networkManager.NetworkConfig.PlayerPrefab = gameAssets.playerPrefab;
+    }
+
+    private static void ApproveConnection(
+        NetworkManager.ConnectionApprovalRequest request,
+        NetworkManager.ConnectionApprovalResponse response)
+    {
+        var connectedCount = NetworkManager.Singleton != null
+            ? NetworkManager.Singleton.ConnectedClientsIds.Count
+            : 0;
+
+        if (connectedCount >= CwslGameConstants.MaxPlayers)
+        {
+            response.Approved = false;
+            response.Reason = "방이 가득 찼습니다. (최대 5인)";
+            return;
+        }
+
+        response.Approved = true;
+        response.CreatePlayerObject = true;
     }
 
     private void TryStartNetcode()

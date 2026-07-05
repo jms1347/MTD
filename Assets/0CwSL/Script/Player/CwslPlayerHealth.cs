@@ -106,6 +106,7 @@ public class CwslPlayerHealth : NetworkBehaviour
         return true;
     }
 
+    // TODO(릴리즈): R키 치트용 — 정식 버전 전 제거
     public void CheatReviveServer()
     {
         if (!IsServer)
@@ -144,6 +145,14 @@ public class CwslPlayerHealth : NetworkBehaviour
             return true;
 
         return ApplyDamageServer(damage, CwslDamagePopupKind.Player, hitPosition);
+    }
+
+    public void TryReceiveEnvironmentHitServer(float damage, Vector3 hitPosition)
+    {
+        if (!IsServer || !IsAlive || damage <= 0f)
+            return;
+
+        ApplyDamageServer(damage, CwslDamagePopupKind.Poison, hitPosition);
     }
 
     private bool ApplyDamageServer(float amount, CwslDamagePopupKind popupKind, Vector3 feedbackPosition)

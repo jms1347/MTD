@@ -134,6 +134,7 @@ public class CwslDamagePopup : MonoBehaviour
             CwslDamagePopupKind.Monster => new Color(1f, 0.92f, 0.28f, 1f),
             CwslDamagePopupKind.Projectile => new Color(0.95f, 0.5f, 1f, 1f),
             CwslDamagePopupKind.Blocked => new Color(0.45f, 0.85f, 1f, 1f),
+            CwslDamagePopupKind.Poison => new Color(0.35f, 1f, 0.35f, 1f),
             _ => new Color(1f, 0.92f, 0.28f, 1f)
         };
     }

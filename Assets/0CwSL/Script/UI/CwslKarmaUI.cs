@@ -29,6 +29,7 @@ public class CwslKarmaUI : MonoBehaviour
         if (karmaLabel == null)
             return;
 
-        karmaLabel.text = $"업보(줍은 골드): {karma:N0} / {CwslGameConstants.BossKarmaThreshold:N0}";
+        karmaLabel.text =
+            $"업보: {CwslCurrencyDisplay.FormatKarma(karma)} / {CwslCurrencyDisplay.FormatKarma(CwslGameConstants.BossKarmaThreshold)} ({karma:N0})";
     }
 }

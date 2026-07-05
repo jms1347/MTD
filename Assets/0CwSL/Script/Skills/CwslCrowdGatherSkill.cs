@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.AI;
 
 /// <summary>
-/// 끌모: Q 홀드로 지면 원 확장 → 뗄 때 범위 안 적·아군을 중심으로 당김 (데미지 없음).
+/// 끌모: Q 홀드로 지면 원 확장 → 차지 중 적·투사체 슬로우(대상당 골드) → Q 해제 시 범위 안 적·총알 당김.
 /// </summary>
 public class CwslCrowdGatherSkill : CwslPlayerSkillBase
 {
@@ -34,8 +34,8 @@ public class CwslCrowdGatherSkill : CwslPlayerSkillBase
     private CwslPlayerGold playerGold;
     private CwslPlayerMovement movement;
     private float chargeStartTime;
-    private float nextGoldSpendTime;
     private float nextGatherTime;
+    private float nextSlowGoldTick;
     private bool maxReadyNotified;
     private Coroutine pullRoutine;
 
@@ -87,9 +87,12 @@ public class CwslCrowdGatherSkill : CwslPlayerSkillBase
         if (!IsServer || !isCharging.Value)
             return;
 
+        var center = syncedCenter.Value;
+        var radius = syncedRadius.Value;
         isCharging.Value = false;
         syncedAtMaxCharge.Value = false;
-        EndChargeVisualClientRpc();
+        ClearZoneSlowServer(center, radius);
+        EndChargeVisualClientRpc(center);
     }
 
     public override bool CanCastServer(ulong senderClientId)
@@ -100,16 +103,26 @@ public class CwslCrowdGatherSkill : CwslPlayerSkillBase
                (playerHealth == null || playerHealth.IsAlive) &&
                !isCharging.Value &&
                Time.time >= nextGatherTime &&
-               (playerGold == null || playerGold.Gold >= CwslGameConstants.SkillGoldCost);
+               (playerGold == null || playerGold.Gold >= CwslGameConstants.GatherStartGoldCost);
     }
 
-    public void BeginChargeServer(Vector3 worldPoint)
+    public bool BeginChargeServer(Vector3 worldPoint)
     {
-        if (!IsServer || !CanCastServer(OwnerClientId))
-            return;
+        if (!IsServer)
+            return false;
 
-        if (playerGold == null || !playerGold.TrySpendGoldServer(CwslGameConstants.SkillGoldCost))
-            return;
+        if (!CanCastServer(OwnerClientId))
+        {
+            if (IsStartGoldInsufficient())
+                RejectGatherStartClientRpc();
+            return false;
+        }
+
+        if (playerGold == null || !playerGold.TrySpendGoldServer(CwslGameConstants.GatherStartGoldCost, playSpendEffect: false))
+        {
+            RejectGatherStartClientRpc();
+            return false;
+        }
 
         worldPoint.y = 0f;
         movement?.StopMovement();
@@ -117,10 +130,13 @@ public class CwslCrowdGatherSkill : CwslPlayerSkillBase
         syncedAtMaxCharge.Value = false;
         maxReadyNotified = false;
         chargeStartTime = Time.time;
-        nextGoldSpendTime = Time.time + CwslGameConstants.GatherGoldIntervalSeconds;
+        nextSlowGoldTick = Time.time;
         syncedCenter.Value = worldPoint;
         syncedRadius.Value = CwslGameConstants.GatherMinRadius;
         SyncChargeVisualClientRpc(worldPoint, syncedRadius.Value, false);
+        PlayGatherCenterSpendClientRpc(worldPoint);
+        PlayGatherCastClientRpc(worldPoint);
+        return true;
     }
 
     public void UpdateChargeCenterServer(Vector3 worldPoint)
@@ -139,16 +155,6 @@ public class CwslCrowdGatherSkill : CwslPlayerSkillBase
 
         movement?.StopMovement();
 
-        if (Time.time >= nextGoldSpendTime)
-        {
-            nextGoldSpendTime = Time.time + CwslGameConstants.GatherGoldIntervalSeconds;
-            if (playerGold == null || !playerGold.TrySpendGoldServer(CwslGameConstants.SkillGoldCost))
-            {
-                CancelChargeServer();
-                return;
-            }
-        }
-
         var elapsed = Time.time - chargeStartTime;
         var chargeRatio = Mathf.Clamp01(elapsed / CwslGameConstants.GatherChargeSeconds);
         var radius = Mathf.Lerp(
@@ -157,15 +163,21 @@ public class CwslCrowdGatherSkill : CwslPlayerSkillBase
             chargeRatio);
         syncedRadius.Value = radius;
 
+        var center = syncedCenter.Value;
+        ApplySlowInZoneServer(center, radius);
+
+        if (!TickSlowGoldServer(center, radius))
+            return;
+
         var atMax = chargeRatio >= 1f;
         syncedAtMaxCharge.Value = atMax;
         if (atMax && !maxReadyNotified)
         {
             maxReadyNotified = true;
-            PlayMaxChargeReadyClientRpc(syncedCenter.Value);
+            PlayMaxChargeReadyClientRpc(center);
         }
 
-        SyncChargeVisualClientRpc(syncedCenter.Value, radius, atMax);
+        SyncChargeVisualClientRpc(center, radius, atMax);
     }
 
     public override void OnSkillReleasedServer(ulong senderClientId)
@@ -173,17 +185,67 @@ public class CwslCrowdGatherSkill : CwslPlayerSkillBase
         if (!IsServer || !isCharging.Value)
             return;
 
-        isCharging.Value = false;
-        syncedAtMaxCharge.Value = false;
-        EndChargeVisualClientRpc();
+        FinishChargeAndPullServer(syncedCenter.Value, syncedRadius.Value);
+    }
 
-        var radius = syncedRadius.Value;
-        var center = syncedCenter.Value;
-        if (radius < CwslGameConstants.GatherMinReleaseRadius)
+    private bool IsStartGoldInsufficient()
+    {
+        return playerGold != null && playerGold.Gold < CwslGameConstants.GatherStartGoldCost;
+    }
+
+    private bool TickSlowGoldServer(Vector3 center, float radius)
+    {
+        if (Time.time < nextSlowGoldTick)
+            return true;
+
+        nextSlowGoldTick = Time.time + CwslGameConstants.GatherSlowGoldIntervalSeconds;
+
+        var targetCount = CollectZoneTargets(center, radius).Count;
+        if (targetCount <= 0)
+            return true;
+
+        var cost = targetCount * CwslGameConstants.GatherSlowGoldPerTarget;
+        if (playerGold == null || playerGold.Gold < cost)
+        {
+            FinishChargeAndPullServer(center, radius);
+            return false;
+        }
+
+        playerGold.TrySpendGoldServer(cost, playSpendEffect: false);
+        return true;
+    }
+
+    private void ApplySlowInZoneServer(Vector3 center, float radius)
+    {
+        foreach (var target in CollectZoneTargets(center, radius))
+        {
+            var modifier = CwslSlowModifier.Ensure(target);
+            modifier?.ApplySlow(
+                CwslGameConstants.GatherSlowMultiplier,
+                CwslGameConstants.GatherSlowRefreshSeconds);
+        }
+    }
+
+    private void ClearZoneSlowServer(Vector3 center, float radius)
+    {
+        foreach (var target in CollectZoneTargets(center, radius))
+        {
+            target.GetComponent<CwslSlowModifier>()?.ClearSlow();
+        }
+    }
+
+    private void FinishChargeAndPullServer(Vector3 center, float radius)
+    {
+        if (!IsServer || !isCharging.Value)
             return;
 
+        isCharging.Value = false;
+        syncedAtMaxCharge.Value = false;
         nextGatherTime = Time.time + CwslGameConstants.GatherCooldown;
+        ClearZoneSlowServer(center, radius);
+        EndChargeVisualClientRpc(center);
         PlayPullFxClientRpc(center, radius);
+
         if (pullRoutine != null)
             StopCoroutine(pullRoutine);
         pullRoutine = StartCoroutine(PullTargetsServer(center, radius));
@@ -193,7 +255,10 @@ public class CwslCrowdGatherSkill : CwslPlayerSkillBase
     {
         var entries = CollectPullEntries(center, radius);
         if (entries.Count == 0)
+        {
+            pullRoutine = null;
             yield break;
+        }
 
         var duration = CwslGameConstants.GatherPullSeconds;
         var elapsed = 0f;
@@ -234,14 +299,13 @@ public class CwslCrowdGatherSkill : CwslPlayerSkillBase
     {
         public Transform Transform;
         public NavMeshAgent Agent;
-        public CwslPlayerMovement Movement;
-        public CwslMomentumRammerSkill Rammer;
         public Vector3 StartPosition;
+        public bool IsProjectile;
     }
 
-    private List<PullEntry> CollectPullEntries(Vector3 center, float radius)
+    private List<Transform> CollectZoneTargets(Vector3 center, float radius)
     {
-        var results = new List<PullEntry>();
+        var results = new List<Transform>();
         var radiusSqr = radius * radius;
 
         var monsters = FindObjectsByType<CwslMonsterHealth>(FindObjectsSortMode.None);
@@ -253,38 +317,53 @@ public class CwslCrowdGatherSkill : CwslPlayerSkillBase
             if (!IsInsideFlatRadius(center, monster.transform.position, radiusSqr))
                 continue;
 
-            results.Add(new PullEntry
-            {
-                Transform = monster.transform,
-                Agent = monster.GetComponent<NavMeshAgent>(),
-                StartPosition = monster.transform.position
-            });
+            results.Add(monster.transform);
         }
 
-        if (NetworkManager.Singleton != null)
+        var monsterProjectiles = FindObjectsByType<CwslMonsterProjectile>(FindObjectsSortMode.None);
+        foreach (var projectile in monsterProjectiles)
         {
-            foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
+            if (projectile == null || !projectile.IsActiveProjectile)
+                continue;
+
+            if (!IsInsideFlatRadius(center, projectile.transform.position, radiusSqr))
+                continue;
+
+            results.Add(projectile.transform);
+        }
+
+        var playerProjectiles = FindObjectsByType<CwslPlayerProjectile>(FindObjectsSortMode.None);
+        foreach (var projectile in playerProjectiles)
+        {
+            if (projectile == null || !projectile.IsActiveProjectile)
+                continue;
+
+            if (!IsInsideFlatRadius(center, projectile.transform.position, radiusSqr))
+                continue;
+
+            results.Add(projectile.transform);
+        }
+
+        return results;
+    }
+
+    private List<PullEntry> CollectPullEntries(Vector3 center, float radius)
+    {
+        var results = new List<PullEntry>();
+        foreach (var target in CollectZoneTargets(center, radius))
+        {
+            if (target == null)
+                continue;
+
+            var isProjectile = target.GetComponent<CwslMonsterProjectile>() != null
+                                 || target.GetComponent<CwslPlayerProjectile>() != null;
+            results.Add(new PullEntry
             {
-                var playerObject = client.PlayerObject;
-                if (playerObject == null)
-                    continue;
-
-                var health = playerObject.GetComponent<CwslPlayerHealth>();
-                if (health != null && !health.IsAlive)
-                    continue;
-
-                if (!IsInsideFlatRadius(center, playerObject.transform.position, radiusSqr))
-                    continue;
-
-                results.Add(new PullEntry
-                {
-                    Transform = playerObject.transform,
-                    Agent = playerObject.GetComponent<NavMeshAgent>(),
-                    Movement = playerObject.GetComponent<CwslPlayerMovement>(),
-                    Rammer = playerObject.GetComponent<CwslMomentumRammerSkill>(),
-                    StartPosition = playerObject.transform.position
-                });
-            }
+                Transform = target,
+                Agent = isProjectile ? null : target.GetComponent<NavMeshAgent>(),
+                StartPosition = target.position,
+                IsProjectile = isProjectile
+            });
         }
 
         return results;
@@ -299,17 +378,31 @@ public class CwslCrowdGatherSkill : CwslPlayerSkillBase
 
     private static Vector3 ResolvePullDestination(Vector3 center, Transform target)
     {
-        var destination = center;
-        destination.y = target.position.y;
+        if (target.GetComponent<CwslMonsterProjectile>() != null
+            || target.GetComponent<CwslPlayerProjectile>() != null)
+        {
+            var destination = center + Vector3.up * 0.85f;
+            destination.y = target.position.y;
+            return destination;
+        }
+
+        var groundDestination = center;
+        groundDestination.y = target.position.y;
         if (NavMesh.SamplePosition(center, out var hit, 2.5f, NavMesh.AllAreas))
-            destination = hit.position;
-        return destination;
+            groundDestination = hit.position;
+        return groundDestination;
     }
 
     private static void ApplyPullPosition(PullEntry entry, Vector3 position)
     {
-        entry.Rammer?.StopMomentumForStunServer();
-        entry.Movement?.StopMovement();
+        if (entry.Transform == null)
+            return;
+
+        if (entry.IsProjectile)
+        {
+            entry.Transform.position = position;
+            return;
+        }
 
         if (entry.Agent != null && entry.Agent.enabled)
         {
@@ -325,15 +418,44 @@ public class CwslCrowdGatherSkill : CwslPlayerSkillBase
     }
 
     [ClientRpc]
-    private void SyncChargeVisualClientRpc(Vector3 center, float radius, bool atMax)
+    private void RejectGatherStartClientRpc()
     {
-        CwslGatherChargeVisual.Sync(center, radius, atMax);
+        if (!IsOwner)
+            return;
+
+        CwslGatherAudioFeedback.StopChargeLoop();
+        CwslGatherChargeVisual.Hide();
+        CwslSkillGoldFeedback.ShowInsufficientGold("골드가 부족해 당김 스킬을 시전할 수 없습니다.");
     }
 
     [ClientRpc]
-    private void EndChargeVisualClientRpc()
+    private void PlayGatherCastClientRpc(Vector3 center)
     {
+        CwslGatherAudioFeedback.PlayGatherCast(center);
+    }
+
+    [ClientRpc]
+    private void PlayGatherCenterSpendClientRpc(Vector3 center)
+    {
+        CwslGatherChargeVisual.BeginLocalCharge(center);
+        CwslGatherChargeVisual.PlayCenterSpend(center);
+        CwslGatherAudioFeedback.StartChargeLoop(center);
+    }
+
+    [ClientRpc]
+    private void SyncChargeVisualClientRpc(Vector3 center, float radius, bool atMax)
+    {
+        CwslGatherChargeVisual.Sync(center, radius, atMax);
+        CwslGatherSlowVisual.Sync(center, radius);
+        CwslGatherAudioFeedback.UpdateChargeLoopPosition(center);
+    }
+
+    [ClientRpc]
+    private void EndChargeVisualClientRpc(Vector3 center)
+    {
+        CwslGatherAudioFeedback.PlayChargeEnd(center);
         CwslGatherChargeVisual.Hide();
+        CwslGatherSlowVisual.Clear();
     }
 
     [ClientRpc]
@@ -345,7 +467,6 @@ public class CwslCrowdGatherSkill : CwslPlayerSkillBase
     [ClientRpc]
     private void PlayPullFxClientRpc(Vector3 center, float radius)
     {
-        CwslGatherChargeVisual.Hide();
-        CwslVfxSpawner.SpawnGatherPull(center, radius);
+        CwslGatherChargeVisual.PlayPull(center, radius);
     }
 }

@@ -10,6 +10,7 @@ public class CwslLocalPlayerHud : NetworkBehaviour
     private CwslPlayerCharacter playerCharacter;
     private TextMeshProUGUI goldLabel;
     private TextMeshProUGUI hintLabel;
+    private TextMeshProUGUI toastLabel;
 
     public override void OnNetworkSpawn()
     {
@@ -30,6 +31,14 @@ public class CwslLocalPlayerHud : NetworkBehaviour
             playerCharacter.OnCharacterChanged += RefreshHint;
             RefreshHint(playerCharacter.CharacterId);
         }
+    }
+
+    private void Update()
+    {
+        if (!IsOwner)
+            return;
+
+        CwslSkillGoldFeedback.Tick();
     }
 
     public override void OnNetworkDespawn()
@@ -70,9 +79,15 @@ public class CwslLocalPlayerHud : NetworkBehaviour
         RemoveLegacyLabels(canvasTransform);
 
         EnsureHintLabel(canvasTransform);
+        EnsureToastLabel(canvasTransform);
         EnsureGoldPanel(canvasTransform);
         EnsureKarmaLabel(canvasTransform);
         EnsureMinimap(canvasTransform);
+        CwslArenaGimmickVisuals.EnsureLocal();
+        if (GetComponent<CwslArenaGimmickVisualRunner>() == null)
+            gameObject.AddComponent<CwslArenaGimmickVisualRunner>();
+        if (GetComponent<CwslArenaTrapVisualRunner>() == null)
+            gameObject.AddComponent<CwslArenaTrapVisualRunner>();
     }
 
     private void EnsureHintLabel(Transform canvasTransform)
@@ -97,6 +112,38 @@ public class CwslLocalPlayerHud : NetworkBehaviour
 
         var characterId = playerCharacter != null ? playerCharacter.CharacterId : CwslCharacterId.Tank;
         RefreshHint(characterId);
+    }
+
+    private void EnsureToastLabel(Transform canvasTransform)
+    {
+        var existing = canvasTransform.Find("CwslSkillToast");
+        if (existing != null)
+        {
+            toastLabel = existing.GetComponent<TextMeshProUGUI>();
+            CwslSkillGoldFeedback.BindToast(toastLabel);
+            return;
+        }
+
+        toastLabel = CreateLabel(
+            canvasTransform,
+            "CwslSkillToast",
+            new Vector2(0.5f, 0.5f),
+            new Vector2(0.5f, 0.5f),
+            new Vector2(0.5f, 0.5f),
+            new Vector2(0f, 120f),
+            new Vector2(920f, 52f),
+            28f);
+        toastLabel.alignment = TextAlignmentOptions.Center;
+        toastLabel.fontStyle = FontStyles.Bold;
+        toastLabel.color = new Color(1f, 0.55f, 0.45f);
+        toastLabel.gameObject.SetActive(false);
+        if (toastLabel.font != null)
+        {
+            toastLabel.outlineWidth = 0.2f;
+            toastLabel.outlineColor = new Color32(0, 0, 0, 220);
+        }
+
+        CwslSkillGoldFeedback.BindToast(toastLabel);
     }
 
     private void RefreshHint(CwslCharacterId characterId)
@@ -238,7 +285,7 @@ public class CwslLocalPlayerHud : NetworkBehaviour
     private void RefreshGold(int gold)
     {
         if (goldLabel != null)
-            goldLabel.text = $"골드  {gold}";
+            goldLabel.text = $"골드 {CwslCurrencyDisplay.FormatGold(gold)} ({gold})";
     }
 
     private static TextMeshProUGUI CreateLabel(

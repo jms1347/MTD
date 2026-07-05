@@ -1,6 +1,7 @@
+using System;
+using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
-
 public class CwslGameSession : NetworkBehaviour
 {
     public static CwslGameSession Instance { get; private set; }
@@ -9,8 +10,12 @@ public class CwslGameSession : NetworkBehaviour
     [SerializeField] private CwslMonsterSpawner monsterSpawner;
 
     public CwslGameAssets Assets => assets;
+    public CwslMonsterSpawner MonsterSpawner => monsterSpawner;
 
     private bool bossSpawned;
+    private readonly Dictionary<ulong, CwslCharacterId> assignedCharacters = new();
+
+    public static event Action OnCharacterAssignmentsChanged;
 
     private void Awake()
     {
@@ -26,15 +31,46 @@ public class CwslGameSession : NetworkBehaviour
         {
             CwslGoldFeedback.Initialize(assets.goldBurstVfx, assets.goldPickupSound);
             CwslRammerAudioFeedback.Initialize(assets.horseGallopSound, assets.rammerStunSound);
+            CwslGatherAudioFeedback.Initialize(
+                assets.gatherChargeCastSound,
+                assets.gatherChargeLoopSound,
+                assets.gatherChargeEndSound,
+                assets.skillGoldFailSound);
+            CwslArenaAudioFeedback.Initialize(assets);
         }
 
         CwslDamagePopupPool.EnsureReady();
+        EnsureArenaSystems();
+    }
+
+    private void EnsureArenaSystems()
+    {
+        if (GetComponent<CwslBossWatchState>() == null)
+            gameObject.AddComponent<CwslBossWatchState>();
+        if (GetComponent<CwslArenaGimmickSystem>() == null)
+            gameObject.AddComponent<CwslArenaGimmickSystem>();
+        if (GetComponent<CwslArenaTrapSystem>() == null)
+            gameObject.AddComponent<CwslArenaTrapSystem>();
+        if (GetComponent<CwslArenaHazardPadSystem>() == null)
+            gameObject.AddComponent<CwslArenaHazardPadSystem>();
     }
 
     public override void OnNetworkSpawn()
     {
         if (IsServer && assets != null)
             CwslNetworkPoolService.Instance?.Initialize(assets);
+
+        if (IsServer && NetworkManager.Singleton != null)
+        {
+            NetworkManager.Singleton.OnClientConnectedCallback += HandleClientConnected;
+            NetworkManager.Singleton.OnClientDisconnectCallback += HandleClientDisconnected;
+
+            foreach (var clientId in NetworkManager.Singleton.ConnectedClientsIds)
+            {
+                EnsureCharacterAssigned(clientId);
+                ApplyAssignedCharacterToPlayer(clientId);
+            }
+        }
 
         if (!IsServer)
             return;
@@ -45,11 +81,135 @@ public class CwslGameSession : NetworkBehaviour
 
     public override void OnNetworkDespawn()
     {
+        if (NetworkManager.Singleton != null)
+        {
+            NetworkManager.Singleton.OnClientConnectedCallback -= HandleClientConnected;
+            NetworkManager.Singleton.OnClientDisconnectCallback -= HandleClientDisconnected;
+        }
+
         if (CwslKarmaSystem.Instance != null)
             CwslKarmaSystem.Instance.OnKarmaChanged -= HandleKarmaChanged;
 
+        if (IsServer)
+            assignedCharacters.Clear();
+
         if (Instance == this)
             Instance = null;
+    }
+
+    private void HandleClientConnected(ulong clientId)
+    {
+        EnsureCharacterAssigned(clientId);
+        ApplyAssignedCharacterToPlayer(clientId);
+    }
+
+    private void HandleClientDisconnected(ulong clientId)
+    {
+        ReleaseCharacter(clientId);
+    }
+
+    private void ApplyAssignedCharacterToPlayer(ulong clientId)
+    {
+        if (!TryGetAssignedCharacter(clientId, out var characterId))
+            return;
+
+        if (!NetworkManager.Singleton.ConnectedClients.TryGetValue(clientId, out var client))
+            return;
+
+        var playerObject = client.PlayerObject;
+        if (playerObject == null)
+            return;
+
+        var playerCharacter = playerObject.GetComponent<CwslPlayerCharacter>();
+        playerCharacter?.ApplyAssignedCharacterServer(characterId);
+    }
+
+    private static bool IsServerActive()
+    {
+        return NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer;
+    }
+
+    public bool TryAssignRandomCharacter(ulong clientId, out CwslCharacterId characterId)
+    {
+        characterId = default;
+        if (!IsServerActive())
+            return false;
+
+        assignedCharacters.Remove(clientId);
+
+        var available = new List<CwslCharacterId>();
+        foreach (CwslCharacterId id in Enum.GetValues(typeof(CwslCharacterId)))
+        {
+            if (!IsCharacterTakenByOther(id, clientId))
+                available.Add(id);
+        }
+
+        if (available.Count == 0)
+            return false;
+
+        characterId = available[UnityEngine.Random.Range(0, available.Count)];
+        assignedCharacters[clientId] = characterId;
+        NotifyAssignmentsChanged();
+        return true;
+    }
+
+    public bool TryGetAssignedCharacter(ulong clientId, out CwslCharacterId characterId)
+    {
+        return assignedCharacters.TryGetValue(clientId, out characterId);
+    }
+
+    public void EnsureCharacterAssigned(ulong clientId)
+    {
+        if (!IsServerActive())
+            return;
+
+        if (assignedCharacters.ContainsKey(clientId))
+            return;
+
+        TryAssignRandomCharacter(clientId, out _);
+    }
+
+    public bool TryAssignCharacter(ulong clientId, CwslCharacterId characterId)
+    {
+        if (!IsServerActive() || !Enum.IsDefined(typeof(CwslCharacterId), characterId))
+            return false;
+
+        if (IsCharacterTakenByOther(characterId, clientId))
+            return false;
+
+        assignedCharacters[clientId] = characterId;
+        NotifyAssignmentsChanged();
+        return true;
+    }
+
+    public void ReleaseCharacter(ulong clientId)
+    {
+        if (!IsServerActive())
+            return;
+
+        if (!assignedCharacters.Remove(clientId))
+            return;
+
+        NotifyAssignmentsChanged();
+    }
+
+    private bool IsCharacterTakenByOther(CwslCharacterId characterId, ulong exceptClientId)
+    {
+        foreach (var pair in assignedCharacters)
+        {
+            if (pair.Key == exceptClientId)
+                continue;
+
+            if (pair.Value == characterId)
+                return true;
+        }
+
+        return false;
+    }
+
+    private static void NotifyAssignmentsChanged()
+    {
+        OnCharacterAssignmentsChanged?.Invoke();
     }
 
     public GameObject GetMonsterPrefab(CwslMonsterType type)

@@ -9,10 +9,17 @@ public class CwslMonsterHealth : NetworkBehaviour, ICwslPooledNetworkObject
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server);
 
+    private int dropGoldAmount = CwslGameConstants.GoldDropNormal;
+    private float maxHealth = CwslGameConstants.MonsterMaxHealth;
+    private bool isExecutive;
+
     public CwslMonsterType MonsterType { get; private set; }
     public bool IsAlive => health.Value > 0f;
+    public float CurrentHealth => health.Value;
+    public float MaxHealth => maxHealth;
+    public bool IsExecutive => isExecutive;
+    public bool IsBoss => MonsterType == CwslMonsterType.BossHongmyeongbo;
 
-    /// <summary>조준/유도에 쓰는 몸통 중심(콜라이더 기준).</summary>
     public Vector3 GetAimPoint()
     {
         var capsule = GetComponent<CapsuleCollider>();
@@ -23,30 +30,53 @@ public class CwslMonsterHealth : NetworkBehaviour, ICwslPooledNetworkObject
     }
 
     public event Action<CwslMonsterHealth, ulong> OnKilled;
+    public event Action<CwslMonsterHealth, float, ulong> OnDamaged;
 
-    public void Configure(CwslMonsterType type)
+    public void Configure(CwslMonsterType type, int goldDrop = -1, bool executive = false)
     {
         MonsterType = type;
+        isExecutive = executive;
+        dropGoldAmount = goldDrop >= 0
+            ? goldDrop
+            : executive
+                ? CwslGameConstants.GoldDropExecutive
+                : CwslGameConstants.GoldDropNormal;
+        maxHealth = CwslGameConstants.MonsterMaxHealth;
+    }
+
+    public void ConfigureBoss(float bossMaxHealth)
+    {
+        MonsterType = CwslMonsterType.BossHongmyeongbo;
+        isExecutive = false;
+        dropGoldAmount = 0;
+        maxHealth = bossMaxHealth;
+        if (IsServer)
+            health.Value = bossMaxHealth;
     }
 
     public override void OnNetworkSpawn()
     {
         EnsureCombatHitCollider();
-        if (IsServer)
-            health.Value = CwslGameConstants.MonsterMaxHealth;
+        if (IsServer && !IsBoss)
+            health.Value = maxHealth;
     }
 
     public void OnSpawnedFromPool()
     {
         EnsureCombatHitCollider();
-        if (IsServer)
-            health.Value = CwslGameConstants.MonsterMaxHealth;
+        if (IsServer && !IsBoss)
+            health.Value = maxHealth;
 
         CwslMonsterMaterialFix.Refresh(transform, MonsterType);
+        if (isExecutive)
+            CwslMonsterExecutiveVisual.Apply(transform);
     }
 
     public void OnReturnedToPool()
     {
+        isExecutive = false;
+        dropGoldAmount = CwslGameConstants.GoldDropNormal;
+        maxHealth = CwslGameConstants.MonsterMaxHealth;
     }
 
     private void EnsureCombatHitCollider()
@@ -61,12 +91,31 @@ public class CwslMonsterHealth : NetworkBehaviour, ICwslPooledNetworkObject
         capsule.height = CwslGameConstants.MonsterHitHeight;
         if (capsule.radius < CwslGameConstants.MonsterHitMinRadius)
             capsule.radius = CwslGameConstants.MonsterHitMinRadius;
+
+        if (isExecutive && capsule.radius < 0.72f)
+            capsule.radius = 0.72f;
     }
 
     public void DamageFromPlayer(ulong attackerClientId, float amount)
     {
         if (!IsServer || !IsAlive || amount <= 0f)
             return;
+
+        if (IsBoss)
+        {
+            if (!CwslBossHongmyeongbo.CanReceiveDamageFrom(attackerClientId))
+                return;
+
+            health.Value = Mathf.Max(0f, health.Value - amount);
+            ShowDamagePopupClientRpc(transform.position + Vector3.up * 1.2f, amount, (int)CwslDamagePopupKind.Monster);
+            OnDamaged?.Invoke(this, health.Value, attackerClientId);
+            GetComponent<CwslBossHongmyeongbo>()?.NotifyDamagedServer(health.Value);
+
+            if (health.Value <= 0f)
+                Die(attackerClientId, dropGold: false);
+
+            return;
+        }
 
         ShowDamagePopupClientRpc(transform.position + Vector3.up * 1.2f, amount, (int)CwslDamagePopupKind.Monster);
         Die(attackerClientId);
@@ -86,7 +135,8 @@ public class CwslMonsterHealth : NetworkBehaviour, ICwslPooledNetworkObject
             return;
 
         health.Value = 0f;
-        CwslGoldDropService.SpawnDrop(goldPosition);
+        if (dropGoldAmount > 0)
+            CwslGoldDropService.SpawnDrop(goldPosition, dropGoldAmount);
         OnKilled?.Invoke(this, attackerClientId);
         PlayDeathClientRpc(transform.position, (int)MonsterType);
 
@@ -97,8 +147,8 @@ public class CwslMonsterHealth : NetworkBehaviour, ICwslPooledNetworkObject
     private void Die(ulong attackerClientId, bool dropGold = true)
     {
         health.Value = 0f;
-        if (dropGold)
-            CwslGoldDropService.SpawnDrop(transform.position);
+        if (dropGold && dropGoldAmount > 0)
+            CwslGoldDropService.SpawnDrop(transform.position, dropGoldAmount);
         OnKilled?.Invoke(this, attackerClientId);
         PlayDeathClientRpc(transform.position, (int)MonsterType);
 

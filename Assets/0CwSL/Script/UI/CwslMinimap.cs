@@ -110,6 +110,13 @@ public class CwslMinimap : MonoBehaviour
         {
             localPlayerIcon.gameObject.SetActive(true);
             localPlayerIcon.anchoredPosition = WorldToMinimap(localPlayerTransform.position);
+            var localImage = localPlayerIcon.GetComponent<Image>();
+            if (localImage != null)
+            {
+                localImage.color = CwslBossWatchHud.IsLocalPlayerWatched
+                    ? new Color(1f, 0.2f, 0.2f)
+                    : LocalPlayerColor;
+            }
         }
         else if (localPlayerIcon != null)
         {
@@ -136,6 +143,14 @@ public class CwslMinimap : MonoBehaviour
                 continue;
 
             var icon = GetOrCreateIcon(playerIcons, index, OtherPlayerColor, 10f, "OtherPlayer");
+            var watchedId = CwslBossWatchState.Instance != null
+                ? CwslBossWatchState.Instance.WatchedClientId
+                : ulong.MaxValue;
+            var iconImage = icon.GetComponent<Image>();
+            if (iconImage != null && health.NetworkObject != null && health.NetworkObject.OwnerClientId == watchedId
+                && CwslBossWatchState.IsWatching(watchedId))
+                iconImage.color = new Color(1f, 0.25f, 0.25f);
+
             icon.anchoredPosition = WorldToMinimap(health.transform.position);
             index++;
         }

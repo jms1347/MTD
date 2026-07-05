@@ -7,6 +7,7 @@ public class CwslPlayerVision : NetworkBehaviour
 
     private CwslPlayerCharacter playerCharacter;
     private CwslLocalDarkVision darkVision;
+    private CwslPlayerVisionDebuff visionDebuff;
     private float visionRadius = 14f;
     private bool localReady;
     private CwslPlayerVisionScry activeScry;
@@ -16,16 +17,18 @@ public class CwslPlayerVision : NetworkBehaviour
 
     /// <summary>시야 0 캐릭터도 발밑 짧은 반경은 보이게 하는 실제 판정/연출 반경.</summary>
     public float EffectiveVisionRadius =>
-        darkVision != null ? darkVision.EffectiveVisionRadius :
-        visionRadius <= 0.01f ? 2.8f : visionRadius;
+        IsBlindVision ? CwslGameConstants.BlindVisionRadius : ResolveEffectiveVisionRadius();
 
-    public bool IsBlindVision => visionRadius <= 0.01f;
+    public bool IsBlindVision => visionRadius <= 0.01f || IsForcedBlind;
+
+    public bool IsForcedBlind => visionDebuff != null && visionDebuff.IsForcedBlind;
 
     public Vector3 VisionOrigin => transform.position;
 
     public override void OnNetworkSpawn()
     {
         playerCharacter = GetComponent<CwslPlayerCharacter>();
+        visionDebuff = GetComponent<CwslPlayerVisionDebuff>();
         if (playerCharacter != null)
             playerCharacter.OnCharacterChanged += HandleCharacterChanged;
 
@@ -102,6 +105,7 @@ public class CwslPlayerVision : NetworkBehaviour
         EnsureDarkVision();
         CleanupHardVisionMasks();
         EnsureVisionSystem();
+        EnsureFogZoneEffect();
         ApplyVisionRadius();
     }
 
@@ -121,7 +125,28 @@ public class CwslPlayerVision : NetworkBehaviour
     private void ApplyVisionRadius()
     {
         if (darkVision != null)
-            darkVision.RefreshRadius(visionRadius);
+            darkVision.RefreshRadius(visionRadius, GetLighthouseVisionBonus());
+    }
+
+    private float ResolveEffectiveVisionRadius()
+    {
+        return visionRadius + GetLighthouseVisionBonus();
+    }
+
+    private float GetLighthouseVisionBonus()
+    {
+        if (IsBlindVision)
+            return 0f;
+
+        return CwslArenaGimmickSystem.GetLighthouseVisionBonus(transform.position);
+    }
+
+    private void Update()
+    {
+        if (!IsOwner || !localReady || darkVision == null)
+            return;
+
+        darkVision.RefreshRadius(visionRadius, GetLighthouseVisionBonus());
     }
 
     private void EnsureDarkVision()
@@ -129,13 +154,19 @@ public class CwslPlayerVision : NetworkBehaviour
         darkVision = GetComponent<CwslLocalDarkVision>();
         if (darkVision == null)
             darkVision = gameObject.AddComponent<CwslLocalDarkVision>();
-        darkVision.Activate(visionRadius);
+        darkVision.Activate(visionRadius, GetLighthouseVisionBonus());
     }
 
     private void EnsureVisionSystem()
     {
         if (GetComponent<CwslLocalVisionSystem>() == null)
             gameObject.AddComponent<CwslLocalVisionSystem>();
+    }
+
+    private void EnsureFogZoneEffect()
+    {
+        if (GetComponent<CwslLocalFogZoneEffect>() == null)
+            gameObject.AddComponent<CwslLocalFogZoneEffect>();
     }
 
     private void CleanupHardVisionMasks()

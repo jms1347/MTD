@@ -133,6 +133,10 @@ public class CwslLocalVisionSystem : MonoBehaviour
         flat.y = 0f;
         var distance = flat.magnitude;
 
+        if (CwslArenaGimmickSystem.IsBossFinalPhaseDarkness
+            && !CwslArenaGimmickSystem.IsInsideFinalPhaseVision(worldPosition))
+            return 0f;
+
         if (blind)
         {
             // 시야 없는 캐릭터: 완전 가깝지 않으면 거의 안 보임

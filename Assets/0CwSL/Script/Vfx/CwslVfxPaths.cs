@@ -45,6 +45,39 @@ public static class CwslVfxPaths
     public const string RammerStunSound =
         "Assets/Game/0Sound/stun-dding.mp3";
 
+    public const string SkillGoldFailSound =
+        "Assets/Game/0Sound/soundshelfstudio-ui-warning-buzz-515667.mp3";
+
+    public const string GatherChargeCastSound =
+        "Assets/Game/0Sound/BatteryCharge.mp3";
+
+    public const string GatherChargeLoopSound =
+        "Assets/Game/0Sound/drone-engine-loop-40794.mp3";
+
+    public const string GatherChargeEndSound =
+        "Assets/Game/0Sound/dragon-studio-power-off-386180.mp3";
+
+    public const string BossTeleportCastSound =
+        "Assets/Game/0Sound/boss-teleport-cast.mp3";
+
+    public const string BossTeleportArriveSound =
+        "Assets/Game/0Sound/boss-teleport-arrive.mp3";
+
+    public const string BossPhaseShiftSound =
+        "Assets/Game/0Sound/boss-phase-shift.mp3";
+
+    public const string TeamBallRollSound =
+        "Assets/Game/0Sound/team-ball-roll.mp3";
+
+    public const string TeamBallHitSound =
+        "Assets/Game/0Sound/team-ball-hit.mp3";
+
+    public const string CornerStoneBreakSound =
+        "Assets/Game/0Sound/corner-stone-break.mp3";
+
+    public const string BossWatchStartSound =
+        "Assets/Game/0Sound/boss-watch-start.mp3";
+
     public const string FortifyAura =
         "Assets/Epic Toon FX/Prefabs/Combat/Shield/ShieldSoftBlue.prefab";
 
@@ -67,14 +100,126 @@ public static class CwslVfxPaths
         "Assets/Epic Toon FX/Prefabs/Combat/Brawling/Stun/StunnedCirclingStars.prefab";
 
     public const string GatherChargeCircle =
-        "Assets/Epic Toon FX/Prefabs/Combat/Magic/Circle Simple/MagicCircleSimpleBlue.prefab";
+        "Assets/Epic Toon FX/Prefabs/Interactive/Zone/SpinZone/SpinZoneBlue.prefab";
 
     public const string GatherMaxReady =
         "Assets/Epic Toon FX/Prefabs/Combat/Magic/Charge/MagicChargeYellow.prefab";
 
     public const string GatherPullVortex =
-        "Assets/Epic Toon FX/Prefabs/Interactive/Portals/VortexPortal/VortexPortalPurple.prefab";
+        "Assets/Epic Toon FX/Prefabs/Interactive/Zone/SpinZone/SpinZoneBlue.prefab";
 
     public const string GatherPullBurst =
+        "Assets/Epic Toon FX/Prefabs/Interactive/Zone/SpinZone/SpinZoneBlue.prefab";
+
+    public const string GatherSlowEnchant =
+        "Assets/Epic Toon FX/Prefabs/Combat/Magic/Enchant/MagicEnchantBlue.prefab";
+
+    // --- 아레나 기믹 / 홍명보 보스 ---
+    public const string BossTeleportDepart =
+        "Assets/Epic Toon FX/Prefabs/Interactive/Portals/WavePortal/WavePortalBlue.prefab";
+
+    public const string BossTeleportArrive =
+        "Assets/Epic Toon FX/Prefabs/Interactive/Portals/WavePortal/WavePortalGold.prefab";
+
+    public const string BossPhaseTransition =
+        "Assets/Epic Toon FX/Prefabs/Combat/Explosions/MysticExplosion/MysticExplosionWhite.prefab";
+
+    public const string FightZoneAura =
+        "Assets/Epic Toon FX/Prefabs/Interactive/Zone/BasicZone/BasicZoneRed.prefab";
+
+    public const string TeamBallVisual =
+        "Assets/Epic Toon FX/Prefabs/Combat/Missiles/FatBullet/BulletFatFire.prefab";
+
+    public const string TeamBallTrail =
+        "Assets/Epic Toon FX/Prefabs/Environment/Fire/Trails/SpikyFireTrail.prefab";
+
+    public const string TeamBallHit =
+        "Assets/Epic Toon FX/Prefabs/Combat/Explosions/- Misc/BalloonPopExplosion.prefab";
+
+    public const string CornerStoneBreak =
+        "Assets/Epic Toon FX/Prefabs/Combat/Explosions/SoulExplosion/SoulExplosionCrimson.prefab";
+
+    public const string KarmaMilestone =
+        "Assets/Epic Toon FX/Prefabs/Combat/Explosions/SparkleExplosion/SparkleExplosionYellow.prefab";
+
+    public const string SilhouetteAura =
+        "Assets/Epic Toon FX/Prefabs/Combat/Explosions/ShadowExplosion/ShadowExplosion.prefab";
+
+    public const string PressConferenceRing =
+        "Assets/Epic Toon FX/Prefabs/Combat/Magic/Circle Simple/MagicCircleSimpleYellow.prefab";
+
+    public const string FinalPhaseRing =
+        "Assets/Epic Toon FX/Prefabs/Combat/Magic/Circle/MagicCircleYellow.prefab";
+
+    public const string FogZoneHeavy =
+        "Assets/Epic Toon FX/Prefabs/Environment/Fog/Black/FogHeavyBlack.prefab";
+
+    public const string FogZoneLively =
+        "Assets/Epic Toon FX/Prefabs/Environment/Fog/Black/FogLivelyBlack.prefab";
+
+    public const string FogZoneLocal =
+        "Assets/Epic Toon FX/Prefabs/Environment/Fog/Black/FogCalmBlack.prefab";
+
+    public const string BlackHoleVortex =
+        "Assets/Epic Toon FX/Prefabs/Interactive/Portals/VortexPortal/VortexPortalBlue.prefab";
+
+    public const string TrapPadAura =
+        "Assets/Epic Toon FX/Prefabs/Interactive/Zone/BasicZone/BasicZoneRed.prefab";
+
+    public const string TrapPadTrigger =
+        "Assets/Epic Toon FX/Prefabs/Combat/Explosions/SparkleExplosion/SparkleExplosionRed.prefab";
+
+    public const string KarmaHalfZoneAura =
+        "Assets/Epic Toon FX/Prefabs/Interactive/Zone/BasicZone/BasicZoneBlue.prefab";
+
+    public const string TianyuanAura =
         "Assets/Epic Toon FX/Prefabs/Interactive/Zone/SpinZone/SpinZoneOrange.prefab";
+
+    public const string LighthouseGlow =
+        "Assets/Epic Toon FX/Prefabs/Interactive/Loot/GlowOrb/GlowOrbYellow.prefab";
+
+    public const string WatchGlare =
+        "Assets/Epic Toon FX/Prefabs/Interactive/Emojis/EmojiAngry.prefab";
+
+    public const string WatchSparkle =
+        "Assets/Epic Toon FX/Prefabs/Interactive/Sparkle/TinySparkle.prefab";
+
+    public const string BossFightShield =
+        "Assets/Epic Toon FX/Prefabs/Combat/Shield/ShieldSoftYellow.prefab";
+
+    public const string OffsideLaserMissile =
+        "Assets/Epic Toon FX/Prefabs/Combat/Missiles/Laser/LaserMissileRed.prefab";
+
+    public const string FakeGoldExplosion =
+        "Assets/Epic Toon FX/Prefabs/Combat/Explosions/LaserExplosion/LaserExplosionRed.prefab";
+
+    public const string BadGrassAura =
+        "Assets/Epic Toon FX/Prefabs/Interactive/Zone/BasicZone/BasicZoneGreen.prefab";
+
+    public const string DonationPadGlow =
+        "Assets/Epic Toon FX/Prefabs/Interactive/Loot/GlowOrb/GlowOrbYellow.prefab";
+
+    public const string LightningStrike =
+        "Assets/Epic Toon FX/Prefabs/Environment/Lightning/Soft/LightningStrikeBlue.prefab";
+
+    public const string LightningOrb =
+        "Assets/Epic Toon FX/Prefabs/Environment/Lightning/Soft/LightningOrbPink.prefab";
+
+    public const string LightningMissile =
+        "Assets/Epic Toon FX/Prefabs/Combat/Missiles/Lightning/LightningMissilePink.prefab";
+
+    public const string LightningZoneAura =
+        "Assets/Epic Toon FX/Prefabs/Combat/Nova/Lightning/NovaLightningYellow.prefab";
+
+    public const string OffsideHornSound =
+        "Assets/Game/0Sound/boss-phase-shift.mp3";
+
+    public const string HazardAcidPad =
+        "Assets/Epic Toon FX/Prefabs/Environment/Water/Boiling/AcidBoiling.prefab";
+
+    public const string HazardLavaPad =
+        "Assets/Epic Toon FX/Prefabs/Environment/Water/Boiling/LavaBoiling.prefab";
+
+    public const string HazardWaterPad =
+        "Assets/Epic Toon FX/Prefabs/Environment/Water/Boiling/WaterBoiling.prefab";
 }

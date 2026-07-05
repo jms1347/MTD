@@ -170,6 +170,7 @@ public class LobbyUIController : MonoBehaviour
         errorText.text = string.Empty;
         SetStatus("대기실");
         localIpText.text = $"내 IP: {localIp}  (다른 사람에게 이 주소를 알려주세요)";
+        UpdateReadyButtonLabel();
     }
 
     private void ShowRoomPanel()
@@ -177,6 +178,7 @@ public class LobbyUIController : MonoBehaviour
         connectPanel.SetActive(false);
         roomPanel.SetActive(true);
         errorText.text = string.Empty;
+        SyncReadyButtonFromNetwork();
         RefreshPlayerList();
     }
 
@@ -203,7 +205,7 @@ public class LobbyUIController : MonoBehaviour
     private void OnReadyClicked()
     {
         isReady = !isReady;
-        readyButton.GetComponentInChildren<TextMeshProUGUI>().text = isReady ? "준비 취소" : "준비";
+        UpdateReadyButtonLabel();
         network.SetReady(isReady);
         UpdateStartButton();
     }
@@ -237,7 +239,27 @@ public class LobbyUIController : MonoBehaviour
             builder.Append("플레이어 없음");
 
         playerListText.text = builder.ToString();
+        SyncReadyButtonFromNetwork();
         UpdateStartButton();
+    }
+
+    private void SyncReadyButtonFromNetwork()
+    {
+        if (network == null || readyButton == null)
+            return;
+
+        isReady = network.LocalReadyState;
+        UpdateReadyButtonLabel();
+    }
+
+    private void UpdateReadyButtonLabel()
+    {
+        if (readyButton == null)
+            return;
+
+        var label = readyButton.GetComponentInChildren<TextMeshProUGUI>();
+        if (label != null)
+            label.text = isReady ? "준비 취소" : "준비";
     }
 
     private void UpdateStartButton()

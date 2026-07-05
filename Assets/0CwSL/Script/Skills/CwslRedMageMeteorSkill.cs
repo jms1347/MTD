@@ -30,7 +30,7 @@ public class CwslRedMageMeteorSkill : CwslPlayerSkillBase
             return false;
 
         var gold = GetComponent<CwslPlayerGold>();
-        return gold != null && gold.Gold >= CwslGameConstants.SkillGoldCost;
+        return gold != null && gold.Gold >= CwslGameConstants.MeteorGoldCost;
     }
 
     public override void OnSkillGroundTargetServer(ulong senderClientId, Vector3 worldPoint)
@@ -67,6 +67,19 @@ public class CwslRedMageMeteorSkill : CwslPlayerSkillBase
                 continue;
 
             monster.DamageFromPlayer(OwnerClientId, MeteorDamage);
+        }
+
+        var boss = CwslBossHongmyeongbo.Active;
+        if (boss != null)
+        {
+            var bossHealth = boss.GetComponent<CwslMonsterHealth>();
+            if (bossHealth != null && bossHealth.IsAlive)
+            {
+                var flat = boss.transform.position - impactPoint;
+                flat.y = 0f;
+                if (flat.sqrMagnitude <= radiusSqr)
+                    bossHealth.DamageFromPlayer(OwnerClientId, MeteorDamage);
+            }
         }
     }
 }

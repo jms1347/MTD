@@ -138,9 +138,6 @@ public class CwslMissileTankSkill : CwslPlayerSkillBase
 
     private bool ShouldAutoFire()
     {
-        if (playerGold == null || playerGold.Gold < CwslGameConstants.SkillGoldCost)
-            return false;
-
         if (combat != null && combat.IsPureMoveMode)
             return false;
 
@@ -176,9 +173,6 @@ public class CwslMissileTankSkill : CwslPlayerSkillBase
         if (Time.time < nextRightFireTime)
             return false;
 
-        if (playerGold == null || !playerGold.TrySpendGoldServer(CwslGameConstants.SkillGoldCost))
-            return false;
-
         FireFromGun(GunSide.Right);
         nextRightFireTime = Time.time + GunCooldown;
         return true;
@@ -186,12 +180,18 @@ public class CwslMissileTankSkill : CwslPlayerSkillBase
 
     private bool TryFireDualWieldServer()
     {
-        var dualCost = CwslGameConstants.SkillGoldCost * 2;
+        var dualCost = CwslGameConstants.MissileDualWieldGoldCost;
         if (playerGold == null || playerGold.Gold < dualCost)
+        {
+            GetComponent<CwslPlayerSkills>()?.NotifyGoldInsufficientServer();
             return false;
+        }
 
         if (!playerGold.TrySpendGoldServer(dualCost))
+        {
+            GetComponent<CwslPlayerSkills>()?.NotifyGoldInsufficientServer();
             return false;
+        }
 
         if (!TryPrepareShot(out var aimPoint, out var fireDirection, out var shotTarget))
             return false;

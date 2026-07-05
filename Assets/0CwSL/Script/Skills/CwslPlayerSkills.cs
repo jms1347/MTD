@@ -47,7 +47,7 @@ public class CwslPlayerSkills : NetworkBehaviour
 
     public void BeginGatherSkillServer(ulong senderClientId, Vector3 worldPoint)
     {
-        if (!IsServer || crowdGatherSkill == null)
+        if (!IsServer || crowdGatherSkill == null || BlocksSkillUseServer(senderClientId))
             return;
 
         if (!IsSkillActiveForCharacter(crowdGatherSkill))
@@ -58,7 +58,7 @@ public class CwslPlayerSkills : NetworkBehaviour
 
     public void UpdateGatherSkillServer(ulong senderClientId, Vector3 worldPoint)
     {
-        if (!IsServer || crowdGatherSkill == null)
+        if (!IsServer || crowdGatherSkill == null || BlocksSkillUseServer(senderClientId))
             return;
 
         if (!IsSkillActiveForCharacter(crowdGatherSkill))
@@ -69,7 +69,7 @@ public class CwslPlayerSkills : NetworkBehaviour
 
     public void PressSkillServer(ulong senderClientId)
     {
-        if (!IsServer)
+        if (!IsServer || BlocksSkillUseServer(senderClientId))
             return;
 
         foreach (var skill in skills)
@@ -86,7 +86,7 @@ public class CwslPlayerSkills : NetworkBehaviour
 
     public void ReleaseSkillServer(ulong senderClientId)
     {
-        if (!IsServer)
+        if (!IsServer || BlocksSkillUseServer(senderClientId))
             return;
 
         foreach (var skill in skills)
@@ -101,7 +101,7 @@ public class CwslPlayerSkills : NetworkBehaviour
 
     public void CastGroundSkillServer(ulong senderClientId, Vector3 worldPoint)
     {
-        if (!IsServer)
+        if (!IsServer || BlocksSkillUseServer(senderClientId))
             return;
 
         // 빨간 마법사 메테오 (프리팹에 스킬 컴포넌트가 없어도 동작)
@@ -120,7 +120,11 @@ public class CwslPlayerSkills : NetworkBehaviour
                 continue;
 
             if (!skill.CanCastServer(senderClientId))
-                continue;
+            {
+                if (IsGoldInsufficientForSkill())
+                    NotifyGoldInsufficientServer();
+                return;
+            }
 
             if (!TrySpendSkillCost())
                 return;
@@ -134,7 +138,13 @@ public class CwslPlayerSkills : NetworkBehaviour
         if (Time.time < nextMeteorTime)
             return;
 
-        if (!TrySpendSkillCost())
+        if (IsGoldInsufficientForSkill(CwslGameConstants.MeteorGoldCost))
+        {
+            NotifyGoldInsufficientServer();
+            return;
+        }
+
+        if (!TrySpendSkillCost(CwslGameConstants.MeteorGoldCost))
             return;
 
         nextMeteorTime = Time.time + MeteorCooldown;
@@ -169,7 +179,11 @@ public class CwslPlayerSkills : NetworkBehaviour
     private void TryCastInstant(CwslPlayerSkillBase skill, ulong senderClientId)
     {
         if (!skill.CanCastServer(senderClientId))
+        {
+            if (IsGoldInsufficientForSkill())
+                NotifyGoldInsufficientServer();
             return;
+        }
 
         if (!TrySpendSkillCost())
             return;
@@ -185,13 +199,58 @@ public class CwslPlayerSkills : NetworkBehaviour
         return skill.IsActiveForCharacter(characterId);
     }
 
-    private bool TrySpendSkillCost()
+    private bool BlocksSkillUseServer(ulong senderClientId)
     {
+        return senderClientId == OwnerClientId && CwslBossWatchState.BlocksSkills(senderClientId);
+    }
+
+    private bool TrySpendSkillCost(int baseCost = -1)
+    {
+        if (CwslArenaGimmickSystem.AreSkillsFreeInFightPhase(transform.position))
+            return true;
+
         var gold = GetComponent<CwslPlayerGold>();
         if (gold == null)
             return true;
 
-        return gold.TrySpendGoldServer(CwslGameConstants.SkillGoldCost);
+        var cost = (baseCost >= 0 ? baseCost : CwslGameConstants.SkillGoldCost)
+                   + CwslArenaGimmickSystem.GetExtraSkillGoldCost(transform.position);
+        if (gold.TrySpendGoldServer(cost))
+            return true;
+
+        NotifyGoldInsufficientServer();
+        return false;
+    }
+
+    public void NotifyGoldInsufficientServer()
+    {
+        if (!IsServer)
+            return;
+
+        NotifySkillGoldInsufficientClientRpc();
+    }
+
+    private bool IsGoldInsufficientForSkill(int baseCost = -1)
+    {
+        var gold = GetComponent<CwslPlayerGold>();
+        if (gold == null)
+            return false;
+
+        if (CwslArenaGimmickSystem.AreSkillsFreeInFightPhase(transform.position))
+            return false;
+
+        var cost = (baseCost >= 0 ? baseCost : CwslGameConstants.SkillGoldCost)
+                   + CwslArenaGimmickSystem.GetExtraSkillGoldCost(transform.position);
+        return gold.Gold < cost;
+    }
+
+    [ClientRpc]
+    private void NotifySkillGoldInsufficientClientRpc()
+    {
+        if (!IsOwner)
+            return;
+
+        CwslSkillGoldFeedback.ShowInsufficientGold();
     }
 
     [ClientRpc]

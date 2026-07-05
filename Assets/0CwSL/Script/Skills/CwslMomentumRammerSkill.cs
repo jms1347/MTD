@@ -136,7 +136,7 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
                (playerHealth == null || playerHealth.IsAlive) &&
                !IsStunned &&
                !isWingSpreadActive.Value &&
-               (playerGold == null || playerGold.Gold >= CwslGameConstants.SkillGoldCost);
+               (playerGold == null || playerGold.Gold >= CwslGameConstants.RammerWingSpreadStartGoldCost);
     }
 
     public override void OnSkillPressedServer(ulong senderClientId)
@@ -148,13 +148,17 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
             isWingSpreadActive.Value)
             return;
 
-        if (playerGold == null || !playerGold.TrySpendGoldServer(CwslGameConstants.SkillGoldCost))
+        if (playerGold == null || !playerGold.TrySpendGoldServer(CwslGameConstants.RammerWingSpreadStartGoldCost, playSpendEffect: false))
+        {
+            GetComponent<CwslPlayerSkills>()?.NotifyGoldInsufficientServer();
             return;
+        }
 
         isWingSpreadActive.Value = true;
         wingSpreadStartTime = Time.time;
         nextGoldSpendTime = Time.time + CwslGameConstants.RammerWingSpreadGoldIntervalSeconds;
         syncedBladeScale.Value = 1f;
+        PlayWingGoldSpendClientRpc(transform.position, CwslGameConstants.RammerWingSpreadStartGoldCost);
     }
 
     public override void OnSkillReleasedServer(ulong senderClientId)
@@ -191,11 +195,13 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
         if (Time.time >= nextGoldSpendTime)
         {
             nextGoldSpendTime = Time.time + CwslGameConstants.RammerWingSpreadGoldIntervalSeconds;
-            if (playerGold == null || !playerGold.TrySpendGoldServer(CwslGameConstants.SkillGoldCost))
+            if (playerGold == null || !playerGold.TrySpendGoldServer(CwslGameConstants.RammerWingSpreadTickGoldCost, playSpendEffect: false))
             {
                 StopWingSpreadServer();
                 return;
             }
+
+            PlayWingGoldSpendClientRpc(transform.position, CwslGameConstants.RammerWingSpreadTickGoldCost);
         }
 
         if (syncedBladeScale.Value >= CwslGameConstants.RammerWingSpreadMinScaleForDamage)
@@ -340,7 +346,8 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
         if (speed <= 0.01f)
             return;
 
-        var delta = moveDirection * (speed * Time.deltaTime);
+        var grassSlow = GetComponent<CwslSlowModifier>()?.SpeedMultiplier ?? 1f;
+        var delta = moveDirection * (speed * grassSlow * Time.deltaTime);
         var beforePosition = transform.position;
         var nextPosition = beforePosition + delta;
         nextPosition.y = beforePosition.y;
@@ -598,6 +605,12 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
             applyDamage();
             nextWingHitTimeByTarget[targetId] = Time.time + CwslGameConstants.RammerWingSpreadHitCooldown;
         }
+    }
+
+    [ClientRpc]
+    private void PlayWingGoldSpendClientRpc(Vector3 position, int amount)
+    {
+        CwslGoldFeedback.PlaySpend(position + Vector3.up * 0.9f, amount);
     }
 
     private void EnableNavMeshAgent()

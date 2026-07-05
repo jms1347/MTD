@@ -132,7 +132,8 @@ public class LobbyNetworkManager : MonoBehaviour
             IsClient = false;
 
             players.Clear();
-            players.Add(CreateLocalPlayer(isHost: true, ready: true));
+            players.Add(CreateLocalPlayer(isHost: true, ready: false));
+            LocalReadyState = false;
 
             acceptThread = new Thread(AcceptClientsLoop) { IsBackground = true };
             acceptThread.Start();
@@ -182,9 +183,9 @@ public class LobbyNetworkManager : MonoBehaviour
             isRunning = true;
 
             serverConnection = new ClientConnection(client);
-            serverConnection.OnMessageReceived += HandleClientMessage;
-            serverConnection.OnGameMessageReceived += HandleClientGameMessage;
-            serverConnection.OnDisconnected += HandleServerDisconnected;
+            serverConnection.OnMessageReceived += (conn, msg) => EnqueueMain(() => HandleClientMessage(conn, msg));
+            serverConnection.OnGameMessageReceived += (conn, json) => EnqueueMain(() => HandleClientGameMessage(conn, json));
+            serverConnection.OnDisconnected += () => EnqueueMain(HandleServerDisconnected);
             serverConnection.StartReadLoop();
 
             SendToServer(LobbyMessage.Join(LocalPlayerId, LocalPlayerName));
@@ -221,6 +222,7 @@ public class LobbyNetworkManager : MonoBehaviour
 
         if (IsHost)
         {
+            SyncLocalReadyFromPlayers();
             BroadcastPlayerList();
             OnPlayerListChanged?.Invoke();
         }
@@ -315,9 +317,9 @@ public class LobbyNetworkManager : MonoBehaviour
             return;
         }
 
-        connection.OnMessageReceived += HandleHostSideClientMessage;
-        connection.OnGameMessageReceived += HandleHostSideGameMessage;
-        connection.OnDisconnected += () => HandleClientDisconnected(connection);
+        connection.OnMessageReceived += (conn, msg) => EnqueueMain(() => HandleHostSideClientMessage(conn, msg));
+        connection.OnGameMessageReceived += (conn, json) => EnqueueMain(() => HandleHostSideGameMessage(conn, json));
+        connection.OnDisconnected += () => EnqueueMain(() => HandleClientDisconnected(connection));
         connection.StartReadLoop();
     }
 
@@ -329,6 +331,17 @@ public class LobbyNetworkManager : MonoBehaviour
         switch (message.type)
         {
             case LobbyMessage.JoinRequest:
+                if (players.Count >= CwslGameConstants.MaxPlayers)
+                {
+                    connection.Send(new LobbyMessage
+                    {
+                        type = LobbyMessage.Error,
+                        error = $"방이 가득 찼습니다. (최대 {CwslGameConstants.MaxPlayers}인)"
+                    });
+                    connection.Dispose();
+                    return;
+                }
+
                 if (string.IsNullOrEmpty(message.playerId))
                     message.playerId = Guid.NewGuid().ToString("N");
 
@@ -449,6 +462,7 @@ public class LobbyNetworkManager : MonoBehaviour
 
     private void UpdateLocalReadyState(bool ready)
     {
+        LocalReadyState = ready;
         for (var i = 0; i < players.Count; i++)
         {
             if (players[i].playerId != LocalPlayerId)
@@ -485,8 +499,23 @@ public class LobbyNetworkManager : MonoBehaviour
         if (remotePlayers != null)
             players.AddRange(remotePlayers);
 
+        SyncLocalReadyFromPlayers();
         OnPlayerListChanged?.Invoke();
     }
+
+    private void SyncLocalReadyFromPlayers()
+    {
+        for (var i = 0; i < players.Count; i++)
+        {
+            if (players[i].playerId != LocalPlayerId)
+                continue;
+
+            LocalReadyState = players[i].isReady;
+            return;
+        }
+    }
+
+    public bool LocalReadyState { get; private set; }
 
     private void BroadcastPlayerList() => Broadcast(LobbyMessage.Players(players.ToArray()));
 

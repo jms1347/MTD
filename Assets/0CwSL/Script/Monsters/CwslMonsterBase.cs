@@ -92,7 +92,8 @@ public abstract class CwslMonsterBase : NetworkBehaviour
         if (flat.sqrMagnitude < 0.0004f)
             return;
 
-        var step = flat.normalized * (moveSpeed * speedMultiplier * Time.deltaTime);
+        var step = flat.normalized * (moveSpeed * speedMultiplier * CwslArenaZones.GetMonsterSpeedMultiplier(transform.position)
+            * (GetComponent<CwslSlowModifier>()?.SpeedMultiplier ?? 1f) * Time.deltaTime);
         transform.position += step;
         transform.rotation = Quaternion.Slerp(
             transform.rotation,

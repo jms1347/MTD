@@ -11,13 +11,16 @@ public class CwslPlayerCharacter : NetworkBehaviour
 
     public CwslCharacterId CharacterId => (CwslCharacterId)syncedCharacterId.Value;
 
+    public static event Action OnAnyCharacterChanged;
+
     public event Action<CwslCharacterId> OnCharacterChanged;
 
     public override void OnNetworkSpawn()
     {
         syncedCharacterId.OnValueChanged += HandleCharacterChanged;
+
         if (IsServer)
-            syncedCharacterId.Value = (int)CwslCharacterId.Tank;
+            ApplyServerCharacterAssignment();
 
         NotifyCharacterChanged(CharacterId);
     }
@@ -25,6 +28,17 @@ public class CwslPlayerCharacter : NetworkBehaviour
     public override void OnNetworkDespawn()
     {
         syncedCharacterId.OnValueChanged -= HandleCharacterChanged;
+
+        if (IsServer)
+            CwslGameSession.Instance?.ReleaseCharacter(OwnerClientId);
+    }
+
+    internal void ApplyAssignedCharacterServer(CwslCharacterId characterId)
+    {
+        if (!IsServer || !Enum.IsDefined(typeof(CwslCharacterId), characterId))
+            return;
+
+        syncedCharacterId.Value = (int)characterId;
     }
 
     public void RequestSelect(CwslCharacterId characterId)
@@ -38,18 +52,25 @@ public class CwslPlayerCharacter : NetworkBehaviour
     [ServerRpc]
     private void RequestCharacterServerRpc(int characterId)
     {
-        if (!IsServer)
-            return;
+        // 본게임에서는 입장 시 배정된 캐릭터 고정 (C키/패널 변경 없음)
+    }
 
-        if (!Enum.IsDefined(typeof(CwslCharacterId), characterId))
+    private void ApplyServerCharacterAssignment()
+    {
+        var session = CwslGameSession.Instance;
+        if (session == null)
+        {
+            Debug.LogWarning("[CwSL] CwslGameSession 없음 — Tank로 폴백");
+            syncedCharacterId.Value = (int)CwslCharacterId.Tank;
             return;
+        }
 
-        var next = (CwslCharacterId)characterId;
-        if (CharacterId == next)
-            return;
+        session.EnsureCharacterAssigned(OwnerClientId);
 
-        GetComponent<CwslPlayerSkills>()?.ReleaseSkillServer(OwnerClientId);
-        syncedCharacterId.Value = characterId;
+        if (session.TryGetAssignedCharacter(OwnerClientId, out var assigned))
+            syncedCharacterId.Value = (int)assigned;
+        else
+            Debug.LogWarning($"[CwSL] 캐릭터 배정 실패 client={OwnerClientId}");
     }
 
     private void HandleCharacterChanged(int previous, int current)
@@ -60,5 +81,6 @@ public class CwslPlayerCharacter : NetworkBehaviour
     private void NotifyCharacterChanged(CwslCharacterId characterId)
     {
         OnCharacterChanged?.Invoke(characterId);
+        OnAnyCharacterChanged?.Invoke();
     }
 }

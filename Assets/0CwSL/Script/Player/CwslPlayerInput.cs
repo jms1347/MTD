@@ -3,15 +3,6 @@ using UnityEngine;
 
 public class CwslPlayerInput : NetworkBehaviour
 {
-    private static readonly CwslCharacterId[] CharacterCycle =
-    {
-        CwslCharacterId.Tank,
-        CwslCharacterId.MissileTank,
-        CwslCharacterId.RedMage,
-        CwslCharacterId.MomentumRammer,
-        CwslCharacterId.CrowdGatherer
-    };
-
     private Camera playerCamera;
     private CwslPlayerMovement movement;
     private CwslPlayerSelection selection;
@@ -41,13 +32,13 @@ public class CwslPlayerInput : NetworkBehaviour
             playerCamera = Camera.main;
     }
 
+    // TODO(릴리즈): 테스트용 치트키(C/R/U 등) — 정식 버전 전에 제거 예정. 현재는 보류(유지).
     private void Update()
     {
         if (!IsOwner || !IsSpawned)
             return;
 
         HandleCheatInput();
-        HandleCharacterSwitchInput();
 
         if (playerHealth != null && !playerHealth.IsAlive)
         {
@@ -70,40 +61,19 @@ public class CwslPlayerInput : NetworkBehaviour
         HandleGiftInput();
     }
 
+    // TODO(릴리즈): 테스트용 — C키 캐릭터 전환. 본게임에서는 비활성(입장 시 랜덤 배정).
     private void HandleCharacterSwitchInput()
     {
-        if (!Input.GetKeyDown(KeyCode.C) || playerCharacter == null)
-            return;
-
-        CancelGroundTargeting();
-        CancelAttackMovePending();
-        if (skillHeld)
-        {
-            skillHeld = false;
-            ReleaseSkillServerRpc();
-        }
-
-        var current = playerCharacter.CharacterId;
-        var index = 0;
-        for (var i = 0; i < CharacterCycle.Length; i++)
-        {
-            if (CharacterCycle[i] == current)
-            {
-                index = i;
-                break;
-            }
-        }
-
-        var next = CharacterCycle[(index + 1) % CharacterCycle.Length];
-        playerCharacter.RequestSelect(next);
     }
 
+    // TODO(릴리즈): 테스트용 — R(부활), U(카르마). 정식 버전 전 제거 예정.
     private void HandleCheatInput()
     {
-        if (!Input.GetKeyDown(KeyCode.R))
-            return;
+        if (Input.GetKeyDown(KeyCode.R))
+            CheatReviveServerRpc();
 
-        CheatReviveServerRpc();
+        if (Input.GetKeyDown(KeyCode.U))
+            CheatAddKarmaServerRpc();
     }
 
     private void HandleGroundTargetPreview()
@@ -297,18 +267,18 @@ public class CwslPlayerInput : NetworkBehaviour
                         UpdateGatherSkillServerRpc(point);
                     }
 
-                    var previewRadius = crowdGatherSkill != null && crowdGatherSkill.IsCharging
-                        ? crowdGatherSkill.ChargeRadius
-                        : CwslGameConstants.GatherMinRadius;
-                    var atMax = crowdGatherSkill != null && crowdGatherSkill.IsAtMaxCharge;
-                    CwslGatherTargetMarker.Show(point, previewRadius, atMax);
+                    if (crowdGatherSkill != null && crowdGatherSkill.IsCharging)
+                    {
+                        var previewRadius = crowdGatherSkill.ChargeRadius;
+                        var atMax = crowdGatherSkill.IsAtMaxCharge;
+                        CwslGatherChargeVisual.Sync(point, previewRadius, atMax);
+                    }
                 }
             }
             else if (skillHeld)
             {
                 skillHeld = false;
                 ReleaseSkillServerRpc();
-                CwslGatherTargetMarker.Hide();
             }
 
             return;
@@ -449,5 +419,11 @@ public class CwslPlayerInput : NetworkBehaviour
     private void CheatReviveServerRpc()
     {
         playerHealth?.CheatReviveServer();
+    }
+
+    [ServerRpc]
+    private void CheatAddKarmaServerRpc()
+    {
+        CwslKarmaSystem.Instance?.AddKarmaServer(CwslGameConstants.CheatKarmaIncrement);
     }
 }

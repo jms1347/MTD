@@ -21,6 +21,7 @@ MonoBehaviour:
   bossDeathVfx: {fileID: 1390804924065176, guid: 72ae485445fce1144bab28ae2f6aadd4, type: 3}
   playerDeathVfx: {fileID: 1631042304284920, guid: 94c74d51bcada5249a6520831c0f6e9b, type: 3}
   goldBurstVfx: {fileID: 143964, guid: 09d9de58ef3bf5444ac94afa0e6013cb, type: 3}
+  goldPickupSound: {fileID: 8300000, guid: bd7723e163262f04fb85ffc0537c0a58, type: 3}
   goldMagnetTrailVfx: {fileID: 118250, guid: a79f8048fa75d6c449d730e96bb836fa, type: 3}
   playerMissileVfx: {fileID: 135146, guid: b79841d82f4b1f6499d7f44697afdcbd, type: 3}
   gunMuzzleVfx: {fileID: 195376, guid: 346f3bf3686d682498113714ee132099, type: 3}
@@ -31,13 +32,61 @@ MonoBehaviour:
   meteorBurnVfx: {fileID: 1027697777517218, guid: 628d050c815a3a3448ce1dcdf0578f21, type: 3}
   rammerStunExplosionVfx: {fileID: 123268, guid: 775fb3e8f5df827428272416a14d9adf, type: 3}
   rammerStunStarsVfx: {fileID: 109542, guid: 2ed06ab528b7c474eb9246421cd7c791, type: 3}
-  gatherChargeCircleVfx: {fileID: 100100000, guid: 92f1a4b7c0101cb4f84455289ac65548, type: 3}
+  gatherChargeCircleVfx: {fileID: 124416, guid: 9b95de169c5cf5b46b404f6f2bed4afb, type: 3}
   gatherMaxReadyVfx: {fileID: 162722, guid: 1fc71432c1bd537489e1be6246b56973, type: 3}
-  gatherPullVortexVfx: {fileID: 100100000, guid: 603b7f589d2adc446ae6f20ac3b637b5, type: 3}
-  gatherPullBurstVfx: {fileID: 104456, guid: 31bea997407d42b4c815aff8926295bb, type: 3}
-  goldPickupSound: {fileID: 8300000, guid: bd7723e163262f04fb85ffc0537c0a58, type: 3}
+  gatherPullVortexVfx: {fileID: 124416, guid: 9b95de169c5cf5b46b404f6f2bed4afb, type: 3}
+  gatherPullBurstVfx: {fileID: 124416, guid: 9b95de169c5cf5b46b404f6f2bed4afb, type: 3}
+  gatherSlowEnchantVfx: {fileID: 164592, guid: 5423bfc84896575469c1270496ce5a32, type: 3}
+  bossTeleportDepartVfx: {fileID: 1414887181323416, guid: aef81f0abc923284db4c90166664a2e7, type: 3}
+  bossTeleportArriveVfx: {fileID: 1216923556492372, guid: cf0aeef6718bb3c47b97edde031754db, type: 3}
+  bossPhaseTransitionVfx: {fileID: 120778, guid: 632339e29e2ddd64aab6f9dd68facc82, type: 3}
+  fightZoneAuraVfx: {fileID: 197318, guid: c82022460ac6d274cb9e2aefc6da9dc9, type: 3}
+  teamBallVisualVfx: {fileID: 144206, guid: eecfd95aa06159440b824635d22e0f24, type: 3}
+  teamBallTrailVfx: {fileID: 185524, guid: 7ef15b3b75916c044aa8aa197b362208, type: 3}
+  teamBallHitVfx: {fileID: 193104, guid: c2f28a236b0696a4f90a994422019577, type: 3}
+  cornerStoneBreakVfx: {fileID: 169216, guid: 737959db973360b43bdeb1a4874f1af8, type: 3}
+  karmaMilestoneVfx: {fileID: 1438902432858508, guid: 70d6dfe08ec8a1447b4822e95e56918e, type: 3}
+  silhouetteAuraVfx: {fileID: 133642, guid: 721ed883392764d42a3957861e7752c0, type: 3}
+  pressConferenceRingVfx: {fileID: 1486123758399518, guid: c211cd63eef717741a0578bda14552a9, type: 3}
+  finalPhaseRingVfx: {fileID: 171722, guid: 8f3db2ef4b3fd674eafb97a117b99408, type: 3}
+  fogZoneHeavyVfx: {fileID: 140774, guid: 5f3df74fe190ff84f8893b1bbb6cb3b6, type: 3}
+  fogZoneLivelyVfx: {fileID: 183136, guid: 223b998603e7da64daa74a527588ce73, type: 3}
+  fogZoneLocalVfx: {fileID: 143018, guid: 4ef67ccc10cbe6c4494cb37e4a2cad03, type: 3}
+  goldLeakZoneAuraVfx: {fileID: 183362, guid: 3f97cdb2dde8d7f44a37ce3a93c2bf69, type: 3}
+  blackHoleVortexVfx: {fileID: 1209815176174424, guid: 6c4162965c7215f4a8c116238adb30ec, type: 3}
+  trapPadAuraVfx: {fileID: 197318, guid: c82022460ac6d274cb9e2aefc6da9dc9, type: 3}
+  trapPadTriggerVfx: {fileID: 0}
+  karmaHalfZoneAuraVfx: {fileID: 131378, guid: 79cd481c8e7a27a44ba9a78fbb16b903, type: 3}
+  tianyuanAuraVfx: {fileID: 156674, guid: 31bea997407d42b4c815aff8926295bb, type: 3}
+  lighthouseGlowVfx: {fileID: 184882, guid: 661f21b6e6d0a6543a4a1a9122f017b0, type: 3}
+  watchGlareVfx: {fileID: 180600, guid: f276f55eadaf0e34ba03d5b43bfbfae0, type: 3}
+  watchSparkleVfx: {fileID: 109358, guid: b043edfe6ed22be46b3d939fd3f3e5bb, type: 3}
+  bossFightShieldVfx: {fileID: 1527444747669750, guid: d689eae7844400f4883b231a5cd72279, type: 3}
+  fakeGoldExplosionVfx: {fileID: 134664, guid: 5b2df17ecc30d7b44909bcc7d4a4febd, type: 3}
+  badGrassAuraVfx: {fileID: 191608, guid: 087da436576d35542825d392925d79c4, type: 3}
+  donationPadGlowVfx: {fileID: 184882, guid: 661f21b6e6d0a6543a4a1a9122f017b0, type: 3}
+  offsideLaserMissileVfx: {fileID: 169190, guid: 7cf0c810c7ede2c42a2e71ac3c0e257d, type: 3}
+  lightningStrikeVfx: {fileID: 167788, guid: 76d4aad90bac27a4588a3efc2f93d6f2, type: 3}
+  lightningOrbVfx: {fileID: 1359518743339416, guid: fd6402536deadff48939913b6d3c7bf3, type: 3}
+  lightningMissileVfx: {fileID: 156818, guid: 1468a051063648a4ba29b56af532b72d, type: 3}
+  lightningZoneAuraVfx: {fileID: 134696, guid: b7e5be8cde65c7c42915ee6e2273d19b, type: 3}
+  hazardAcidPadVfx: {fileID: 112986, guid: e370423ba226169489d92631df31f5af, type: 3}
+  hazardLavaPadVfx: {fileID: 129292, guid: d8ac9950df006754ea1bf8311f5c97bc, type: 3}
+  hazardWaterPadVfx: {fileID: 130202, guid: 69650b375a92f8e4c8ac8682d63f7451, type: 3}
+  offsideHornSound: {fileID: 8300000, guid: ffd99eb29b9d64948b1c2da37db4f6f6, type: 3}
   horseGallopSound: {fileID: 8300000, guid: 1c9126a3c46df7646a547596f0bdf059, type: 3}
   rammerStunSound: {fileID: 8300000, guid: d097d189607736745b2dc78fd5b9089d, type: 3}
+  bossTeleportCastSound: {fileID: 8300000, guid: d33c283ab72bd3f4c80e6b8a8e28e85a, type: 3}
+  bossTeleportArriveSound: {fileID: 8300000, guid: dea7b595bc7f2484ca213788dc2071f6, type: 3}
+  bossPhaseShiftSound: {fileID: 8300000, guid: ffd99eb29b9d64948b1c2da37db4f6f6, type: 3}
+  teamBallRollSound: {fileID: 8300000, guid: 788f83e53e2b392438feae14288f8718, type: 3}
+  teamBallHitSound: {fileID: 8300000, guid: b677c83ef59b4634ca80569bb75bab48, type: 3}
+  cornerStoneBreakSound: {fileID: 8300000, guid: 72819ee026e50f0448d415c46aa381c8, type: 3}
+  bossWatchStartSound: {fileID: 0}
+  gatherChargeCastSound: {fileID: 8300000, guid: 2f434813ae7854c499c83c2be544ad2c, type: 3}
+  gatherChargeLoopSound: {fileID: 8300000, guid: f5377a5e50a0a5d46b2312f05881aaf3, type: 3}
+  gatherChargeEndSound: {fileID: 8300000, guid: 77dd773ebc12f094da54118ece216216, type: 3}
+  skillGoldFailSound: {fileID: 8300000, guid: 1977a51030f8f024191e311f880570eb, type: 3}
   playerPrefab: {fileID: 6360497807503343767, guid: 5885e0e861be95e41b8318c7d2df905d, type: 3}
   rangedMonsterPrefab: {fileID: 5648177666945189405, guid: 7c47dd5b69da58e46b0228723bfc6e50, type: 3}
   suicideMonsterPrefab: {fileID: 693524371213619005, guid: 89969a663620d644fbe8335b472026cd, type: 3}

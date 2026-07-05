@@ -25,7 +25,7 @@ public class CwslLocalDarkVision : MonoBehaviour
     private static readonly Color PlayerLightColor = new(1f, 0.82f, 0.58f, 1f);
     private const float SpotIntensityNormal = 1.0f;
     private const float SpotIntensityBlind = 0.75f;
-    private const float BlindVisionRadius = 2.8f;
+    private const float BlindVisionRadius = CwslGameConstants.BlindVisionRadius;
 
     private Light playerLight;
     private CwslScreenSpaceVision screenVision;
@@ -53,9 +53,9 @@ public class CwslLocalDarkVision : MonoBehaviour
 
     public float EffectiveVisionRadius => currentRadius;
 
-    public void Activate(float visionRadius)
+    public void Activate(float catalogVisionRadius, float lighthouseBonus = 0f)
     {
-        ApplyRadius(visionRadius);
+        ApplyRadius(catalogVisionRadius, lighthouseBonus);
         if (!applied)
         {
             CacheEnvironment();
@@ -70,26 +70,28 @@ public class CwslLocalDarkVision : MonoBehaviour
         ApplyCameraBackground();
     }
 
-    public void RefreshRadius(float visionRadius)
+    public void RefreshRadius(float catalogVisionRadius, float lighthouseBonus = 0f)
     {
-        ApplyRadius(visionRadius);
+        ApplyRadius(catalogVisionRadius, lighthouseBonus);
         if (!applied)
         {
-            Activate(visionRadius);
+            Activate(catalogVisionRadius, lighthouseBonus);
             return;
         }
 
         ApplyNightEnvironment();
         ApplyFarFogOnly();
         if (screenVision != null)
-            screenVision.SetVisionRadius(visionRadius);
+            screenVision.SetVisionRadius(isBlindVision ? 0f : currentRadius);
         ConfigureCameraAlignedLight(playerLight);
     }
 
-    private void ApplyRadius(float visionRadius)
+    private void ApplyRadius(float catalogVisionRadius, float lighthouseBonus = 0f)
     {
-        isBlindVision = visionRadius <= 0.01f;
-        currentRadius = isBlindVision ? BlindVisionRadius : Mathf.Max(8f, visionRadius);
+        isBlindVision = catalogVisionRadius <= 0.01f;
+        currentRadius = isBlindVision
+            ? BlindVisionRadius
+            : Mathf.Max(8f, catalogVisionRadius + lighthouseBonus);
     }
 
     private void LateUpdate()

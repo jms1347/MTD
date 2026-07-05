@@ -11,6 +11,11 @@ public class CwslGoldPickup : NetworkBehaviour, ICwslPooledNetworkObject
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server);
 
+    private readonly NetworkVariable<int> pickupKind = new(
+        (int)CwslGoldPickupKind.Normal,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server);
+
     private readonly NetworkVariable<ulong> magnetTargetId = new(
         0,
         NetworkVariableReadPermission.Everyone,
@@ -24,9 +29,11 @@ public class CwslGoldPickup : NetworkBehaviour, ICwslPooledNetworkObject
 
     public int GoldAmount => goldAmount.Value;
     public bool IsMagnetized => magnetTargetId.Value != 0;
+    public bool IsFake => pickupKind.Value == (int)CwslGoldPickupKind.Fake;
 
     public void ConfigureServer(Vector3 center, Vector3 finalPosition)
     {
+        pickupKind.Value = (int)CwslGoldPickupKind.Normal;
         goldAmount.Value = 1;
         claimed = false;
         magnetTargetId.Value = 0;
@@ -37,16 +44,31 @@ public class CwslGoldPickup : NetworkBehaviour, ICwslPooledNetworkObject
         transform.position = dropCenter;
     }
 
+    public void ConfigureFakeServer(Vector3 center, Vector3 finalPosition)
+    {
+        pickupKind.Value = (int)CwslGoldPickupKind.Fake;
+        goldAmount.Value = 0;
+        claimed = false;
+        magnetTargetId.Value = 0;
+        dropCenter = center;
+        spreadTarget = finalPosition;
+        spreadStartTime = Time.time;
+        claimableTime = Time.time + CwslGameConstants.GoldCoinSpreadDuration * 0.35f;
+        transform.position = dropCenter;
+    }
+
     public void OnSpawnedFromPool()
     {
         claimed = false;
         magnetTargetId.Value = 0;
+        pickupKind.Value = (int)CwslGoldPickupKind.Normal;
     }
 
     public void OnReturnedToPool()
     {
         claimed = false;
         magnetTargetId.Value = 0;
+        pickupKind.Value = (int)CwslGoldPickupKind.Normal;
     }
 
     private void Update()
@@ -157,6 +179,15 @@ public class CwslGoldPickup : NetworkBehaviour, ICwslPooledNetworkObject
 
         claimed = true;
         magnetTargetId.Value = 0;
+
+        if (IsFake)
+        {
+            CwslArenaTrapSystem.Instance?.TriggerFakeGoldServer(player, transform.position);
+            PlayFakeGoldTrapClientRpc(transform.position);
+            DespawnSelf();
+            return;
+        }
+
         Collect(player);
     }
 
@@ -170,9 +201,15 @@ public class CwslGoldPickup : NetworkBehaviour, ICwslPooledNetworkObject
         }
 
         playerGold.AddGoldServer(1);
-        CwslKarmaSystem.Instance?.AddKarmaServer(1);
+        var karmaGain = CwslArenaZones.ApplyKarmaMultiplier(player.transform.position, 1);
+        CwslKarmaSystem.Instance?.AddKarmaServer(karmaGain);
         PlayCollectClientRpc();
 
+        DespawnSelf();
+    }
+
+    private void DespawnSelf()
+    {
         if (NetworkObject != null && NetworkObject.IsSpawned)
         {
             if (CwslNetworkPoolService.Instance != null)
@@ -186,6 +223,13 @@ public class CwslGoldPickup : NetworkBehaviour, ICwslPooledNetworkObject
     private void PlayCollectClientRpc()
     {
         CwslGoldFeedback.PlayCoinSound(transform.position);
+    }
+
+    [ClientRpc]
+    private void PlayFakeGoldTrapClientRpc(Vector3 trapPosition)
+    {
+        CwslSkillGoldFeedback.PlayFailSound();
+        CwslVfxSpawner.SpawnFakeGoldExplosion(trapPosition);
     }
 
     private static bool TryGetPlayerFromCollider(Collider other, out NetworkObject player)

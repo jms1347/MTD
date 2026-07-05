@@ -34,7 +34,7 @@ public static class CwslGoldFeedback
     public static void PlaySpend(Vector3 worldPosition, int amount = 1)
     {
         CwslBlockCoinPop.SpawnSpend(worldPosition, amount);
-        PlayBurst(worldPosition);
+        CwslVfxSpawner.SpawnGoldSpendFountain(worldPosition, 0.75f + amount * 0.08f);
         PlayCoinSound(worldPosition);
     }
 

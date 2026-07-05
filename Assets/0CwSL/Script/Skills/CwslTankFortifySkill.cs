@@ -85,7 +85,7 @@ public class CwslTankFortifySkill : CwslPlayerSkillBase
         if (!IsServer || !isShieldActive.Value || playerGold == null)
             return false;
 
-        if (!playerGold.TrySpendGoldServer(CwslGameConstants.SkillGoldCost))
+        if (!playerGold.TrySpendGoldServer(CwslGameConstants.TankHitGoldCost))
         {
             RefreshShieldState();
             return false;
@@ -110,7 +110,7 @@ public class CwslTankFortifySkill : CwslPlayerSkillBase
 
         var shouldActivate = isFortifying.Value &&
                              playerGold != null &&
-                             playerGold.Gold >= CwslGameConstants.SkillGoldCost;
+                             playerGold.Gold >= CwslGameConstants.TankHitGoldCost;
         SetShieldActiveServer(shouldActivate);
     }
 

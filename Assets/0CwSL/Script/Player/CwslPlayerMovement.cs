@@ -180,7 +180,8 @@ public class CwslPlayerMovement : NetworkBehaviour
     private void ApplySpeed()
     {
         if (agent != null)
-            agent.speed = CwslGameConstants.BaseMoveSpeed * speedMultiplier;
+            agent.speed = CwslGameConstants.BaseMoveSpeed * speedMultiplier
+                          * (GetComponent<CwslSlowModifier>()?.SpeedMultiplier ?? 1f);
     }
 
     private CwslCharacterId GetCharacterId()
