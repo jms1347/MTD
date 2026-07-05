@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -9,12 +10,16 @@ public class CwslMonsterSpawner : NetworkBehaviour
 
     private float spawnTimer;
     private int aliveCount;
+    private readonly List<float> baseSpawnTimers = new();
 
     public bool SpawningEnabled { get; set; } = true;
 
     private void Update()
     {
         if (!IsServer || !SpawningEnabled)
+            return;
+
+        if (CwslGameConstants.UseDefenseMode)
             return;
 
         if (CwslKarmaSystem.Instance != null && CwslKarmaSystem.Instance.IsBossThresholdReached)
@@ -31,7 +36,42 @@ public class CwslMonsterSpawner : NetworkBehaviour
         }
 
         spawnTimer = spawnInterval;
-        QueueSpawnWithWarning(CwslArenaUtility.GetRandomSpawnPosition(), CwslMonsterType.Melee);
+        QueueSpawnWithWarning(CwslArenaUtility.GetRandomMonsterSpawnPosition(), CwslMonsterType.Melee);
+    }
+
+    public void TickDefenseSpawnsServer(float dt, IReadOnlyList<Vector3> basePositions, float intervalPerBase)
+    {
+        if (!IsServer || !SpawningEnabled || basePositions == null)
+            return;
+
+        while (baseSpawnTimers.Count < basePositions.Count)
+            baseSpawnTimers.Add(Random.Range(0f, intervalPerBase));
+
+        var manager = CwslMonsterManager.Instance;
+        var maxAlive = manager != null ? manager.MaxAliveMonsters : maxAliveMonsters;
+        var interval = manager != null ? manager.SpawnIntervalPerBase : intervalPerBase;
+
+        for (var i = 0; i < basePositions.Count; i++)
+        {
+            baseSpawnTimers[i] -= dt;
+            if (baseSpawnTimers[i] > 0f)
+                continue;
+
+            baseSpawnTimers[i] = interval;
+            if (aliveCount >= maxAlive)
+                continue;
+
+            var type = RollDefenseMinionType();
+            QueueDefenseSpawnServer(basePositions[i], type);
+        }
+    }
+
+    public void QueueDefenseSpawnServer(Vector3 position, CwslMonsterType forcedType)
+    {
+        if (!IsServer)
+            return;
+
+        StartCoroutine(SpawnWithWarningRoutine(position, forcedType, useDefenseRules: true));
     }
 
     public void SpawnMonstersNearServer(Vector3 center, int count, float spreadRadius)
@@ -93,29 +133,52 @@ public class CwslMonsterSpawner : NetworkBehaviour
         if (!IsServer)
             return;
 
-        StartCoroutine(SpawnWithWarningRoutine(position, forcedType));
+        StartCoroutine(SpawnWithWarningRoutine(position, forcedType, useDefenseRules: false));
     }
 
-    private IEnumerator SpawnWithWarningRoutine(Vector3 position, CwslMonsterType forcedType)
+    private IEnumerator SpawnWithWarningRoutine(Vector3 position, CwslMonsterType forcedType, bool useDefenseRules)
     {
-        var resolvedType = ResolveSpawnType(forcedType);
-        var isExecutive = forcedType == CwslMonsterType.Melee &&
+        var resolvedType = useDefenseRules ? forcedType : ResolveSpawnType(forcedType);
+        var isExecutive = !useDefenseRules &&
+                          forcedType == CwslMonsterType.Melee &&
                           resolvedType == CwslMonsterType.Melee &&
                           Random.value < CwslGameConstants.ExecutiveSpawnChance;
-        ShowSpawnWarningClientRpc(position, (int)resolvedType, CwslGameConstants.MonsterSpawnWarningSeconds);
 
-        yield return new WaitForSeconds(CwslGameConstants.MonsterSpawnWarningSeconds);
+        var warningSeconds = useDefenseRules && CwslMonsterManager.Instance != null
+            ? CwslMonsterManager.Instance.SpawnWarningSeconds
+            : CwslGameConstants.MonsterSpawnWarningSeconds;
+
+        ShowSpawnWarningClientRpc(position, (int)resolvedType, warningSeconds);
+        yield return new WaitForSeconds(warningSeconds);
 
         if (!IsServer || !SpawningEnabled)
             yield break;
 
-        if (CwslKarmaSystem.Instance != null && CwslKarmaSystem.Instance.IsBossThresholdReached)
+        if (!useDefenseRules &&
+            CwslKarmaSystem.Instance != null &&
+            CwslKarmaSystem.Instance.IsBossThresholdReached)
             yield break;
 
-        if (aliveCount >= maxAliveMonsters)
+        var maxAlive = useDefenseRules && CwslMonsterManager.Instance != null
+            ? CwslMonsterManager.Instance.MaxAliveMonsters
+            : maxAliveMonsters;
+        if (aliveCount >= maxAlive)
             yield break;
 
         SpawnMonsterAtServer(position, resolvedType, isExecutive);
+    }
+
+    private static CwslMonsterType RollDefenseMinionType()
+    {
+        return Random.Range(0, 6) switch
+        {
+            0 => CwslMonsterType.Melee,
+            1 => CwslMonsterType.Ranged,
+            2 => CwslMonsterType.Suicide,
+            3 => CwslMonsterType.NexusMelee,
+            4 => CwslMonsterType.NexusRanged,
+            _ => CwslMonsterType.NexusSuicide
+        };
     }
 
     private static CwslMonsterType ResolveSpawnType(CwslMonsterType forcedType)
@@ -147,17 +210,21 @@ public class CwslMonsterSpawner : NetworkBehaviour
             return;
 
         var instance = networkObject.gameObject;
+        instance.transform.localScale = Vector3.one;
+
         var health = instance.GetComponent<CwslMonsterHealth>();
         var monsterBase = instance.GetComponent<CwslMonsterBase>();
         monsterBase?.Initialize(type);
-        if (health != null)
+        if (health != null && monsterBase == null)
         {
             health.Configure(
                 type,
                 isExecutive ? CwslGameConstants.GoldDropExecutive : CwslGameConstants.GoldDropNormal,
                 isExecutive);
-            health.OnKilled += HandleMonsterKilled;
         }
+
+        if (health != null)
+            health.OnKilled += HandleMonsterKilled;
 
         aliveCount++;
     }

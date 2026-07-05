@@ -105,10 +105,11 @@ public class CwslLocalPlayerHud : NetworkBehaviour
         CwslBossHealthHud.Ensure(canvasTransform);
         EnsurePartyPanel(canvasTransform);
         EnsureGameOverHud(canvasTransform);
+        CwslDefenseHud.Ensure(canvasTransform);
         EnsureMinimap(canvasTransform);
-        if (GetComponent<CwslArenaGimmickVisualRunner>() == null)
+        if (GetComponent<CwslArenaGimmickVisualRunner>() == null && !CwslGameConstants.UseDefenseMode)
             gameObject.AddComponent<CwslArenaGimmickVisualRunner>();
-        if (GetComponent<CwslArenaTrapVisualRunner>() == null)
+        if (GetComponent<CwslArenaTrapVisualRunner>() == null && !CwslGameConstants.UseDefenseMode)
             gameObject.AddComponent<CwslArenaTrapVisualRunner>();
     }
 
@@ -179,6 +180,16 @@ public class CwslLocalPlayerHud : NetworkBehaviour
 
     private void EnsureGoldPanel(Transform canvasTransform)
     {
+        if (CwslGameConstants.UseDefenseMode)
+        {
+            var defenseGoldPanel = canvasTransform.Find("CwslGoldPanel");
+            if (defenseGoldPanel != null)
+                Destroy(defenseGoldPanel.gameObject);
+
+            goldLabel = null;
+            return;
+        }
+
         var existing = canvasTransform.Find("CwslGoldPanel");
         if (existing != null)
         {

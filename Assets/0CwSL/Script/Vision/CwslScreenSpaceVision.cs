@@ -2,9 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// 스크린 스페이스 시야 마스크.
-/// 플레이어의 화면 좌표를 중심으로 부드러운 원형 어둠을 그려,
-/// 쿼터뷰 카메라에서도 위쪽이 잘리지 않는다.
+/// 스크린 스페이스 시야 마스크 — 원형 어둠.
 /// </summary>
 public class CwslScreenSpaceVision : MonoBehaviour
 {
@@ -49,50 +47,39 @@ public class CwslScreenSpaceVision : MonoBehaviour
         if (camera == null || vignetteMaterial == null)
             return;
 
+        vignetteMaterial.SetFloat("_Aspect", CwslVisionShape.GetScreenAspect(camera));
+
         if (isAbsoluteBlind)
         {
             vignetteMaterial.SetVector("_Center", new Vector4(0.5f, 0.5f, 0f, 0f));
             vignetteMaterial.SetFloat("_InnerRadius", 0f);
             vignetteMaterial.SetFloat("_OuterRadius", 0.001f);
-            vignetteMaterial.SetFloat("_Aspect", (float)Screen.width / Mathf.Max(1f, Screen.height));
             vignetteMaterial.SetColor("_Color", DarkColor);
-            ApplyScryMask(camera, (float)Screen.width / Mathf.Max(1f, Screen.height));
+            ApplyScryMask(camera);
             return;
         }
 
-        // 플레이어 발밑(지면)을 스크린 좌표로
         var worldAnchor = followTarget.position;
         var viewport = camera.WorldToViewportPoint(worldAnchor);
         if (viewport.z <= 0f)
             return;
 
-        // 시야 반경을 뷰포트 단위로 변환 (지면 위 한 점 투영)
-        var edgeWorld = worldAnchor + GetCameraRightOnGround(camera) * visionRadius;
-        var edgeViewport = camera.WorldToViewportPoint(edgeWorld);
-        var center = new Vector2(viewport.x, viewport.y);
-        var edge = new Vector2(edgeViewport.x, edgeViewport.y);
+        CwslVisionShape.ProjectViewportRadii(
+            camera,
+            worldAnchor,
+            visionRadius,
+            isBlindVision,
+            out var innerRadius,
+            out var outerRadius);
 
-        // aspect 보정 전 거리
-        var aspect = (float)Screen.width / Mathf.Max(1f, Screen.height);
-        var delta = edge - center;
-        delta.x *= aspect;
-        var radiusViewport = delta.magnitude;
-        radiusViewport = Mathf.Clamp(radiusViewport, 0.04f, 0.98f);
-
-        // 안쪽은 밝고, 바깥으로 smoothstep 페이드
-        // 시야 없는 캐릭터는 더 타이트하게
-        var inner = isBlindVision ? radiusViewport * 0.25f : radiusViewport * 0.58f;
-        var outer = isBlindVision ? radiusViewport * 1.15f : radiusViewport * 1.28f;
-
-        vignetteMaterial.SetVector("_Center", new Vector4(center.x, center.y, 0f, 0f));
-        vignetteMaterial.SetFloat("_InnerRadius", inner);
-        vignetteMaterial.SetFloat("_OuterRadius", outer);
-        vignetteMaterial.SetFloat("_Aspect", aspect);
+        vignetteMaterial.SetVector("_Center", new Vector4(viewport.x, viewport.y, 0f, 0f));
+        vignetteMaterial.SetFloat("_InnerRadius", innerRadius);
+        vignetteMaterial.SetFloat("_OuterRadius", outerRadius);
         vignetteMaterial.SetColor("_Color", DarkColor);
-        ApplyScryMask(camera, aspect);
+        ApplyScryMask(camera);
     }
 
-    private void ApplyScryMask(Camera camera, float aspect)
+    private void ApplyScryMask(Camera camera)
     {
         if (vignetteMaterial == null)
             return;
@@ -111,26 +98,18 @@ public class CwslScreenSpaceVision : MonoBehaviour
             return;
         }
 
-        var edgeWorld = scryCenter + GetCameraRightOnGround(camera) * scryRadius;
-        var edgeViewport = camera.WorldToViewportPoint(edgeWorld);
-        var scryCenterViewport = new Vector2(scryViewport.x, scryViewport.y);
-        var edgeDelta = new Vector2(edgeViewport.x, edgeViewport.y) - scryCenterViewport;
-        edgeDelta.x *= aspect;
-        var scryRadiusViewport = Mathf.Clamp(edgeDelta.magnitude, 0.03f, 0.95f);
+        CwslVisionShape.ProjectViewportRadii(
+            camera,
+            scryCenter,
+            scryRadius,
+            blindVision: false,
+            out var innerRadius,
+            out var outerRadius);
 
         vignetteMaterial.SetFloat("_ScryActive", 1f);
-        vignetteMaterial.SetVector("_ScryCenter", new Vector4(scryCenterViewport.x, scryCenterViewport.y, 0f, 0f));
-        vignetteMaterial.SetFloat("_ScryInnerRadius", scryRadiusViewport * 0.52f);
-        vignetteMaterial.SetFloat("_ScryOuterRadius", scryRadiusViewport * 1.12f);
-    }
-
-    private static Vector3 GetCameraRightOnGround(Camera camera)
-    {
-        var right = camera.transform.right;
-        right.y = 0f;
-        if (right.sqrMagnitude < 0.0001f)
-            return Vector3.right;
-        return right.normalized;
+        vignetteMaterial.SetVector("_ScryCenter", new Vector4(scryViewport.x, scryViewport.y, 0f, 0f));
+        vignetteMaterial.SetFloat("_ScryInnerRadius", innerRadius * 0.52f);
+        vignetteMaterial.SetFloat("_ScryOuterRadius", outerRadius * 0.52f);
     }
 
     private void EnsureOverlay()

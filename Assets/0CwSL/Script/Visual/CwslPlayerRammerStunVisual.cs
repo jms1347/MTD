@@ -9,23 +9,83 @@ public class CwslPlayerRammerStunVisual : MonoBehaviour
     private GameObject starsInstance;
     private CwslPlayerStun playerStun;
     private CwslPlayerHealth playerHealth;
-    private bool wasStunned;
+    private bool rammerStunFxActive;
 
     private void Awake()
     {
         playerStun = GetComponentInParent<CwslPlayerStun>();
         playerHealth = GetComponentInParent<CwslPlayerHealth>();
-
-        var headPivot = transform.Find("HorseRoot/RiderPivot/HeadPivot");
-        if (headPivot == null)
-            return;
-
-        starsAnchor = new GameObject("RammerStunStarsAnchor").transform;
-        starsAnchor.SetParent(headPivot, false);
-        starsAnchor.localPosition = new Vector3(0f, 0.42f, 0f);
+        EnsureStarsAnchor();
     }
 
-    private void Start()
+    private void OnEnable()
+    {
+        if (playerStun != null)
+            playerStun.OnStunStateChanged += HandleStunStateChanged;
+
+        SyncWithCurrentStunState();
+    }
+
+    private void OnDisable()
+    {
+        if (playerStun != null)
+            playerStun.OnStunStateChanged -= HandleStunStateChanged;
+
+        EndStunVisual();
+    }
+
+    public void PlayStunVfx(Vector3 worldPosition)
+    {
+        rammerStunFxActive = true;
+        EnsureStarsAnchor();
+        CwslVfxSpawner.SpawnRammerStunExplosion(worldPosition);
+        EnsureStars();
+    }
+
+    public void OnStunEnded()
+    {
+        EndStunVisual();
+    }
+
+    private void HandleStunStateChanged(bool stunned)
+    {
+        if (stunned)
+        {
+            rammerStunFxActive = true;
+            EnsureStarsAnchor();
+            EnsureStars();
+            return;
+        }
+
+        EndStunVisual();
+    }
+
+    private void SyncWithCurrentStunState()
+    {
+        if (playerHealth != null && !playerHealth.IsAlive)
+        {
+            EndStunVisual();
+            return;
+        }
+
+        if (playerStun != null && playerStun.IsStunned)
+        {
+            rammerStunFxActive = true;
+            EnsureStarsAnchor();
+            EnsureStars();
+            return;
+        }
+
+        EndStunVisual();
+    }
+
+    private void EndStunVisual()
+    {
+        rammerStunFxActive = false;
+        ClearStars();
+    }
+
+    private void EnsureStarsAnchor()
     {
         if (starsAnchor != null)
             return;
@@ -39,37 +99,13 @@ public class CwslPlayerRammerStunVisual : MonoBehaviour
         starsAnchor.localPosition = new Vector3(0f, 0.42f, 0f);
     }
 
-    private void Update()
-    {
-        if (playerStun == null || starsAnchor == null)
-            return;
-
-        if (playerHealth != null && !playerHealth.IsAlive)
-        {
-            ClearStars();
-            wasStunned = false;
-            return;
-        }
-
-        var stunned = playerStun.IsStunned;
-        if (stunned && !wasStunned)
-            EnsureStars();
-
-        if (!stunned && wasStunned)
-            ClearStars();
-
-        wasStunned = stunned;
-    }
-
-    public void PlayStunVfx(Vector3 worldPosition)
-    {
-        CwslVfxSpawner.SpawnRammerStunExplosion(worldPosition);
-        EnsureStars();
-    }
-
     private void EnsureStars()
     {
-        if (starsInstance != null || starsAnchor == null)
+        if (!rammerStunFxActive || starsInstance != null)
+            return;
+
+        EnsureStarsAnchor();
+        if (starsAnchor == null)
             return;
 
         starsInstance = CwslVfxSpawner.AttachRammerStunStars(starsAnchor);

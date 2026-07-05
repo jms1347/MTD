@@ -32,23 +32,29 @@ public static class CwslGameSceneSetup
         var rangedPrefab = BuildMonsterPrefab(CwslMonsterType.Ranged, typeof(CwslRangedMonster), 0.55f);
         var suicidePrefab = BuildMonsterPrefab(CwslMonsterType.Suicide, typeof(CwslSuicideMonster), 0.5f);
         var meleePrefab = BuildMonsterPrefab(CwslMonsterType.Melee, typeof(CwslMeleeMonster), 0.6f);
+        var midBossPrefab = BuildMonsterPrefab(CwslMonsterType.MidBoss, typeof(CwslDefenseMidBoss), 0.85f);
+        var defenseBossPrefab = BuildMonsterPrefab(CwslMonsterType.DefenseBoss, typeof(CwslDefenseBoss), 1.1f);
         var bossPrefab = BuildBossPrefab();
         var projectilePrefab = BuildProjectilePrefab();
         var playerMissilePrefab = BuildPlayerMissilePrefab();
         var goldPickupPrefab = BuildGoldPickupPrefab();
         var pillPickupPrefab = BuildPillPickupPrefab();
         var graveVisualPrefab = BuildGraveVisualPrefab();
+        var nexusPrefab = BuildNexusPrefab();
 
         assets.playerPrefab = playerPrefab;
         assets.rangedMonsterPrefab = rangedPrefab;
         assets.suicideMonsterPrefab = suicidePrefab;
         assets.meleeMonsterPrefab = meleePrefab;
+        assets.midBossMonsterPrefab = midBossPrefab;
+        assets.defenseBossMonsterPrefab = defenseBossPrefab;
         assets.bossPrefab = bossPrefab;
         assets.projectilePrefab = projectilePrefab;
         assets.playerMissilePrefab = playerMissilePrefab;
         assets.goldPickupPrefab = goldPickupPrefab;
         assets.pillPickupPrefab = pillPickupPrefab;
         assets.graveVisualPrefab = graveVisualPrefab;
+        assets.nexusPrefab = nexusPrefab;
         assets.darkMissileVfx = LoadPrefab(CwslVfxPaths.RangedProjectileVisual);
         assets.shadowProjectileHitVfx = LoadPrefab(CwslVfxPaths.ShadowProjectileHit);
         assets.shadowMuzzleVfx = LoadPrefab(CwslVfxPaths.ShadowMuzzleFlash);
@@ -142,11 +148,14 @@ public static class CwslGameSceneSetup
         RegisterPrefab(networkPrefabs, rangedPrefab);
         RegisterPrefab(networkPrefabs, suicidePrefab);
         RegisterPrefab(networkPrefabs, meleePrefab);
+        RegisterPrefab(networkPrefabs, midBossPrefab);
+        RegisterPrefab(networkPrefabs, defenseBossPrefab);
         RegisterPrefab(networkPrefabs, bossPrefab);
         RegisterPrefab(networkPrefabs, projectilePrefab);
         RegisterPrefab(networkPrefabs, playerMissilePrefab);
         RegisterPrefab(networkPrefabs, goldPickupPrefab);
         RegisterPrefab(networkPrefabs, pillPickupPrefab);
+        RegisterPrefab(networkPrefabs, nexusPrefab);
         EditorUtility.SetDirty(networkPrefabs);
 
         BuildScene(assets, networkPrefabs);
@@ -617,14 +626,14 @@ public static class CwslGameSceneSetup
 
         var plane = GameObject.CreatePrimitive(PrimitiveType.Plane);
         plane.name = "ArenaPlane";
-        plane.transform.localScale = new Vector3(8f, 1f, 8f);
+        plane.transform.localScale = new Vector3(10f, 1f, 10f);
         var planeRenderer = plane.GetComponent<Renderer>();
         if (planeRenderer != null)
             planeRenderer.sharedMaterial = CwslMaterialUtil.CreateMatteColored(CwslGameConstants.ArenaFloorColor);
 
         var navMeshSurface = plane.AddComponent<NavMeshSurface>();
         navMeshSurface.center = new Vector3(0f, 0f, 0f);
-        navMeshSurface.size = new Vector3(80f, 20f, 80f);
+        navMeshSurface.size = new Vector3(100f, 20f, 100f);
         navMeshSurface.BuildNavMesh();
 
         var light = new GameObject("Directional Light");
@@ -662,18 +671,27 @@ public static class CwslGameSceneSetup
 
         var systems = new GameObject("CwslGameSystems");
         systems.AddComponent<NetworkObject>();
-        systems.AddComponent<CwslKarmaSystem>();
         systems.AddComponent<CwslTeamGoldCollectedSystem>();
         systems.AddComponent<CwslMonsterSpawner>();
         systems.AddComponent<CwslGameSession>();
         systems.AddComponent<CwslGameFlow>();
         systems.AddComponent<CwslNetworkPoolService>();
-        systems.AddComponent<CwslBossWatchState>();
-        systems.AddComponent<CwslArenaGimmickSystem>();
-        systems.AddComponent<CwslArenaTrapSystem>();
-        systems.AddComponent<CwslArenaHazardPadSystem>();
-        systems.AddComponent<CwslArenaBuffSystem>();
-        systems.AddComponent<CwslArenaDynamicZoneSystem>();
+
+        if (CwslGameConstants.UseDefenseMode)
+        {
+            systems.AddComponent<CwslMonsterManager>();
+            systems.AddComponent<CwslDefenseModeController>();
+        }
+        else
+        {
+            systems.AddComponent<CwslKarmaSystem>();
+            systems.AddComponent<CwslBossWatchState>();
+            systems.AddComponent<CwslArenaGimmickSystem>();
+            systems.AddComponent<CwslArenaTrapSystem>();
+            systems.AddComponent<CwslArenaHazardPadSystem>();
+            systems.AddComponent<CwslArenaBuffSystem>();
+            systems.AddComponent<CwslArenaDynamicZoneSystem>();
+        }
 
         var session = systems.GetComponent<CwslGameSession>();
         var sessionSerialized = new SerializedObject(session);
@@ -682,6 +700,22 @@ public static class CwslGameSceneSetup
         sessionSerialized.ApplyModifiedPropertiesWithoutUndo();
 
         EditorSceneManager.SaveScene(scene, ScenePath);
+    }
+
+    private static GameObject BuildNexusPrefab()
+    {
+        var root = new GameObject("CwslNexus");
+
+        CwslNexusVisualBuilder.Build(root.transform);
+
+        var collider = root.AddComponent<CapsuleCollider>();
+        CwslNexusVisualBuilder.ConfigureHitCollider(collider);
+
+        root.AddComponent<NetworkObject>();
+        root.AddComponent<CwslNexus>();
+        root.AddComponent<CwslNexusVisual>();
+
+        return SavePrefab(root, $"{PrefabFolder}/CwslNexus.prefab");
     }
 
     private static void UpdateBuildSettings()

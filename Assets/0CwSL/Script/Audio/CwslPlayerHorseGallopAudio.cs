@@ -23,6 +23,7 @@ public class CwslPlayerHorseGallopAudio : MonoBehaviour
     private NavMeshAgent agent;
     private Vector3 lastRootPosition;
     private bool clipAssigned;
+    private bool wasStunnedForAudio;
 
     private void Awake()
     {
@@ -42,6 +43,29 @@ public class CwslPlayerHorseGallopAudio : MonoBehaviour
         BindReferences();
         EnsureClip();
         ApplySpatialSettings();
+
+        if (playerStun != null)
+            playerStun.OnStunStateChanged += HandleStunStateChanged;
+    }
+
+    private void OnDestroy()
+    {
+        if (playerStun != null)
+            playerStun.OnStunStateChanged -= HandleStunStateChanged;
+    }
+
+    private void HandleStunStateChanged(bool stunned)
+    {
+        if (stunned)
+        {
+            wasStunnedForAudio = true;
+            StopGallop();
+            return;
+        }
+
+        wasStunnedForAudio = false;
+        lastRootPosition = transform.root.position;
+        source.volume = BaseVolume;
     }
 
     private void BindReferences()
@@ -75,16 +99,19 @@ public class CwslPlayerHorseGallopAudio : MonoBehaviour
             return;
         }
 
-        if (rammerSkill != null && rammerSkill.IsStunned)
+        var stunned = playerStun != null && playerStun.IsStunned;
+        if (stunned)
         {
+            wasStunnedForAudio = true;
             StopGallop();
             return;
         }
 
-        if (playerStun != null && playerStun.IsStunned)
+        if (wasStunnedForAudio)
         {
-            StopGallop();
-            return;
+            wasStunnedForAudio = false;
+            lastRootPosition = transform.root.position;
+            source.volume = BaseVolume;
         }
 
         var speed = ReadSpeed();

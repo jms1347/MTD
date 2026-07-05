@@ -6,99 +6,138 @@ public static class CwslMonsterVisualBuilder
     {
         var visualRoot = new GameObject("Visual");
         visualRoot.transform.SetParent(root, false);
+        var palette = CwslMonsterVisualPalette.GetPalette(type);
 
-        switch (type)
+        switch (ResolveSilhouette(type))
         {
-            case CwslMonsterType.Ranged:
-                BuildRanged(visualRoot.transform);
+            case MonsterSilhouette.Tank:
+                BuildTank(visualRoot.transform, palette);
                 break;
-            case CwslMonsterType.Suicide:
-                BuildSuicide(visualRoot.transform);
+            case MonsterSilhouette.Bomb:
+                BuildBomb(visualRoot.transform, palette);
                 break;
-            case CwslMonsterType.Melee:
-                BuildMelee(visualRoot.transform);
+            case MonsterSilhouette.Juggler:
+                BuildJuggler(visualRoot.transform, palette);
                 break;
-            case CwslMonsterType.BossHongmyeongbo:
-                BuildBoss(visualRoot.transform);
+            case MonsterSilhouette.Robot:
+                BuildHumanoidRobot(visualRoot.transform, palette);
                 break;
         }
     }
 
-    private static void BuildRanged(Transform root)
+    private enum MonsterSilhouette
     {
-        var baseCube = CreatePrimitive(PrimitiveType.Cube, root, new Vector3(0f, 0.35f, 0f), new Vector3(1.1f, 0.35f, 1.1f),
-            new Color(0.28f, 0.22f, 0.45f));
-        var body = CreatePrimitive(PrimitiveType.Sphere, root, new Vector3(0f, 0.95f, 0f), Vector3.one * 0.95f,
-            new Color(0.55f, 0.25f, 0.95f));
-        var eyeL = CreatePrimitive(PrimitiveType.Sphere, body.transform, new Vector3(-0.22f, 0.12f, 0.38f), Vector3.one * 0.18f,
-            new Color(0.95f, 0.2f, 0.85f));
-        var eyeR = CreatePrimitive(PrimitiveType.Sphere, body.transform, new Vector3(0.22f, 0.12f, 0.38f), Vector3.one * 0.18f,
-            new Color(0.95f, 0.2f, 0.85f));
+        Tank,
+        Bomb,
+        Juggler,
+        Robot
+    }
+
+    private static MonsterSilhouette ResolveSilhouette(CwslMonsterType type)
+    {
+        return type switch
+        {
+            CwslMonsterType.Ranged or CwslMonsterType.NexusRanged => MonsterSilhouette.Tank,
+            CwslMonsterType.Suicide or CwslMonsterType.NexusSuicide => MonsterSilhouette.Bomb,
+            CwslMonsterType.Melee or CwslMonsterType.NexusMelee => MonsterSilhouette.Juggler,
+            _ => MonsterSilhouette.Robot
+        };
+    }
+
+    private static void BuildTank(Transform root, CwslMonsterPalette palette)
+    {
+        var treadL = CreatePrimitive(PrimitiveType.Cube, root, new Vector3(-0.42f, 0.14f, 0f), new Vector3(0.28f, 0.18f, 1.05f),
+            palette.Metal);
+        var treadR = CreatePrimitive(PrimitiveType.Cube, root, new Vector3(0.42f, 0.14f, 0f), new Vector3(0.28f, 0.18f, 1.05f),
+            palette.Metal);
+        var hull = CreatePrimitive(PrimitiveType.Cube, root, new Vector3(0f, 0.34f, 0f), new Vector3(0.95f, 0.28f, 0.82f),
+            palette.Primary);
+        var skirt = CreatePrimitive(PrimitiveType.Cube, root, new Vector3(0f, 0.22f, 0f), new Vector3(1.02f, 0.12f, 0.88f),
+            palette.Secondary);
+        var turret = CreatePrimitive(PrimitiveType.Cylinder, root, new Vector3(0f, 0.52f, 0f), new Vector3(0.42f, 0.14f, 0.42f),
+            palette.Secondary);
+
         var cannonPivot = new GameObject("CannonPivot");
         cannonPivot.transform.SetParent(root, false);
-        cannonPivot.transform.localPosition = new Vector3(0f, 1.05f, 0.22f);
-        cannonPivot.transform.localRotation = Quaternion.Euler(12f, 0f, 0f);
+        cannonPivot.transform.localPosition = new Vector3(0f, 0.56f, 0.12f);
+        cannonPivot.transform.localRotation = Quaternion.Euler(8f, 0f, 0f);
 
-        var cannon = CreatePrimitive(PrimitiveType.Cylinder, cannonPivot.transform, new Vector3(0f, 0f, 0.22f),
-            new Vector3(0.22f, 0.35f, 0.22f), new Color(0.15f, 0.12f, 0.2f));
-        cannon.name = "Cannon";
-        cannon.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+        var barrel = CreatePrimitive(PrimitiveType.Cylinder, cannonPivot.transform, new Vector3(0f, 0f, 0.28f),
+            new Vector3(0.12f, 0.28f, 0.12f), palette.Metal);
+        barrel.name = "Cannon";
+        barrel.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
 
         var muzzle = new GameObject("Muzzle");
         muzzle.transform.SetParent(cannonPivot.transform, false);
-        muzzle.transform.localPosition = new Vector3(0f, 0f, 0.48f);
+        muzzle.transform.localPosition = new Vector3(0f, 0f, 0.52f);
 
-        RemoveCollider(baseCube);
-        RemoveCollider(body);
-        RemoveCollider(eyeL);
-        RemoveCollider(eyeR);
-        RemoveCollider(cannon);
+        RemoveColliders(treadL, treadR, hull, skirt, turret, barrel);
     }
 
-    private static void BuildSuicide(Transform root)
+    private static void BuildBomb(Transform root, CwslMonsterPalette palette)
     {
-        var core = CreatePrimitive(PrimitiveType.Sphere, root, new Vector3(0f, 0.65f, 0f), Vector3.one * 0.85f,
-            new Color(1f, 0.45f, 0.1f));
-        for (var i = 0; i < 6; i++)
-        {
-            var angle = i * 60f * Mathf.Deg2Rad;
-            var spike = CreatePrimitive(PrimitiveType.Cube, root,
-                new Vector3(Mathf.Cos(angle) * 0.55f, 0.65f, Mathf.Sin(angle) * 0.55f),
-                new Vector3(0.18f, 0.55f, 0.18f), new Color(1f, 0.2f, 0.05f));
-            spike.transform.localRotation = Quaternion.Euler(0f, i * 60f, 0f);
-            RemoveCollider(spike);
-        }
+        var body = CreatePrimitive(PrimitiveType.Sphere, root, new Vector3(0f, 0.58f, 0f), Vector3.one * 0.82f, palette.Secondary);
+        var band = CreatePrimitive(PrimitiveType.Cylinder, root, new Vector3(0f, 0.58f, 0f), new Vector3(0.9f, 0.05f, 0.9f),
+            palette.Accent);
+        band.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+        var fuse = CreatePrimitive(PrimitiveType.Cylinder, root, new Vector3(0f, 1.02f, 0f), new Vector3(0.06f, 0.16f, 0.06f),
+            palette.Metal);
+        var spark = CreatePrimitive(PrimitiveType.Sphere, root, new Vector3(0f, 1.18f, 0f), Vector3.one * 0.12f, palette.Accent);
 
-        var fuse = CreatePrimitive(PrimitiveType.Cylinder, root, new Vector3(0f, 1.15f, 0f), new Vector3(0.08f, 0.2f, 0.08f),
-            new Color(0.2f, 0.2f, 0.2f));
-        RemoveCollider(core);
-        RemoveCollider(fuse);
+        RemoveColliders(body, band, fuse, spark);
     }
 
-    private static void BuildMelee(Transform root)
+    private static void BuildJuggler(Transform root, CwslMonsterPalette palette)
     {
-        var body = CreatePrimitive(PrimitiveType.Sphere, root, new Vector3(0f, 0.7f, 0f), new Vector3(1.15f, 0.95f, 1.15f),
-            new Color(0.2f, 0.85f, 0.35f));
-        var jawL = CreatePrimitive(PrimitiveType.Cube, root, new Vector3(-0.35f, 0.45f, 0.35f), new Vector3(0.25f, 0.18f, 0.35f),
-            new Color(0.1f, 0.55f, 0.2f));
-        var jawR = CreatePrimitive(PrimitiveType.Cube, root, new Vector3(0.35f, 0.45f, 0.35f), new Vector3(0.25f, 0.18f, 0.35f),
-            new Color(0.1f, 0.55f, 0.2f));
-        RemoveCollider(body);
-        RemoveCollider(jawL);
-        RemoveCollider(jawR);
+        var body = CreatePrimitive(PrimitiveType.Capsule, root, new Vector3(0f, 0.42f, 0f), new Vector3(0.28f, 0.42f, 0.28f),
+            palette.Secondary);
+        var armL = CreatePrimitive(PrimitiveType.Cylinder, root, new Vector3(-0.28f, 0.62f, 0.04f), new Vector3(0.06f, 0.22f, 0.06f),
+            palette.Metal);
+        armL.transform.localRotation = Quaternion.Euler(0f, 0f, 58f);
+        var armR = CreatePrimitive(PrimitiveType.Cylinder, root, new Vector3(0.28f, 0.62f, 0.04f), new Vector3(0.06f, 0.22f, 0.06f),
+            palette.Metal);
+        armR.transform.localRotation = Quaternion.Euler(0f, 0f, -58f);
+
+        var ballL = CreatePrimitive(PrimitiveType.Sphere, root, new Vector3(-0.42f, 0.92f, 0.08f), Vector3.one * 0.22f, palette.Primary);
+        var ballC = CreatePrimitive(PrimitiveType.Sphere, root, new Vector3(0f, 1.18f, -0.02f), Vector3.one * 0.24f, palette.Accent);
+        var ballR = CreatePrimitive(PrimitiveType.Sphere, root, new Vector3(0.4f, 0.86f, 0.1f), Vector3.one * 0.2f,
+            Color.Lerp(palette.Primary, palette.Accent, 0.35f));
+
+        RemoveColliders(body, armL, armR, ballL, ballC, ballR);
     }
 
-    private static void BuildBoss(Transform root)
+    private static void BuildHumanoidRobot(Transform root, CwslMonsterPalette palette)
     {
-        var lower = CreatePrimitive(PrimitiveType.Cylinder, root, new Vector3(0f, 0.9f, 0f), new Vector3(2.4f, 0.9f, 2.4f),
-            new Color(0.15f, 0.35f, 0.95f));
-        var upper = CreatePrimitive(PrimitiveType.Sphere, root, new Vector3(0f, 2.2f, 0f), Vector3.one * 2.1f,
-            new Color(0.9f, 0.12f, 0.1f));
-        var crown = CreatePrimitive(PrimitiveType.Cube, root, new Vector3(0f, 3.35f, 0f), new Vector3(1.2f, 0.35f, 1.2f),
-            new Color(0.95f, 0.85f, 0.2f));
-        RemoveCollider(lower);
-        RemoveCollider(upper);
-        RemoveCollider(crown);
+        var legL = CreatePrimitive(PrimitiveType.Cube, root, new Vector3(-0.18f, 0.22f, 0f), new Vector3(0.16f, 0.34f, 0.16f),
+            palette.Metal);
+        var legR = CreatePrimitive(PrimitiveType.Cube, root, new Vector3(0.18f, 0.22f, 0f), new Vector3(0.16f, 0.34f, 0.16f),
+            palette.Metal);
+        var torso = CreatePrimitive(PrimitiveType.Cube, root, new Vector3(0f, 0.58f, 0f), new Vector3(0.42f, 0.42f, 0.24f),
+            palette.Metal);
+        var chest = CreatePrimitive(PrimitiveType.Cube, root, new Vector3(0f, 0.6f, 0.1f), new Vector3(0.3f, 0.28f, 0.08f),
+            palette.Primary);
+        var shoulderL = CreatePrimitive(PrimitiveType.Sphere, root, new Vector3(-0.28f, 0.72f, 0f), Vector3.one * 0.14f,
+            palette.Secondary);
+        var shoulderR = CreatePrimitive(PrimitiveType.Sphere, root, new Vector3(0.28f, 0.72f, 0f), Vector3.one * 0.14f,
+            palette.Secondary);
+        var armL = CreatePrimitive(PrimitiveType.Cube, root, new Vector3(-0.34f, 0.5f, 0.04f), new Vector3(0.1f, 0.28f, 0.1f),
+            palette.Metal);
+        var armR = CreatePrimitive(PrimitiveType.Cube, root, new Vector3(0.34f, 0.5f, 0.04f), new Vector3(0.1f, 0.28f, 0.1f),
+            palette.Metal);
+        var head = CreatePrimitive(PrimitiveType.Cube, root, new Vector3(0f, 0.92f, 0f), new Vector3(0.24f, 0.22f, 0.2f),
+            palette.Secondary);
+        var visor = CreatePrimitive(PrimitiveType.Cube, head.transform, new Vector3(0f, 0f, 0.1f), new Vector3(0.18f, 0.08f, 0.04f),
+            palette.Accent);
+        var antenna = CreatePrimitive(PrimitiveType.Cylinder, head.transform, new Vector3(0f, 0.16f, 0f), new Vector3(0.04f, 0.1f, 0.04f),
+            palette.Metal);
+
+        RemoveColliders(legL, legR, torso, chest, shoulderL, shoulderR, armL, armR, head, visor, antenna);
+    }
+
+    private static void RemoveColliders(params GameObject[] objects)
+    {
+        foreach (var go in objects)
+            RemoveCollider(go);
     }
 
     public static void BuildPlayer(Transform root, Color bodyColor)
@@ -585,7 +624,12 @@ public static class CwslMonsterVisualBuilder
     private static void RemoveCollider(GameObject go)
     {
         var collider = go.GetComponent<Collider>();
-        if (collider != null)
+        if (collider == null)
+            return;
+
+        if (Application.isPlaying)
+            Object.Destroy(collider);
+        else
             Object.DestroyImmediate(collider);
     }
 }

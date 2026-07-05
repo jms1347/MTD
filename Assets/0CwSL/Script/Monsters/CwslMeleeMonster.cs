@@ -130,16 +130,8 @@ public class CwslMeleeMonster : CwslMonsterBase
 
         transform.position += transform.forward * LungeDistance;
 
-
-
-        var playerHealth = currentTarget.GetComponent<CwslPlayerHealth>();
-
-        var hitPoint = currentTarget.transform.position + Vector3.up * 1.05f;
-
-        playerHealth?.TryReceiveMeleeHitServer(MeleeDamage, hitPoint);
-
-        PlayMeleeHitClientRpc(currentTarget.transform.position);
-
+        if (TryDamageCurrentTargetMelee(MeleeDamage, StickDistance + 0.65f, Vector3.up * 1.05f))
+            PlayMeleeHitClientRpc(currentTarget.transform.position);
     }
 
 

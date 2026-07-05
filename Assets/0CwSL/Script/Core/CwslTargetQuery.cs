@@ -34,6 +34,59 @@ public static class CwslTargetQuery
         return target != null;
     }
 
+    public static bool TryGetNearestCombatTarget(
+        Vector3 from,
+        CwslMonsterTargetingMode mode,
+        out NetworkObject target,
+        out float distance)
+    {
+        target = null;
+        distance = float.MaxValue;
+
+        var hasPlayer = TryGetNearestLivingPlayer(from, out var player, out var playerDistance);
+        var hasNexus = TryGetNexus(from, out var nexus, out var nexusDistance);
+
+        if (mode == CwslMonsterTargetingMode.NexusFirst && hasNexus)
+        {
+            target = nexus;
+            distance = nexusDistance;
+            return true;
+        }
+
+        if (!hasPlayer && !hasNexus)
+            return false;
+
+        if (hasPlayer && (!hasNexus || playerDistance <= nexusDistance))
+        {
+            target = player;
+            distance = playerDistance;
+            return true;
+        }
+
+        target = nexus;
+        distance = nexusDistance;
+        return true;
+    }
+
+    public static bool TryGetNexus(Vector3 from, out NetworkObject nexusObject, out float distance)
+    {
+        nexusObject = null;
+        distance = float.MaxValue;
+
+        var nexus = CwslNexus.Instance;
+        if (nexus == null || !nexus.IsAlive)
+            return false;
+
+        nexusObject = nexus.GetComponent<NetworkObject>();
+        if (nexusObject == null || !nexusObject.IsSpawned)
+            return false;
+
+        var flat = nexus.transform.position - from;
+        flat.y = 0f;
+        distance = flat.magnitude;
+        return true;
+    }
+
     public static bool TryGetClosestPlayerInRadius(Vector3 from, float radius, out NetworkObject target)
     {
         target = null;

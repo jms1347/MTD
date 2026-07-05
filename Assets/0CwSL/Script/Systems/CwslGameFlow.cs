@@ -17,6 +17,19 @@ public class CwslGameFlow : NetworkBehaviour
 
     public static event System.Action<bool> OnAllPlayersDefeatedChanged;
 
+    private readonly NetworkVariable<bool> defenseEnded = new(
+        false,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server);
+
+    private readonly NetworkVariable<bool> defenseVictory = new(
+        false,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server);
+
+    public bool DefenseEnded => defenseEnded.Value;
+    public bool DefenseVictory => defenseVictory.Value;
+
     private bool restartInProgress;
 
     private void Awake()
@@ -33,15 +46,34 @@ public class CwslGameFlow : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         allPlayersDefeated.OnValueChanged += HandleDefeatStateChanged;
+        defenseEnded.OnValueChanged += HandleDefenseEndedChanged;
         NotifyDefeatStateChanged(allPlayersDefeated.Value);
+        if (defenseEnded.Value)
+            NotifyDefenseResultChanged(defenseVictory.Value);
     }
 
     public override void OnNetworkDespawn()
     {
         allPlayersDefeated.OnValueChanged -= HandleDefeatStateChanged;
+        defenseEnded.OnValueChanged -= HandleDefenseEndedChanged;
 
         if (Instance == this)
             Instance = null;
+    }
+
+    public void NotifyDefenseEndedServer(bool victory)
+    {
+        if (!IsServer || restartInProgress)
+            return;
+
+        defenseVictory.Value = victory;
+        defenseEnded.Value = true;
+
+        var spawner = CwslGameSession.Instance?.MonsterSpawner;
+        if (spawner != null)
+            spawner.SpawningEnabled = false;
+
+        NotifyDefenseResultChanged(victory);
     }
 
     public void NotifyPlayerStateChangedServer()
@@ -137,6 +169,19 @@ public class CwslGameFlow : NetworkBehaviour
         }
 
         return hasPlayer;
+    }
+
+    private static void NotifyDefenseResultChanged(bool victory)
+    {
+        CwslGameOverHud.SetDefenseResult(victory);
+    }
+
+    private void HandleDefenseEndedChanged(bool previous, bool current)
+    {
+        if (!current)
+            return;
+
+        NotifyDefenseResultChanged(defenseVictory.Value);
     }
 
     private void HandleDefeatStateChanged(bool previous, bool current)

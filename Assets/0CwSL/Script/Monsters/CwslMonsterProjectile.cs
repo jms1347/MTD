@@ -11,16 +11,18 @@ public class CwslMonsterProjectile : NetworkBehaviour, ICwslPooledNetworkObject
     private float speed;
     private float lifetime;
     private float spawnTime;
+    private float damage = 10f;
     private bool configured;
 
     public bool IsActiveProjectile => configured && IsSpawned;
 
-    public void Configure(Vector3 fireDirection, float projectileSpeed, float maxLifetime)
+    public void Configure(Vector3 fireDirection, float projectileSpeed, float maxLifetime, float projectileDamage = 10f)
     {
         direction = fireDirection.sqrMagnitude < 0.0001f ? Vector3.forward : fireDirection.normalized;
 
         speed = projectileSpeed;
         lifetime = maxLifetime;
+        damage = projectileDamage;
         spawnTime = Time.time;
         configured = true;
         transform.rotation = Quaternion.LookRotation(direction, Vector3.up);
@@ -109,7 +111,7 @@ public class CwslMonsterProjectile : NetworkBehaviour, ICwslPooledNetworkObject
         if (marker == null || marker.Bubble == null || !marker.Bubble.IsBubbleActive)
             return false;
 
-        if (!marker.Bubble.TryBlockProjectileServer(transform.position, ProjectileDamage))
+        if (!marker.Bubble.TryBlockProjectileServer(transform.position, damage))
             return false;
 
         DespawnWithHitFx(transform.position);
@@ -145,7 +147,7 @@ public class CwslMonsterProjectile : NetworkBehaviour, ICwslPooledNetworkObject
             if (playerHealth == null || !playerHealth.IsAlive)
                 continue;
 
-            if (playerHealth.TryInterceptProjectileServer(transform.position, ProjectileDamage))
+            if (playerHealth.TryInterceptProjectileServer(transform.position, damage))
             {
                 DespawnWithHitFx(transform.position);
                 return;
@@ -159,7 +161,7 @@ public class CwslMonsterProjectile : NetworkBehaviour, ICwslPooledNetworkObject
             if (flat.sqrMagnitude > hitReach * hitReach)
                 continue;
 
-            playerHealth.TryReceiveProjectileHitServer(ProjectileDamage, transform.position);
+            playerHealth.TryReceiveProjectileHitServer(damage, transform.position);
             DespawnWithHitFx(transform.position);
             return;
         }
@@ -170,16 +172,23 @@ public class CwslMonsterProjectile : NetworkBehaviour, ICwslPooledNetworkObject
         if (!configured)
             return;
 
-        // 방패 버블은 위에서 처리
         if (collider.GetComponent<CwslShieldBubbleMarker>() != null
             || collider.GetComponentInParent<CwslShieldBubbleMarker>() != null)
             return;
+
+        var nexus = collider.GetComponentInParent<CwslNexus>();
+        if (nexus != null && nexus.IsAlive)
+        {
+            nexus.DamageServer(damage);
+            DespawnWithHitFx(transform.position);
+            return;
+        }
 
         var playerHealth = collider.GetComponentInParent<CwslPlayerHealth>();
         if (playerHealth == null || !playerHealth.IsAlive)
             return;
 
-        playerHealth.TryReceiveProjectileHitServer(ProjectileDamage, transform.position);
+        playerHealth.TryReceiveProjectileHitServer(damage, transform.position);
         DespawnWithHitFx(transform.position);
     }
 

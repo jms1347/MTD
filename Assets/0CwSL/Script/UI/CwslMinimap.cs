@@ -335,7 +335,7 @@ public class CwslMinimap : MonoBehaviour
 
     private static Vector2 WorldToMinimap(Vector3 worldPosition)
     {
-        var extent = CwslGameConstants.ArenaHalfExtent;
+        var extent = CwslArenaUtility.GetPlayHalfExtent();
         var half = MinimapSize * 0.5f - 12f;
         var x = Mathf.Clamp(worldPosition.x / extent, -1f, 1f) * half;
         var y = Mathf.Clamp(worldPosition.z / extent, -1f, 1f) * half;

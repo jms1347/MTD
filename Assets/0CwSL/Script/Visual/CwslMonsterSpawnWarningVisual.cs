@@ -47,22 +47,22 @@ public static class CwslMonsterSpawnWarningVisual
 
     private static string ResolveLabel(CwslMonsterType monsterType)
     {
+        if (CwslMonsterTypeUtil.IsNexusPriority(monsterType))
+            return "넥서스";
+
         return monsterType switch
         {
             CwslMonsterType.Ranged => "궁수",
             CwslMonsterType.Suicide => "돌격",
+            CwslMonsterType.MidBoss or CwslMonsterType.DefenseBoss => "보스",
             _ => "적"
         };
     }
 
     private static Color ResolveLabelColor(CwslMonsterType monsterType)
     {
-        return monsterType switch
-        {
-            CwslMonsterType.Ranged => new Color(0.55f, 0.35f, 0.95f, 1f),
-            CwslMonsterType.Suicide => new Color(0.95f, 0.42f, 0.12f, 1f),
-            _ => new Color(0.95f, 0.22f, 0.16f, 1f)
-        };
+        var palette = CwslMonsterVisualPalette.GetPalette(monsterType);
+        return palette.Primary;
     }
 }
 

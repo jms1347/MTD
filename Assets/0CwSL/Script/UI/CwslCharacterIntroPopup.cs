@@ -104,6 +104,8 @@ public static class CwslCharacterIntroPopup
         root.SetActive(false);
     }
 
+    public static bool IsVisible => root != null && root.activeSelf;
+
     public static void Show(CwslCharacterId characterId)
     {
         if (root == null)

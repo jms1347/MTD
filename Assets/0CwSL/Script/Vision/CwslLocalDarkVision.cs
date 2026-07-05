@@ -43,6 +43,9 @@ public class CwslLocalDarkVision : MonoBehaviour
     private float previousFogDensity;
     private Color previousAmbient;
     private AmbientMode previousAmbientMode;
+    private bool hadCameraState;
+    private CameraClearFlags previousClearFlags;
+    private Color previousBackgroundColor;
     private readonly System.Collections.Generic.List<LightState> directionalStates = new();
 
     private struct LightState
@@ -57,6 +60,7 @@ public class CwslLocalDarkVision : MonoBehaviour
     public void Activate(float catalogVisionRadius, float lighthouseBonus = 0f, bool absoluteBlind = false)
     {
         ApplyRadius(catalogVisionRadius, lighthouseBonus, absoluteBlind);
+
         if (!applied)
         {
             CacheEnvironment();
@@ -74,9 +78,10 @@ public class CwslLocalDarkVision : MonoBehaviour
     public void RefreshRadius(float catalogVisionRadius, float lighthouseBonus = 0f, bool absoluteBlind = false)
     {
         ApplyRadius(catalogVisionRadius, lighthouseBonus, absoluteBlind);
+
         if (!applied)
         {
-            Activate(catalogVisionRadius, lighthouseBonus);
+            Activate(catalogVisionRadius, lighthouseBonus, absoluteBlind);
             return;
         }
 
@@ -128,6 +133,14 @@ public class CwslLocalDarkVision : MonoBehaviour
         previousFogDensity = RenderSettings.fogDensity;
         previousAmbient = RenderSettings.ambientLight;
         previousAmbientMode = RenderSettings.ambientMode;
+
+        var camera = Camera.main;
+        if (camera != null)
+        {
+            hadCameraState = true;
+            previousClearFlags = camera.clearFlags;
+            previousBackgroundColor = camera.backgroundColor;
+        }
 
         directionalStates.Clear();
         foreach (var light in FindObjectsByType<Light>(FindObjectsSortMode.None))
@@ -207,24 +220,27 @@ public class CwslLocalDarkVision : MonoBehaviour
 
         // 시야 원 전체가 안개 시작보다 앞에 오도록 충분히 멀리
         var maxVisionCamDist = EstimateMaxCameraDistanceInVisionCircle(currentRadius);
+        var fogStart = maxVisionCamDist + currentRadius * 0.8f;
+        // 카메라-플레이어 거리보다 앞에서 안개가 시작되지 않게 (캐릭터 주변 안개 방지)
+        fogStart = Mathf.Max(fogStart, cameraDistance + currentRadius * 1.6f + 8f);
 
         RenderSettings.fog = true;
         RenderSettings.fogMode = FogMode.Linear;
         RenderSettings.fogColor = FogColor;
-        RenderSettings.fogStartDistance = maxVisionCamDist + currentRadius * 0.8f;
-        RenderSettings.fogEndDistance = maxVisionCamDist + currentRadius * 3.5f + 10f;
+        RenderSettings.fogStartDistance = fogStart;
+        RenderSettings.fogEndDistance = fogStart + currentRadius * 2.7f + 18f;
     }
 
     private float EstimateMaxCameraDistanceInVisionCircle(float visionRadius)
     {
         var camera = Camera.main;
+        var playerPos = transform.position;
+        playerPos.y = 0f;
+
         if (camera == null)
             return 24f + visionRadius;
 
         var camPos = camera.transform.position;
-        var playerPos = transform.position;
-        playerPos.y = 0f;
-
         var toPlayer = playerPos - camPos;
         toPlayer.y = 0f;
         if (toPlayer.sqrMagnitude < 0.0001f)
@@ -273,8 +289,7 @@ public class CwslLocalDarkVision : MonoBehaviour
     }
 
     /// <summary>
-    /// 카메라와 같은 각도로 Spot Light를 쏴서, 화면에서 시야가 원형으로 보이게 함.
-    /// (수직 조명은 쿼터뷰에서 위쪽이 잘림)
+    /// 카메라와 같은 각도로 Spot Light를 쏴 원형 시야를 은은히 비춤.
     /// </summary>
     private void ConfigureCameraAlignedLight(Light light)
     {
@@ -302,13 +317,11 @@ public class CwslLocalDarkVision : MonoBehaviour
             return;
         }
 
-        // 카메라와 평행한 방향으로, 플레이어 뒤/위에서 비춤
         var lightDistance = isBlindVision ? 6f : 10f;
         var worldPos = transform.position - camera.transform.forward * lightDistance;
         light.transform.position = worldPos;
         light.transform.rotation = camera.transform.rotation;
 
-        // 시야 반경이 화면에 원형으로 담기도록 각도·범위를 반경에 맞춤
         var radiusT = Mathf.InverseLerp(8f, 28f, currentRadius);
         light.range = lightDistance + currentRadius * 2.4f;
         light.spotAngle = isBlindVision ? 42f : Mathf.Lerp(52f, 82f, radiusT);
@@ -357,6 +370,16 @@ public class CwslLocalDarkVision : MonoBehaviour
 
         if (screenVision != null)
             screenVision.Deactivate();
+
+        if (hadCameraState)
+        {
+            var camera = Camera.main;
+            if (camera != null)
+            {
+                camera.clearFlags = previousClearFlags;
+                camera.backgroundColor = previousBackgroundColor;
+            }
+        }
 
         applied = false;
     }

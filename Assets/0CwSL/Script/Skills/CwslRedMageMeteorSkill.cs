@@ -71,5 +71,26 @@ public class CwslRedMageMeteorSkill : CwslPlayerSkillBase
 
             monster.DamageFromPlayer(OwnerClientId, MeteorDamage);
         }
+
+        if (NetworkManager.Singleton == null)
+            yield break;
+
+        foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
+        {
+            var playerObject = client.PlayerObject;
+            if (playerObject == null || playerObject.OwnerClientId == OwnerClientId)
+                continue;
+
+            var playerHealth = playerObject.GetComponent<CwslPlayerHealth>();
+            if (playerHealth == null || !playerHealth.IsAlive)
+                continue;
+
+            var flat = playerObject.transform.position - impactPoint;
+            flat.y = 0f;
+            if (flat.sqrMagnitude > radiusSqr)
+                continue;
+
+            playerHealth.TryReceiveExplosionHitServer(MeteorDamage, playerObject.transform.position);
+        }
     }
 }

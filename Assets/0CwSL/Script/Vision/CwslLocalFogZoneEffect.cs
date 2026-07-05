@@ -10,6 +10,18 @@ public class CwslLocalFogZoneEffect : MonoBehaviour
 
     private void Update()
     {
+        if (CwslGameConstants.UseDefenseMode)
+        {
+            if (localFog != null)
+            {
+                Destroy(localFog);
+                localFog = null;
+            }
+
+            inFogZone = false;
+            return;
+        }
+
         var inZone = CwslArenaGimmickSystem.IsFogVortexAt(transform.position);
         if (inZone == inFogZone)
             return;

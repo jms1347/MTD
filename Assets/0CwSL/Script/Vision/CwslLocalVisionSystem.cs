@@ -158,7 +158,7 @@ public class CwslLocalVisionSystem : MonoBehaviour
     {
         var flat = worldPosition - origin;
         flat.y = 0f;
-        var distance = flat.magnitude;
+        var distance = CwslVisionShape.GetCircularFlatDistance(origin, worldPosition);
 
         if (CwslArenaGimmickSystem.IsBossFinalPhaseDarkness
             && !CwslArenaGimmickSystem.IsInsideFinalPhaseVision(worldPosition))

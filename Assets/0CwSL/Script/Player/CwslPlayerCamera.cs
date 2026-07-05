@@ -1,11 +1,15 @@
 using UnityEngine;
 
+/// <summary>
+/// 플레이어 추적 카메라.
+/// 월드 XZ 축에 맞춘 방송 시점 — 맵이 마름모가 아니라 축구장처럼 직사각형으로 보임.
+/// </summary>
 public class CwslPlayerCamera : MonoBehaviour
 {
-    private const float Pitch = 52f;
-    private const float Yaw = 45f;
-    private const float Distance = 37.5f;
-    private const float FieldOfView = 42f;
+    private const float Pitch = 56f;
+    private const float Yaw = 0f;
+    private const float Distance = 41f;
+    private const float FieldOfView = 40f;
     private const float FollowSmoothTime = 0.38f;
 
     private Transform target;

@@ -5,8 +5,10 @@ using UnityEngine;
 public class CwslPlayerProjectile : NetworkBehaviour, ICwslPooledNetworkObject
 {
     private static int monsterLayerMask = -1;
+    private static int playerLayerMask = -1;
 
     private readonly HashSet<ulong> hitMonsterIds = new();
+    private readonly HashSet<ulong> hitPlayerIds = new();
 
     private Vector3 direction;
     private Vector3 spawnOrigin;
@@ -44,6 +46,7 @@ public class CwslPlayerProjectile : NetworkBehaviour, ICwslPooledNetworkObject
         homingTarget = target;
         configured = true;
         hitMonsterIds.Clear();
+        hitPlayerIds.Clear();
         transform.rotation = Quaternion.LookRotation(direction, Vector3.up);
     }
 
@@ -55,6 +58,7 @@ public class CwslPlayerProjectile : NetworkBehaviour, ICwslPooledNetworkObject
         spawnTime = 0f;
         ownerNetworkObject = null;
         hitMonsterIds.Clear();
+        hitPlayerIds.Clear();
     }
 
     public void OnReturnedToPool()
@@ -64,6 +68,7 @@ public class CwslPlayerProjectile : NetworkBehaviour, ICwslPooledNetworkObject
         homingTarget = null;
         ownerNetworkObject = null;
         hitMonsterIds.Clear();
+        hitPlayerIds.Clear();
     }
 
     private void Update()
@@ -93,7 +98,28 @@ public class CwslPlayerProjectile : NetworkBehaviour, ICwslPooledNetworkObject
         if (!IsServer || !configured || !CanHitNow() || ShouldIgnoreCollider(other))
             return;
 
+        if (TryHitShieldBubble(other))
+            return;
+
         TryDamageCollider(other);
+    }
+
+    private bool TryHitShieldBubble(Component collider)
+    {
+        if (!configured || collider == null)
+            return false;
+
+        var marker = collider.GetComponent<CwslShieldBubbleMarker>()
+                     ?? collider.GetComponentInParent<CwslShieldBubbleMarker>();
+        if (marker == null || marker.Bubble == null || !marker.Bubble.IsBubbleActive)
+            return false;
+
+        if (!marker.Bubble.TryBlockProjectileServer(transform.position, damage))
+            return false;
+
+        configured = false;
+        DespawnSelf();
+        return true;
     }
 
     private bool CanHitNow()
@@ -119,6 +145,13 @@ public class CwslPlayerProjectile : NetworkBehaviour, ICwslPooledNetworkObject
 
         var ownerHealth = collider.GetComponentInParent<CwslPlayerHealth>();
         return ownerHealth != null && ownerHealth.OwnerClientId == ownerClientId;
+    }
+
+    private bool ShouldSkipPlayerForProjectile(CwslPlayerHealth playerHealth)
+    {
+        return playerHealth == null
+               || !playerHealth.IsAlive
+               || playerHealth.OwnerClientId == ownerClientId;
     }
 
     private void TryHitAlongPath(Vector3 from, Vector3 to)
@@ -155,8 +188,40 @@ public class CwslPlayerProjectile : NetworkBehaviour, ICwslPooledNetworkObject
             }
         }
 
+        if (playerLayerMask < 0)
+            playerLayerMask = LayerMask.GetMask(CwslGameConstants.LayerPlayer);
+
+        var playerMask = playerLayerMask != 0 ? playerLayerMask : ~0;
+        if (distance > 0.0001f)
+        {
+            var playerHits = Physics.SphereCastAll(
+                from,
+                CwslGameConstants.PlayerBulletHitRadius,
+                delta.normalized,
+                distance,
+                playerMask,
+                QueryTriggerInteraction.Collide);
+
+            System.Array.Sort(playerHits, (a, b) => a.distance.CompareTo(b.distance));
+
+            foreach (var hit in playerHits)
+            {
+                if (ShouldIgnoreCollider(hit.collider))
+                    continue;
+
+                if (TryHitShieldBubble(hit.collider))
+                    return;
+
+                TryDamageCollider(hit.collider);
+                if (!configured)
+                    return;
+            }
+        }
+
         TryHitMonstersAt(to);
+        TryHitPlayersAt(to);
         TryFlatDirectionHit(from, to);
+        TryFlatDirectionHitPlayers(from, to);
     }
 
     private bool ShouldSkipMonsterForProjectile(CwslMonsterHealth monsterHealth)
@@ -191,6 +256,124 @@ public class CwslPlayerProjectile : NetworkBehaviour, ICwslPooledNetworkObject
             if (!configured)
                 return;
         }
+    }
+
+    private void TryHitPlayersAt(Vector3 position)
+    {
+        if (playerLayerMask < 0)
+            playerLayerMask = LayerMask.GetMask(CwslGameConstants.LayerPlayer);
+
+        var mask = playerLayerMask != 0 ? playerLayerMask : ~0;
+        var hits = Physics.OverlapSphere(
+            position,
+            CwslGameConstants.PlayerBulletHitRadius,
+            mask,
+            QueryTriggerInteraction.Collide);
+
+        foreach (var hit in hits)
+        {
+            if (ShouldIgnoreCollider(hit))
+                continue;
+
+            if (TryHitShieldBubble(hit))
+                return;
+
+            TryDamageCollider(hit);
+            if (!configured)
+                return;
+        }
+
+        TryHitPlayersByDistance(position);
+    }
+
+    private void TryHitPlayersByDistance(Vector3 position)
+    {
+        var players = FindObjectsByType<CwslPlayerHealth>(FindObjectsSortMode.None);
+        foreach (var playerHealth in players)
+        {
+            if (ShouldSkipPlayerForProjectile(playerHealth))
+                continue;
+
+            if (playerHealth.TryInterceptProjectileServer(position, damage))
+            {
+                configured = false;
+                DespawnSelf();
+                return;
+            }
+
+            var flat = playerHealth.transform.position - position;
+            flat.y = 0f;
+            var bodyRadius = playerHealth.GetComponent<CwslPlayerBodyCollider>()?.Radius
+                ?? CwslGameConstants.PlayerBodyColliderRadiusDefault;
+            var hitReach = bodyRadius + CwslGameConstants.PlayerBodyHitSlop;
+            if (flat.sqrMagnitude > hitReach * hitReach)
+                continue;
+
+            TryDamagePlayer(playerHealth);
+            if (!configured)
+                return;
+        }
+    }
+
+    private void TryFlatDirectionHitPlayers(Vector3 from, Vector3 to)
+    {
+        var flatDir = direction;
+        flatDir.y = 0f;
+        if (flatDir.sqrMagnitude < 0.0001f)
+            return;
+
+        flatDir.Normalize();
+        var flatDx = flatDir.x;
+        var flatDz = flatDir.z;
+
+        var segment = to - from;
+        var segmentFlatLen = Mathf.Sqrt(segment.x * segment.x + segment.z * segment.z);
+        if (segmentFlatLen < 0.0001f)
+            return;
+
+        var fromX = from.x;
+        var fromZ = from.z;
+        var reach = segmentFlatLen + CwslGameConstants.PlayerBulletHitRadius;
+        var hitRadius = CwslGameConstants.PlayerBulletHitRadius;
+
+        var players = FindObjectsByType<CwslPlayerHealth>(FindObjectsSortMode.None);
+        foreach (var playerHealth in players)
+        {
+            if (ShouldSkipPlayerForProjectile(playerHealth))
+                continue;
+
+            if (!IsFlatHitPlayer(from, to, playerHealth, flatDx, flatDz, fromX, fromZ, reach, hitRadius))
+                continue;
+
+            TryDamagePlayer(playerHealth);
+            if (!configured)
+                return;
+        }
+    }
+
+    private static bool IsFlatHitPlayer(
+        Vector3 from,
+        Vector3 to,
+        CwslPlayerHealth playerHealth,
+        float flatDx,
+        float flatDz,
+        float fromX,
+        float fromZ,
+        float reach,
+        float hitRadius)
+    {
+        var pos = playerHealth.transform.position;
+        var relX = pos.x - fromX;
+        var relZ = pos.z - fromZ;
+        var projected = relX * flatDx + relZ * flatDz;
+        if (projected < -hitRadius || projected > reach)
+            return false;
+
+        var lateralSq = relX * relX + relZ * relZ - projected * projected;
+        var bodyRadius = playerHealth.GetComponent<CwslPlayerBodyCollider>()?.Radius
+            ?? CwslGameConstants.PlayerBodyColliderRadiusDefault;
+        var lateralSlop = hitRadius + bodyRadius + CwslGameConstants.PlayerBodyHitSlop;
+        return lateralSq <= lateralSlop * lateralSlop;
     }
 
     private void ApplyTargetHoming()
@@ -310,10 +493,40 @@ public class CwslPlayerProjectile : NetworkBehaviour, ICwslPooledNetworkObject
             return;
 
         var monsterHealth = collider.GetComponentInParent<CwslMonsterHealth>();
-        if (monsterHealth == null || !monsterHealth.IsAlive || ShouldSkipMonsterForProjectile(monsterHealth))
+        if (monsterHealth != null && monsterHealth.IsAlive && !ShouldSkipMonsterForProjectile(monsterHealth))
+        {
+            TryDamageMonster(monsterHealth);
+            return;
+        }
+
+        var playerHealth = collider.GetComponentInParent<CwslPlayerHealth>();
+        if (!ShouldSkipPlayerForProjectile(playerHealth))
+            TryDamagePlayer(playerHealth);
+    }
+
+    private void TryDamagePlayer(CwslPlayerHealth playerHealth)
+    {
+        if (!configured || !CanHitNow() || ShouldSkipPlayerForProjectile(playerHealth))
             return;
 
-        TryDamageMonster(monsterHealth);
+        if (playerHealth.TryInterceptProjectileServer(transform.position, damage))
+        {
+            configured = false;
+            DespawnSelf();
+            return;
+        }
+
+        var networkObject = playerHealth.NetworkObject;
+        if (networkObject != null && !hitPlayerIds.Add(networkObject.NetworkObjectId))
+            return;
+
+        playerHealth.TryReceiveProjectileHitServer(damage, transform.position);
+
+        if (!pierce)
+        {
+            configured = false;
+            DespawnSelf();
+        }
     }
 
     private void TryDamageMonster(CwslMonsterHealth monsterHealth)

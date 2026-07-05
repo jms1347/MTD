@@ -138,10 +138,27 @@ public static class CwslGameConstants
     public const float BossFinalPhaseDuration = 38f;
 
     public const float ArenaHalfExtent = 36f;
-    /// <summary>아레나 바닥(Plane 80x80) 실제 가장자리 — 질주자 벽 스턴 판정.</summary>
-    public const float ArenaMapHalfExtent = 40f;
+    /// <summary>아레나 바닥(Plane scale 10 → 100×100) 실제 가장자리 — 벽 스턴·적 기지·몬스터 스폰.</summary>
+    public const float ArenaMapHalfExtent = 50f;
+    /// <summary>맵 벽 직전 스폰 오프셋(벽에 붙어 보이게).</summary>
+    public const float MapEdgeSpawnInset = 1.4f;
+    /// <summary>몬스터 젠 안쪽 금지 구역(플레이어 중심 활동/시야 사각형).</summary>
+    public const float MonsterSpawnInnerHalfExtent = 24f;
+    /// <summary>몬스터 젠 바깥 한계(맵 가장자리 직전 사각형).</summary>
+    public const float MonsterSpawnOuterHalfExtent = ArenaHalfExtent - 1f;
     public static readonly UnityEngine.Color ArenaFloorColor = new(0.72f, 0.53f, 0.30f, 1f);
     public const float SpawnHeight = 0.5f;
+
+    /// <summary>true면 카르마·아레나 기믹 대신 5분 넥서스 방어 모드.</summary>
+    public const bool UseDefenseMode = true;
+
+    /// <summary>모든 플레이어가 시작 발판에 서면 진행되는 카운트다운(초).</summary>
+    public const float DefenseStartCountdownSeconds = 3f;
+
+    /// <summary>준비 구역 원형 벽 반경 — 라인업·시작 발판을 포함.</summary>
+    public const float DefensePrepBarrierRadius = 15.5f;
+    public const float DefensePrepBarrierHeight = 3.2f;
+    public const float DefensePrepBarrierThickness = 0.7f;
 
     // --- 아레나 기믹 ---
     public const float FightZoneCenterX = -18f;

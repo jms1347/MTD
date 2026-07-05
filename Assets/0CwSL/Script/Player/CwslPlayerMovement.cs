@@ -114,6 +114,13 @@ public class CwslPlayerMovement : NetworkBehaviour
         if (!IsServer || agent == null)
             return;
 
+        if (CwslDefensePrepUtility.IsPrepBoundaryActive())
+        {
+            var bodyRadius = GetComponent<CwslPlayerBodyCollider>()?.Radius
+                ?? CwslGameConstants.PlayerBodyColliderRadiusDefault;
+            worldPoint = CwslDefensePrepUtility.ClampToPrepArea(worldPoint, bodyRadius);
+        }
+
         GetComponent<CwslBlackHoleEscape>()?.TryRegisterMoveAwayClickServer(worldPoint);
 
         if (playerStun != null && playerStun.IsStunned)

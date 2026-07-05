@@ -22,7 +22,7 @@ public class CwslRangedMonster : CwslMonsterBase
         if (!IsValidTarget(currentTarget))
             return;
 
-        var aimPoint = GetAimPoint(currentTarget);
+        var aimPoint = GetTargetAimPoint();
         cannonAim?.SetAimServer(aimPoint);
 
         var distance = GetFlatDistanceTo(currentTarget);
@@ -82,6 +82,15 @@ public class CwslRangedMonster : CwslMonsterBase
         return target.transform.position + Vector3.up * AimHeight;
     }
 
+    private Vector3 GetTargetAimPoint()
+    {
+        var nexus = currentTarget.GetComponent<CwslNexus>();
+        if (nexus != null)
+            return nexus.GetAimPoint();
+
+        return GetAimPoint(currentTarget);
+    }
+
     private void FireProjectileServer(Vector3 aimPoint)
     {
         var session = CwslGameSession.Instance;
@@ -103,7 +112,8 @@ public class CwslRangedMonster : CwslMonsterBase
             return;
 
         var projectile = networkObject.GetComponent<CwslMonsterProjectile>();
-        projectile?.Configure(fireDirection, 14f, 8f);
+        var damage = GetScaledDamage(8f);
+        projectile?.Configure(fireDirection, 14f, 8f, damage);
         PlayFireFxClientRpc(muzzle, fireDirection);
     }
 }

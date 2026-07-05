@@ -34,9 +34,17 @@ public class CwslPlayerInput : NetworkBehaviour
     }
 
     // TODO(릴리즈): 테스트용 치트키(V/R/U) — 로비 설정으로 비활성 가능.
+    private static bool ShouldBlockGameplayInput()
+    {
+        return CwslGameConstants.UseDefenseMode && CwslCharacterIntroPopup.IsVisible;
+    }
+
     private void Update()
     {
         if (!IsOwner || !IsSpawned)
+            return;
+
+        if (ShouldBlockGameplayInput())
             return;
 
         CwslLobbyGameSettings.EnsureLoaded();

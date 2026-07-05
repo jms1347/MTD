@@ -8,44 +8,95 @@ public abstract class CwslMonsterBase : NetworkBehaviour
     protected CwslMonsterHealth health;
     protected NetworkObject currentTarget;
     protected float targetRefreshTimer;
+    protected CwslMonsterTargetingMode targetingMode = CwslMonsterTargetingMode.Nearest;
+    protected float localDamageMultiplier = 1f;
+    protected float localSpeedMultiplier = 1f;
+    protected float localScaleMultiplier = 1f;
 
     public CwslMonsterType MonsterType { get; protected set; }
+    public CwslMonsterTargetingMode TargetingMode => targetingMode;
 
     public virtual void Initialize(CwslMonsterType type)
     {
         MonsterType = type;
+        targetingMode = CwslMonsterTypeUtil.GetDefaultTargeting(type);
         health = GetComponent<CwslMonsterHealth>();
-        health?.Configure(type);
+        var healthMultiplier = ApplyDefenseProfile(type);
+        var goldDrop = CwslMonsterTypeUtil.IsElite(type) || CwslMonsterTypeUtil.IsNexusPriority(type) ? 0 : -1;
+        health?.Configure(type, goldDrop: goldDrop, healthMultiplier: healthMultiplier);
+        CwslMonsterVisualRefresh.Refresh(transform, type);
         EnsureMeleeLungeVisual();
         EnsureThreatLight();
-        CwslMonsterMaterialFix.Refresh(transform, type);
+        ApplyScaleMultiplier();
+    }
+
+    private float ApplyDefenseProfile(CwslMonsterType type)
+    {
+        var manager = CwslMonsterManager.Instance;
+        if (manager == null || !CwslGameConstants.UseDefenseMode)
+            return 1f;
+
+        if (CwslMonsterTypeUtil.IsNexusPriority(type))
+        {
+            localDamageMultiplier = 1f;
+            localSpeedMultiplier = manager.NexusVariantSpeedMultiplier;
+            localScaleMultiplier = manager.NexusVariantScaleMultiplier;
+            return manager.NexusVariantHealthMultiplier;
+        }
+
+        switch (type)
+        {
+            case CwslMonsterType.MidBoss:
+                localSpeedMultiplier = manager.MidBossSpeedMultiplier;
+                localScaleMultiplier = manager.MidBossScaleMultiplier;
+                GetComponent<CwslDefenseMidBoss>()?.ConfigureBuff((CwslMidBossBuffKind)Random.Range(0, 3));
+                return manager.MidBossHealthMultiplier;
+            case CwslMonsterType.DefenseBoss:
+                localSpeedMultiplier = manager.DefenseBossSpeedMultiplier;
+                localScaleMultiplier = manager.DefenseBossScaleMultiplier;
+                return manager.DefenseBossHealthMultiplier;
+            default:
+                return 1f;
+        }
+    }
+
+    private void ApplyScaleMultiplier()
+    {
+        if (Mathf.Approximately(localScaleMultiplier, 1f))
+            return;
+
+        transform.localScale = Vector3.one * localScaleMultiplier;
     }
 
     /// <summary>게스트 클라이언트 — 타입·위협 라이트 등 비주얼만 동기화 (서버 로직 없음).</summary>
     public void EnsureClientVisuals(CwslMonsterType type)
     {
         MonsterType = type;
+        targetingMode = CwslMonsterTypeUtil.GetDefaultTargeting(type);
         EnsureMeleeLungeVisual();
         EnsureThreatLight();
+        ApplyScaleMultiplier();
     }
 
     private void EnsureThreatLight()
     {
-        if (MonsterType == CwslMonsterType.Suicide)
-        {
-            CwslThreatLight.Ensure(transform, new Color(1f, 0.2f, 0.05f), 5.5f, 3.2f, new Vector3(0f, 0.8f, 0f));
-            return;
-        }
+        var lightColor = CwslMonsterVisualPalette.GetThreatLightColor(MonsterType);
+        var isSuicide = MonsterType is CwslMonsterType.Suicide or CwslMonsterType.NexusSuicide;
+        var isRanged = MonsterType is CwslMonsterType.Ranged or CwslMonsterType.NexusRanged;
+        var isNexus = CwslMonsterTypeUtil.IsNexusPriority(MonsterType);
 
-        if (MonsterType == CwslMonsterType.Ranged)
+        if (isSuicide || isRanged || isNexus)
         {
-            CwslThreatLight.Ensure(transform, new Color(0.7f, 0.25f, 1f), 3.2f, 1.4f, new Vector3(0f, 1.0f, 0f));
+            var range = isSuicide ? 5.5f : isNexus ? 4.2f : 3.2f;
+            var intensity = isSuicide ? 3.2f : isNexus ? 2.4f : 1.4f;
+            var offsetY = isSuicide ? 0.8f : 1.0f;
+            CwslThreatLight.Ensure(transform, lightColor, range, intensity, new Vector3(0f, offsetY, 0f));
         }
     }
 
     private void EnsureMeleeLungeVisual()
     {
-        if (MonsterType != CwslMonsterType.Melee)
+        if (MonsterType != CwslMonsterType.Melee && MonsterType != CwslMonsterType.NexusMelee && MonsterType != CwslMonsterType.MidBoss)
             return;
 
         var visual = transform.Find("Visual");
@@ -78,10 +129,30 @@ public abstract class CwslMonsterBase : NetworkBehaviour
 
     protected void RefreshTarget()
     {
-        if (CwslTargetQuery.TryGetNearestLivingPlayer(transform.position, out var target, out _))
+        if (targetingMode == CwslMonsterTargetingMode.NexusFirst)
+        {
+            if (TryGetNexusTarget(out var nexusTarget))
+            {
+                currentTarget = nexusTarget;
+                return;
+            }
+        }
+
+        if (CwslTargetQuery.TryGetNearestCombatTarget(transform.position, targetingMode, out var target, out _))
             currentTarget = target;
         else
             currentTarget = null;
+    }
+
+    protected static bool TryGetNexusTarget(out NetworkObject nexusObject)
+    {
+        nexusObject = null;
+        var nexus = CwslNexus.Instance;
+        if (nexus == null || !nexus.IsAlive)
+            return false;
+
+        nexusObject = nexus.GetComponent<NetworkObject>();
+        return nexusObject != null && nexusObject.IsSpawned;
     }
 
     protected static bool IsValidTarget(NetworkObject target)
@@ -89,8 +160,22 @@ public abstract class CwslMonsterBase : NetworkBehaviour
         if (target == null || !target.IsSpawned)
             return false;
 
+        var nexus = target.GetComponent<CwslNexus>();
+        if (nexus != null)
+            return nexus.IsAlive;
+
         var playerHealth = target.GetComponent<CwslPlayerHealth>();
         return playerHealth == null || playerHealth.IsAlive;
+    }
+
+    protected float GetScaledDamage(float baseDamage)
+    {
+        var managerMult = CwslMonsterManager.Instance != null
+            ? CwslMonsterManager.Instance.GetScaledDamage(1f)
+            : 1f;
+        var runtime = GetComponent<CwslMonsterRuntimeStats>();
+        var runtimeMult = runtime != null ? runtime.DamageMultiplier : 1f;
+        return baseDamage * managerMult * localDamageMultiplier * runtimeMult;
     }
 
     protected void MoveToward(Vector3 worldPosition, float speedMultiplier = 1f)
@@ -100,7 +185,10 @@ public abstract class CwslMonsterBase : NetworkBehaviour
         if (flat.sqrMagnitude < 0.0004f)
             return;
 
-        var step = flat.normalized * (moveSpeed * speedMultiplier * CwslArenaZones.GetMonsterSpeedMultiplier(transform.position)
+        var runtime = GetComponent<CwslMonsterRuntimeStats>();
+        var runtimeSpeed = runtime != null ? runtime.SpeedMultiplier : 1f;
+        var step = flat.normalized * (moveSpeed * speedMultiplier * localSpeedMultiplier * runtimeSpeed
+            * CwslArenaZones.GetMonsterSpeedMultiplier(transform.position)
             * (GetComponent<CwslSlowModifier>()?.SpeedMultiplier ?? 1f) * Time.deltaTime);
         transform.position += step;
         transform.rotation = Quaternion.Slerp(
@@ -117,5 +205,28 @@ public abstract class CwslMonsterBase : NetworkBehaviour
         var flat = target.transform.position - transform.position;
         flat.y = 0f;
         return flat.magnitude;
+    }
+
+    protected bool TryDamageCurrentTargetMelee(float baseDamage, float maxDistance, Vector3 hitPointOffset)
+    {
+        if (!IsValidTarget(currentTarget))
+            return false;
+
+        if (GetFlatDistanceTo(currentTarget) > maxDistance)
+            return false;
+
+        var damage = GetScaledDamage(baseDamage);
+        var nexus = currentTarget.GetComponent<CwslNexus>();
+        if (nexus != null)
+        {
+            nexus.DamageServer(damage);
+            return true;
+        }
+
+        var playerHealth = currentTarget.GetComponent<CwslPlayerHealth>();
+        if (playerHealth != null)
+            playerHealth.TryReceiveMeleeHitServer(damage, currentTarget.transform.position + hitPointOffset);
+
+        return true;
     }
 }

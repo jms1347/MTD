@@ -22,6 +22,13 @@ public static class CwslMouseGround
         if (Physics.Raycast(ray, out var hit, 500f, ~0, QueryTriggerInteraction.Ignore))
         {
             point = hit.point;
+            if (CwslDefensePrepUtility.IsPrepBoundaryActive())
+            {
+                point = CwslDefensePrepUtility.ClampToPrepArea(
+                    point,
+                    CwslGameConstants.PlayerBodyColliderRadiusDefault);
+            }
+
             hitCollider = hit.collider;
             return true;
         }
@@ -43,7 +50,15 @@ public static class CwslMouseGround
         point = ray.GetPoint(distance);
         point.y = 0f;
 
-        var extent = CwslGameConstants.ArenaHalfExtent;
+        if (CwslDefensePrepUtility.IsPrepBoundaryActive())
+        {
+            point = CwslDefensePrepUtility.ClampToPrepArea(
+                point,
+                CwslGameConstants.PlayerBodyColliderRadiusDefault);
+            return true;
+        }
+
+        var extent = CwslArenaUtility.GetPlayHalfExtent();
         point.x = Mathf.Clamp(point.x, -extent, extent);
         point.z = Mathf.Clamp(point.z, -extent, extent);
         return true;

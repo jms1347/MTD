@@ -107,6 +107,9 @@ MonoBehaviour:
   projectilePrefab: {fileID: 7720487643500137776, guid: 047c5caa0a97ffa42b3ab283eda90562, type: 3}
   playerMissilePrefab: {fileID: 1119159180590963851, guid: 4146e1dbd4978cd4bbacf7eeaca4b646, type: 3}
   bossPrefab: {fileID: 4975743835310029067, guid: 947ba38eea4204749ba65b99196b3922, type: 3}
+  midBossMonsterPrefab: {fileID: 1179032646208479811, guid: 8774500c5e509a9418988a412960aee1, type: 3}
+  defenseBossMonsterPrefab: {fileID: 8572479323002272293, guid: 1428f2f3c8b4b824eabb63f83e43b59a, type: 3}
+  nexusPrefab: {fileID: 5579736234828561980, guid: 3676912a60de2d545b8011699416ec8d, type: 3}
   goldPickupPrefab: {fileID: 8285741258449009015, guid: 5f1905539d50fc14a91e5ff699dab977, type: 3}
   pillPickupPrefab: {fileID: 531872116740505062, guid: bd2a9bb87d18f6345a31ecf6fe1eca29, type: 3}
   graveVisualPrefab: {fileID: 4056276277256171079, guid: a3df36c37be413247bb6f0bb0124a224, type: 3}

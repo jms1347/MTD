@@ -5,9 +5,9 @@ Shader "CwSL/VisionVignette"
         [PerRendererData] _MainTex ("Sprite Texture", 2D) = "white" {}
         _Color ("Dark Color", Color) = (0.01, 0.012, 0.018, 1)
         _Center ("Center (Viewport)", Vector) = (0.5, 0.5, 0, 0)
-        _InnerRadius ("Inner Radius", Float) = 0.12
-        _OuterRadius ("Outer Radius", Float) = 0.28
-        _Aspect ("Aspect", Float) = 1.777
+        _InnerRadius ("Inner Radius (Viewport)", Float) = 0.12
+        _OuterRadius ("Outer Radius (Viewport)", Float) = 0.28
+        _Aspect ("Aspect Correction", Float) = 1.77
         _ScryActive ("Scry Active", Float) = 0
         _ScryCenter ("Scry Center (Viewport)", Vector) = (0.5, 0.5, 0, 0)
         _ScryInnerRadius ("Scry Inner Radius", Float) = 0.08
@@ -73,26 +73,27 @@ Shader "CwSL/VisionVignette"
                 return o;
             }
 
+            float CircleDarkness(float2 delta, float innerRadius, float outerRadius)
+            {
+                delta.x *= _Aspect;
+                float dist = length(delta);
+                return smoothstep(innerRadius, outerRadius, dist);
+            }
+
             fixed4 frag(v2f i) : SV_Target
             {
-                // UI/RawImage 호환용 (실제 텍스처는 쓰지 않음)
                 fixed4 tex = tex2D(_MainTex, i.uv);
 
                 float2 delta = i.uv - _Center.xy;
-                delta.x *= _Aspect;
-                float dist = length(delta);
-
-                // smoothstep: 안쪽 투명, 바깥 어둠
-                float mainDarkness = smoothstep(_InnerRadius, _OuterRadius, dist);
-
-                float2 scryDelta = i.uv - _ScryCenter.xy;
-                scryDelta.x *= _Aspect;
-                float scryDist = length(scryDelta);
-                float scryDarkness = smoothstep(_ScryInnerRadius, _ScryOuterRadius, scryDist);
+                float mainDarkness = CircleDarkness(delta, _InnerRadius, _OuterRadius);
 
                 float darkness = mainDarkness;
                 if (_ScryActive > 0.5)
+                {
+                    float2 scryDelta = i.uv - _ScryCenter.xy;
+                    float scryDarkness = CircleDarkness(scryDelta, _ScryInnerRadius, _ScryOuterRadius);
                     darkness = min(mainDarkness, scryDarkness);
+                }
 
                 fixed4 col = _Color;
                 col.a = darkness * _Color.a * i.color.a * tex.a;

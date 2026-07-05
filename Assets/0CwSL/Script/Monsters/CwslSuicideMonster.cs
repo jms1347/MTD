@@ -11,7 +11,7 @@ public class CwslSuicideMonster : CwslMonsterBase, ICwslPooledNetworkObject
     public override void Initialize(CwslMonsterType type)
     {
         base.Initialize(type);
-        moveSpeed = 2f;
+        moveSpeed = CwslMonsterTypeUtil.IsNexusPriority(type) ? 1.45f : 2f;
         detonated = false;
     }
 
@@ -45,13 +45,22 @@ public class CwslSuicideMonster : CwslMonsterBase, ICwslPooledNetworkObject
         var position = transform.position;
         PlayExplosionClientRpc(position);
 
-        var playerHealth = currentTarget != null
-            ? currentTarget.GetComponent<CwslPlayerHealth>()
-            : null;
-        if (playerHealth != null)
+        var damage = GetScaledDamage(ExplosionDamage);
+        var nexus = currentTarget != null ? currentTarget.GetComponent<CwslNexus>() : null;
+        if (nexus != null && nexus.IsAlive)
         {
-            var hitPoint = currentTarget.transform.position + Vector3.up * 0.9f;
-            playerHealth.TryReceiveExplosionHitServer(ExplosionDamage, hitPoint);
+            nexus.DamageServer(damage * 1.25f);
+        }
+        else
+        {
+            var playerHealth = currentTarget != null
+                ? currentTarget.GetComponent<CwslPlayerHealth>()
+                : null;
+            if (playerHealth != null)
+            {
+                var hitPoint = currentTarget.transform.position + Vector3.up * 0.9f;
+                playerHealth.TryReceiveExplosionHitServer(damage, hitPoint);
+            }
         }
 
         // 발밑이 아니라 바깥에서 드롭해 플레이어에게 날아오는 연출이 보이게 함
@@ -87,6 +96,14 @@ public class CwslSuicideMonster : CwslMonsterBase, ICwslPooledNetworkObject
     {
         if (!IsServer || detonated)
             return;
+
+        var nexus = other.GetComponentInParent<CwslNexus>();
+        if (nexus != null && nexus.IsAlive)
+        {
+            currentTarget = nexus.GetComponent<NetworkObject>();
+            DetonateServer();
+            return;
+        }
 
         var playerHealth = other.GetComponentInParent<CwslPlayerHealth>();
         if (playerHealth == null || !playerHealth.IsAlive)

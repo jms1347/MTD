@@ -45,6 +45,15 @@ public class CwslGameSession : NetworkBehaviour
 
     private void EnsureArenaSystems()
     {
+        if (CwslGameConstants.UseDefenseMode)
+        {
+            if (GetComponent<CwslMonsterManager>() == null)
+                gameObject.AddComponent<CwslMonsterManager>();
+            if (GetComponent<CwslDefenseModeController>() == null)
+                gameObject.AddComponent<CwslDefenseModeController>();
+            return;
+        }
+
         if (GetComponent<CwslBossWatchState>() == null)
             gameObject.AddComponent<CwslBossWatchState>();
         if (GetComponent<CwslArenaGimmickSystem>() == null)
@@ -79,6 +88,9 @@ public class CwslGameSession : NetworkBehaviour
         }
 
         if (!IsServer)
+            return;
+
+        if (CwslGameConstants.UseDefenseMode)
             return;
 
         if (CwslKarmaSystem.Instance != null)
@@ -241,9 +253,11 @@ public class CwslGameSession : NetworkBehaviour
 
         return type switch
         {
-            CwslMonsterType.Ranged => assets.rangedMonsterPrefab,
-            CwslMonsterType.Suicide => assets.suicideMonsterPrefab,
-            CwslMonsterType.Melee => assets.meleeMonsterPrefab,
+            CwslMonsterType.Ranged or CwslMonsterType.NexusRanged => assets.rangedMonsterPrefab,
+            CwslMonsterType.Suicide or CwslMonsterType.NexusSuicide => assets.suicideMonsterPrefab,
+            CwslMonsterType.Melee or CwslMonsterType.NexusMelee => assets.meleeMonsterPrefab,
+            CwslMonsterType.MidBoss => assets.midBossMonsterPrefab != null ? assets.midBossMonsterPrefab : assets.meleeMonsterPrefab,
+            CwslMonsterType.DefenseBoss => assets.defenseBossMonsterPrefab != null ? assets.defenseBossMonsterPrefab : assets.meleeMonsterPrefab,
             CwslMonsterType.BossHongmyeongbo => assets.bossPrefab,
             _ => null
         };

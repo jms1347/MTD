@@ -186,7 +186,13 @@ public class CwslArenaGimmickSystem : NetworkBehaviour
         return 0f;
     }
 
-    public static bool IsFogVortexAt(Vector3 position) => CwslArenaZones.IsInFogVortex(position);
+    public static bool IsFogVortexAt(Vector3 position)
+    {
+        if (CwslGameConstants.UseDefenseMode)
+            return false;
+
+        return CwslArenaZones.IsInFogVortex(position);
+    }
 
     public void NotifyBossSpawnedServer()
     {

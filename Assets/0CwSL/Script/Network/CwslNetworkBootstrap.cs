@@ -75,6 +75,12 @@ public class CwslNetworkBootstrap : MonoBehaviour
         var lobby = LobbyNetworkManager.Instance;
         var gamePort = CwslGameConstants.GameNetcodePort;
 
+        if (CwslGameConstants.UseDefenseMode)
+        {
+            RemoveLegacySceneNexusObjects();
+            yield return null;
+        }
+
         if (lobby != null && (lobby.PendingNetcodeHost || lobby.PendingNetcodeClient))
         {
             if (lobby.PendingNetcodeHost)
@@ -178,6 +184,19 @@ public class CwslNetworkBootstrap : MonoBehaviour
         FailAndReturnToLobby(
             $"게임 서버({hostAddress}:{port}) 연결 실패.\n" +
             $"호스트 PC 방화벽에서 UDP {port} 허용 여부를 확인하세요.");
+    }
+
+    private static void RemoveLegacySceneNexusObjects()
+    {
+        var nexuses = FindObjectsByType<CwslNexus>(FindObjectsSortMode.None);
+        foreach (var nexus in nexuses)
+        {
+            if (nexus == null)
+                continue;
+
+            Debug.LogWarning("[CwSL] 씬에 배치된 CwslNexus를 제거합니다. 런타임 프리팹 스폰으로 대체됩니다.");
+            Destroy(nexus.gameObject);
+        }
     }
 
     private static void FailAndReturnToLobby(string message)

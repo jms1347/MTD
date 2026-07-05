@@ -17,21 +17,44 @@ public class CwslPlayerStun : NetworkBehaviour
 
     public bool IsStunned => syncedStunEndTime.Value > Time.time;
 
+    public event System.Action<bool> OnStunStateChanged;
+
     public override void OnNetworkSpawn()
     {
         movement = GetComponent<CwslPlayerMovement>();
         rammerSkill = GetComponent<CwslMomentumRammerSkill>();
         playerHealth = GetComponent<CwslPlayerHealth>();
 
+        syncedStunEndTime.OnValueChanged += HandleStunEndTimeChanged;
+
         if (playerHealth != null)
             playerHealth.OnDied += HandleDied;
+
+        NotifyStunStateChanged(IsStunned);
     }
 
     public override void OnNetworkDespawn()
     {
+        syncedStunEndTime.OnValueChanged -= HandleStunEndTimeChanged;
+
         if (playerHealth != null)
             playerHealth.OnDied -= HandleDied;
     }
+
+    private void Update()
+    {
+        if (!IsSpawned)
+            return;
+
+        var stunned = IsStunned;
+        if (stunned == lastReportedStunned)
+            return;
+
+        lastReportedStunned = stunned;
+        NotifyStunStateChanged(stunned);
+    }
+
+    private bool lastReportedStunned;
 
     public void ApplyStunServer(float duration, Vector3 impactPosition, CwslStunSource source = CwslStunSource.Rammer)
     {
@@ -52,7 +75,26 @@ public class CwslPlayerStun : NetworkBehaviour
         if (!IsServer)
             return;
 
+        if (syncedStunEndTime.Value <= 0f)
+            return;
+
         syncedStunEndTime.Value = 0f;
+    }
+
+    private void HandleStunEndTimeChanged(float previous, float current)
+    {
+        var wasStunned = previous > Time.time;
+        var isStunned = current > Time.time;
+        if (wasStunned == isStunned)
+            return;
+
+        lastReportedStunned = isStunned;
+        NotifyStunStateChanged(isStunned);
+    }
+
+    private void NotifyStunStateChanged(bool stunned)
+    {
+        OnStunStateChanged?.Invoke(stunned);
     }
 
     private void StopMovementServer()
@@ -88,6 +130,6 @@ public class CwslPlayerStun : NetworkBehaviour
 
         var character = GetComponent<CwslPlayerCharacter>();
         if (character != null && character.CharacterId == CwslCharacterId.MomentumRammer)
-            transform.Find("Visual")?.GetComponent<CwslPlayerRammerStunVisual>()?.PlayStunVfx(impactPosition);
+            GetComponentInChildren<CwslPlayerRammerStunVisual>(true)?.PlayStunVfx(impactPosition);
     }
 }

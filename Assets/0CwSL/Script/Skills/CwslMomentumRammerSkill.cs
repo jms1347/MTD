@@ -110,7 +110,6 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
         momentumActive = false;
         hasDestination = false;
         steerHeld = false;
-        playerStun?.ClearStunServer();
 
         if (enableAgent)
             EnableNavMeshAgent();
@@ -425,10 +424,25 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
 
     private bool TryDetectWallBlock(Vector3 from, Vector3 to, float speed)
     {
+        var bodyRadius = ResolveCollisionRadius();
+
+        if (CwslDefensePrepUtility.IsPrepBoundaryActive())
+        {
+            var maxRadius = CwslDefensePrepUtility.GetPrepInnerRadius(bodyRadius);
+            var fromRadius = new Vector2(from.x, from.z).magnitude;
+            var toRadius = new Vector2(to.x, to.z).magnitude;
+            if (fromRadius <= maxRadius && toRadius > maxRadius)
+            {
+                var flat = new Vector2(to.x, to.z).normalized * maxRadius;
+                transform.position = new Vector3(flat.x, from.y, flat.y);
+                syncedSpeed.Value = 0f;
+                return true;
+            }
+        }
+
         if (speed < CwslGameConstants.RammerWallStunMinSpeed)
             return false;
 
-        var bodyRadius = ResolveCollisionRadius();
         var extent = CwslGameConstants.ArenaMapHalfExtent - bodyRadius;
 
         var fromInside = Mathf.Abs(from.x) <= extent && Mathf.Abs(from.z) <= extent;

@@ -9,16 +9,22 @@ public class CwslMonsterHealth : NetworkBehaviour, ICwslPooledNetworkObject
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server);
 
+    private readonly NetworkVariable<byte> syncedMonsterType = new(
+        (byte)CwslMonsterType.Melee,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server);
+
     private int dropGoldAmount = CwslGameConstants.GoldDropNormal;
     private float maxHealth = CwslGameConstants.MonsterMaxHealth;
     private bool isExecutive;
+    private bool suppressSyncedVisualCallbacks;
 
     public CwslMonsterType MonsterType { get; private set; }
     public bool IsAlive => health.Value > 0f;
     public float CurrentHealth => health.Value;
     public float MaxHealth => maxHealth;
     public bool IsExecutive => isExecutive;
-    public bool IsBoss => MonsterType == CwslMonsterType.BossHongmyeongbo;
+    public bool IsBoss => MonsterType is CwslMonsterType.BossHongmyeongbo or CwslMonsterType.DefenseBoss;
 
     public Vector3 GetAimPoint()
     {
@@ -46,7 +52,7 @@ public class CwslMonsterHealth : NetworkBehaviour, ICwslPooledNetworkObject
     public event Action<CwslMonsterHealth, ulong> OnKilled;
     public event Action<CwslMonsterHealth, float, ulong> OnDamaged;
 
-    public void Configure(CwslMonsterType type, int goldDrop = -1, bool executive = false)
+    public void Configure(CwslMonsterType type, int goldDrop = -1, bool executive = false, float healthMultiplier = 1f)
     {
         MonsterType = type;
         isExecutive = executive;
@@ -55,7 +61,9 @@ public class CwslMonsterHealth : NetworkBehaviour, ICwslPooledNetworkObject
             : executive
                 ? CwslGameConstants.GoldDropExecutive
                 : CwslGameConstants.GoldDropNormal;
-        maxHealth = CwslGameConstants.MonsterMaxHealth;
+        maxHealth = CwslGameConstants.MonsterMaxHealth * Mathf.Max(0.1f, healthMultiplier);
+        if (IsServer)
+            syncedMonsterType.Value = (byte)type;
     }
 
     public void ConfigureBoss(float bossMaxHealth)
@@ -66,11 +74,15 @@ public class CwslMonsterHealth : NetworkBehaviour, ICwslPooledNetworkObject
         maxHealth = bossMaxHealth;
         RefreshBossHitCollider();
         if (IsServer)
+        {
+            syncedMonsterType.Value = (byte)CwslMonsterType.BossHongmyeongbo;
             health.Value = bossMaxHealth;
+        }
     }
 
     public override void OnNetworkSpawn()
     {
+        syncedMonsterType.OnValueChanged += HandleSyncedMonsterTypeChanged;
         EnsureCombatHitCollider();
         SyncMonsterVisualsForNetwork();
 
@@ -78,34 +90,47 @@ public class CwslMonsterHealth : NetworkBehaviour, ICwslPooledNetworkObject
             health.Value = maxHealth;
     }
 
+    public override void OnNetworkDespawn()
+    {
+        syncedMonsterType.OnValueChanged -= HandleSyncedMonsterTypeChanged;
+        base.OnNetworkDespawn();
+    }
+
+    private void HandleSyncedMonsterTypeChanged(byte previousValue, byte newValue)
+    {
+        if (suppressSyncedVisualCallbacks || previousValue == newValue)
+            return;
+
+        ApplySyncedMonsterVisuals((CwslMonsterType)newValue);
+    }
+
     private void SyncMonsterVisualsForNetwork()
     {
-        var resolvedType = ResolveMonsterTypeFromComponents();
-        if (MonsterType == default)
-            Configure(resolvedType);
+        ApplySyncedMonsterVisuals(GetResolvedVisualType());
+    }
 
-        var type = MonsterType != default ? MonsterType : resolvedType;
+    private CwslMonsterType GetResolvedVisualType()
+    {
+        if (IsServer && MonsterType != default)
+            return MonsterType;
+
+        return (CwslMonsterType)syncedMonsterType.Value;
+    }
+
+    private void ApplySyncedMonsterVisuals(CwslMonsterType type)
+    {
+        if (suppressSyncedVisualCallbacks || !isActiveAndEnabled || health.Value <= 0f)
+            return;
+
+        MonsterType = type;
+        CwslMonsterVisualRefresh.Refresh(transform, type);
         CwslMonsterMaterialFix.Refresh(transform, type);
 
-        if (!IsServer)
-            GetComponent<CwslMonsterBase>()?.EnsureClientVisuals(type);
+        var monsterBase = GetComponent<CwslMonsterBase>();
+        monsterBase?.EnsureClientVisuals(type);
 
         if (isExecutive)
             CwslMonsterExecutiveVisual.Apply(transform);
-    }
-
-    private CwslMonsterType ResolveMonsterTypeFromComponents()
-    {
-        if (GetComponent<CwslBossHongmyeongbo>() != null)
-            return CwslMonsterType.BossHongmyeongbo;
-        if (GetComponent<CwslSuicideMonster>() != null)
-            return CwslMonsterType.Suicide;
-        if (GetComponent<CwslMeleeMonster>() != null)
-            return CwslMonsterType.Melee;
-        if (GetComponent<CwslRangedMonster>() != null)
-            return CwslMonsterType.Ranged;
-
-        return MonsterType != default ? MonsterType : CwslMonsterType.Melee;
     }
 
     public void OnSpawnedFromPool()
@@ -122,6 +147,14 @@ public class CwslMonsterHealth : NetworkBehaviour, ICwslPooledNetworkObject
         isExecutive = false;
         dropGoldAmount = CwslGameConstants.GoldDropNormal;
         maxHealth = CwslGameConstants.MonsterMaxHealth;
+        MonsterType = default;
+
+        if (!IsServer)
+            return;
+
+        suppressSyncedVisualCallbacks = true;
+        syncedMonsterType.Value = (byte)CwslMonsterType.Melee;
+        suppressSyncedVisualCallbacks = false;
     }
 
     private void EnsureCombatHitCollider()
@@ -167,8 +200,11 @@ public class CwslMonsterHealth : NetworkBehaviour, ICwslPooledNetworkObject
             return;
 
         var scaledAmount = ApplyAttackerBuffs(attackerClientId, amount);
+        var runtime = GetComponent<CwslMonsterRuntimeStats>();
+        if (runtime != null && runtime.DefenseMultiplier > 0f)
+            scaledAmount *= runtime.DefenseMultiplier;
 
-        if (IsBoss)
+        if (IsBoss && MonsterType == CwslMonsterType.BossHongmyeongbo)
         {
             if (!CwslBossHongmyeongbo.CanReceiveDamageFrom(attackerClientId))
                 return;
@@ -181,6 +217,16 @@ public class CwslMonsterHealth : NetworkBehaviour, ICwslPooledNetworkObject
             if (health.Value <= 0f)
                 Die(attackerClientId, dropGold: false);
 
+            return;
+        }
+
+        if (MonsterType is CwslMonsterType.MidBoss or CwslMonsterType.DefenseBoss)
+        {
+            health.Value = Mathf.Max(0f, health.Value - scaledAmount);
+            ShowDamagePopupClientRpc(transform.position + Vector3.up * 1.2f, scaledAmount, (int)CwslDamagePopupKind.Monster);
+            OnDamaged?.Invoke(this, health.Value, attackerClientId);
+            if (health.Value <= 0f)
+                Die(attackerClientId, dropGold: false);
             return;
         }
 

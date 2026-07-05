@@ -72,7 +72,7 @@ public class CwslPlayerVision : NetworkBehaviour
         var flat = worldPosition - Local.VisionOrigin;
         flat.y = 0f;
         var radius = Local.EffectiveVisionRadius;
-        return flat.sqrMagnitude <= radius * radius;
+        return CwslVisionShape.GetCircularFlatDistance(Local.VisionOrigin, worldPosition) <= radius;
     }
 
     public void RevealMeteorScry(Vector3 worldCenter)
@@ -116,14 +116,14 @@ public class CwslPlayerVision : NetworkBehaviour
         CleanupHardVisionMasks();
         EnsureVisionSystem();
         EnsureFogZoneEffect();
-        ApplyVisionRadius();
+        ApplyLocalVision();
     }
 
     private void HandleCharacterChanged(CwslCharacterId characterId)
     {
         RefreshVisionRadius();
         if (IsOwner)
-            ApplyVisionRadius();
+            ApplyLocalVision();
     }
 
     private void RefreshVisionRadius()
@@ -132,10 +132,12 @@ public class CwslPlayerVision : NetworkBehaviour
         visionRadius = CwslCharacterCatalog.GetVisionRadius(characterId);
     }
 
-    private void ApplyVisionRadius()
+    private void ApplyLocalVision()
     {
-        if (darkVision != null)
-            darkVision.RefreshRadius(visionRadius, GetZoneVisionBonus(), IsAbsoluteBlindVision);
+        if (darkVision == null)
+            return;
+
+        darkVision.Activate(visionRadius, GetZoneVisionBonus(), IsAbsoluteBlindVision);
     }
 
     private float ResolveEffectiveVisionRadius()

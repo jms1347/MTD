@@ -69,6 +69,43 @@ public static class CwslGameOverHud
             restartButton.interactable = visible;
     }
 
+    public static void SetDefenseResult(bool victory)
+    {
+        EnsureForDefense();
+        if (root == null)
+            return;
+
+        root.SetActive(true);
+        if (titleLabel != null)
+        {
+            titleLabel.text = victory ? "방어 성공!" : "넥서스 파괴";
+            titleLabel.color = victory ? new Color(1f, 0.9f, 0.45f) : new Color(1f, 0.45f, 0.4f);
+        }
+
+        if (subtitleLabel != null)
+            subtitleLabel.text = victory ? "5분을 버텼습니다." : "넥서스가 파괴되었습니다.";
+
+        if (restartButton != null)
+            restartButton.interactable = true;
+    }
+
+    private static TextMeshProUGUI titleLabel;
+    private static TextMeshProUGUI subtitleLabel;
+
+    private static void EnsureForDefense()
+    {
+        if (root != null)
+            return;
+
+        var canvas = GameObject.Find("CwslGameHudCanvas");
+        if (canvas == null)
+            return;
+
+        Ensure(canvas.transform);
+        titleLabel = root.transform.Find("Box/Title")?.GetComponent<TextMeshProUGUI>();
+        subtitleLabel = root.transform.Find("Box/Subtitle")?.GetComponent<TextMeshProUGUI>();
+    }
+
     private static void OnRestartClicked()
     {
         var flow = CwslGameFlow.Instance;
