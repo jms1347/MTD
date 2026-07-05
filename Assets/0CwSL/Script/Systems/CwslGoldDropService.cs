@@ -12,24 +12,43 @@ public static class CwslGoldDropService
         if (session == null || session.Assets == null || session.Assets.goldPickupPrefab == null)
             return;
 
-        var amount = Random.Range(CwslGameConstants.GoldDropMin, CwslGameConstants.GoldDropMax + 1);
-
         if (!NavMeshUtility.TryProject(position, out var grounded))
             grounded = position;
 
+        var totalGold = Random.Range(CwslGameConstants.GoldDropMin, CwslGameConstants.GoldDropMax + 1);
+        for (var i = 0; i < totalGold; i++)
+            SpawnSingleCoin(session.Assets.goldPickupPrefab, grounded);
+    }
+
+    private static void SpawnSingleCoin(GameObject prefab, Vector3 center)
+    {
+        var direction = Random.insideUnitCircle;
+        if (direction.sqrMagnitude < 0.0001f)
+            direction = Vector2.right;
+        direction.Normalize();
+
+        var radius = Random.Range(
+            CwslGameConstants.GoldDropSpreadRadius * 0.45f,
+            CwslGameConstants.GoldDropSpreadRadius);
+        var offset = direction * radius;
+        var spawnPosition = center + new Vector3(offset.x, 0f, offset.y);
+
+        if (!NavMeshUtility.TryProject(spawnPosition, out spawnPosition))
+            spawnPosition = center + new Vector3(offset.x, 0f, offset.y);
+
         var networkObject = CwslNetworkPoolService.Instance?.Get(
-            session.Assets.goldPickupPrefab,
-            grounded,
+            prefab,
+            spawnPosition,
             Quaternion.identity);
 
         if (networkObject == null)
         {
-            var pickup = Object.Instantiate(session.Assets.goldPickupPrefab, grounded, Quaternion.identity);
+            var pickup = Object.Instantiate(prefab, spawnPosition, Quaternion.identity);
             networkObject = pickup.GetComponent<NetworkObject>();
             networkObject?.Spawn(true);
         }
 
-        networkObject?.GetComponent<CwslGoldPickup>()?.ConfigureServer(amount);
+        networkObject?.GetComponent<CwslGoldPickup>()?.ConfigureServer(center, spawnPosition);
     }
 }
 

@@ -1,6 +1,9 @@
 using Unity.Netcode;
 using UnityEngine;
 
+/// <summary>
+/// 월드 3D 골드 1개 — 몬스터 중심에서 퍼진 뒤, 근처 플레이어에게 회전하며 빨려 들어간다.
+/// </summary>
 public class CwslGoldPickup : NetworkBehaviour, ICwslPooledNetworkObject
 {
     private readonly NetworkVariable<int> goldAmount = new(
@@ -13,119 +16,162 @@ public class CwslGoldPickup : NetworkBehaviour, ICwslPooledNetworkObject
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server);
 
-    private bool magnetFlyActive;
-    private Transform coinVisual;
+    private bool claimed;
+    private Vector3 dropCenter;
+    private Vector3 spreadTarget;
+    private float spreadStartTime;
+    private float claimableTime;
 
     public int GoldAmount => goldAmount.Value;
+    public bool IsMagnetized => magnetTargetId.Value != 0;
 
-    public void ConfigureServer(int amount)
+    public void ConfigureServer(Vector3 center, Vector3 finalPosition)
     {
-        goldAmount.Value = Mathf.Clamp(amount, CwslGameConstants.GoldDropMin, CwslGameConstants.GoldDropMax);
-        magnetFlyActive = false;
+        goldAmount.Value = 1;
+        claimed = false;
         magnetTargetId.Value = 0;
-        ApplyVisualScale();
-        if (coinVisual != null)
-            coinVisual.gameObject.SetActive(true);
-
-        // 생성 즉시 가장 가까운 플레이어에게 붙기 시작
-        TryCollectNearestPlayer();
+        dropCenter = center;
+        spreadTarget = finalPosition;
+        spreadStartTime = Time.time;
+        claimableTime = Time.time + CwslGameConstants.GoldCoinSpreadDuration + 0.05f;
+        transform.position = dropCenter;
     }
 
     public void OnSpawnedFromPool()
     {
-        magnetFlyActive = false;
+        claimed = false;
         magnetTargetId.Value = 0;
-        CacheVisual();
-        if (coinVisual != null)
-            coinVisual.gameObject.SetActive(true);
     }
 
     public void OnReturnedToPool()
     {
-        magnetFlyActive = false;
+        claimed = false;
         magnetTargetId.Value = 0;
-        CwslGoldFlyToPlayer.EndMagnetFly(NetworkObjectId);
-    }
-
-    public override void OnNetworkSpawn()
-    {
-        goldAmount.OnValueChanged += HandleAmountChanged;
-        magnetTargetId.OnValueChanged += HandleMagnetTargetChanged;
-        CacheVisual();
-        ApplyVisualScale();
-
-        if (magnetTargetId.Value != 0)
-            BeginMagnetVisual(magnetTargetId.Value);
-    }
-
-    public override void OnNetworkDespawn()
-    {
-        goldAmount.OnValueChanged -= HandleAmountChanged;
-        magnetTargetId.OnValueChanged -= HandleMagnetTargetChanged;
-        CwslGoldFlyToPlayer.EndMagnetFly(NetworkObjectId);
     }
 
     private void Update()
     {
-        if (!IsServer)
+        if (!IsServer || claimed)
             return;
 
-        TryCollectNearestPlayer();
+        UpdateSpreadPosition();
+
+        if (Time.time < claimableTime)
+            return;
+
+        UpdateMagnetAndCollect();
     }
 
-    private void TryCollectNearestPlayer()
+    private void UpdateSpreadPosition()
     {
-        if (!CwslTargetQuery.TryGetNearestLivingPlayer(transform.position, out var player, out var distance))
+        var duration = CwslGameConstants.GoldCoinSpreadDuration;
+        var elapsed = Time.time - spreadStartTime;
+        if (elapsed >= duration)
+            return;
+
+        var t = Mathf.Clamp01(elapsed / duration);
+        var eased = 1f - (1f - t) * (1f - t);
+        transform.position = Vector3.Lerp(dropCenter, spreadTarget, eased);
+    }
+
+    private void UpdateMagnetAndCollect()
+    {
+        if (magnetTargetId.Value == 0)
         {
-            StopMagnetFlyIfNeeded();
+            if (!CwslTargetQuery.TryGetClosestPlayerInRadius(
+                    transform.position,
+                    CwslGameConstants.GoldMagnetRadius,
+                    out var nearest))
+                return;
+
+            magnetTargetId.Value = nearest.NetworkObjectId;
             return;
         }
 
-        var pickupPoint = player.transform.position + Vector3.up * 0.35f;
-
-        // 맵 어디서든 가장 가까운 플레이어에게 항상 자석
-        if (!magnetFlyActive || magnetTargetId.Value != player.NetworkObjectId)
+        if (!TryResolvePlayer(magnetTargetId.Value, out var player))
         {
-            magnetFlyActive = true;
-            magnetTargetId.Value = player.NetworkObjectId;
+            magnetTargetId.Value = 0;
+            return;
         }
 
-        if (distance <= CwslGameConstants.GoldPickupRadius)
+        var health = player.GetComponent<CwslPlayerHealth>();
+        if (health != null && !health.IsAlive)
         {
-            Collect(player);
+            magnetTargetId.Value = 0;
+            return;
+        }
+
+        var pickupPoint = player.transform.position + Vector3.up * 0.55f;
+        var toTarget = pickupPoint - transform.position;
+        var distance = toTarget.magnitude;
+
+        if (distance <= CwslGameConstants.GoldCoinClaimRadius)
+        {
+            TryClaim(player);
+            return;
+        }
+
+        if (distance > CwslGameConstants.GoldMagnetRadius * 1.6f)
+        {
+            magnetTargetId.Value = 0;
             return;
         }
 
         var speed = Mathf.Lerp(
-            CwslGameConstants.GoldMagnetSpeed,
-            CwslGameConstants.GoldMagnetSpeed * 3.2f,
-            Mathf.Clamp01(distance / 12f));
+            CwslGameConstants.GoldMagnetSpeed * 1.2f,
+            CwslGameConstants.GoldMagnetSpeed * 3.5f,
+            Mathf.Clamp01(1f - distance / (CwslGameConstants.GoldMagnetRadius * 1.4f)));
 
-        var toTarget = pickupPoint - transform.position;
         var step = toTarget.normalized * (speed * Time.deltaTime);
-        if (step.sqrMagnitude > toTarget.sqrMagnitude)
-            transform.position = pickupPoint;
-        else
-            transform.position += step;
+        transform.position = step.sqrMagnitude >= toTarget.sqrMagnitude
+            ? pickupPoint
+            : transform.position + step;
+    }
 
-        if (Vector3.Distance(transform.position, pickupPoint) <= CwslGameConstants.GoldPickupRadius)
-            Collect(player);
+    private void OnTriggerEnter(Collider other)
+    {
+        if (!IsServer || claimed || Time.time < claimableTime)
+            return;
+
+        if (!TryGetPlayerFromCollider(other, out var player))
+            return;
+
+        if (magnetTargetId.Value == 0)
+            magnetTargetId.Value = player.NetworkObjectId;
+
+        if (magnetTargetId.Value == player.NetworkObjectId)
+            TryClaim(player);
+    }
+
+    private void TryClaim(NetworkObject player)
+    {
+        if (claimed || player == null || Time.time < claimableTime)
+            return;
+
+        if (magnetTargetId.Value != 0 && magnetTargetId.Value != player.NetworkObjectId)
+            return;
+
+        var pickupPoint = player.transform.position + Vector3.up * 0.55f;
+        if (Vector3.Distance(transform.position, pickupPoint) > CwslGameConstants.GoldCoinClaimRadius)
+            return;
+
+        claimed = true;
+        magnetTargetId.Value = 0;
+        Collect(player);
     }
 
     private void Collect(NetworkObject player)
     {
         var playerGold = player.GetComponent<CwslPlayerGold>();
         if (playerGold == null)
+        {
+            claimed = false;
             return;
+        }
 
-        var amount = goldAmount.Value;
-        var collectPosition = transform.position;
-        playerGold.AddGoldServer(amount);
-        CwslKarmaSystem.Instance?.AddKarmaServer(amount);
-
-        magnetFlyActive = false;
-        magnetTargetId.Value = 0;
-        PlayCollectFlyClientRpc(player.NetworkObjectId, collectPosition, amount);
+        playerGold.AddGoldServer(1);
+        CwslKarmaSystem.Instance?.AddKarmaServer(1);
+        PlayCollectClientRpc();
 
         if (NetworkObject != null && NetworkObject.IsSpawned)
         {
@@ -136,90 +182,33 @@ public class CwslGoldPickup : NetworkBehaviour, ICwslPooledNetworkObject
         }
     }
 
-    private void StopMagnetFlyIfNeeded()
-    {
-        if (!magnetFlyActive && magnetTargetId.Value == 0)
-            return;
-
-        magnetFlyActive = false;
-        magnetTargetId.Value = 0;
-        CwslGoldFlyToPlayer.EndMagnetFly(NetworkObjectId);
-    }
-
-    private void HandleMagnetTargetChanged(ulong previous, ulong current)
-    {
-        CwslGoldFlyToPlayer.EndMagnetFly(NetworkObjectId);
-        if (current == 0)
-            return;
-
-        BeginMagnetVisual(current);
-    }
-
-    private void BeginMagnetVisual(ulong playerNetworkObjectId)
-    {
-        if (!TryResolvePlayer(playerNetworkObjectId, out var playerTransform))
-            return;
-
-        HideCoinVisual();
-        CwslGoldFlyToPlayer.BeginMagnetFly(
-            NetworkObjectId,
-            transform.position,
-            playerTransform,
-            goldAmount.Value);
-    }
-
     [ClientRpc]
-    private void PlayCollectFlyClientRpc(ulong playerNetworkObjectId, Vector3 position, int amount)
+    private void PlayCollectClientRpc()
     {
-        if (CwslGoldFlyToPlayer.TryCompleteMagnetFly(NetworkObjectId, position, amount))
-            return;
-
-        if (!TryResolvePlayer(playerNetworkObjectId, out var playerTransform))
-            return;
-
-        CwslGoldFlyToPlayer.Play(position, playerTransform, amount);
+        CwslGoldFeedback.PlayCoinSound(transform.position);
     }
 
-    private static bool TryResolvePlayer(ulong playerNetworkObjectId, out Transform playerTransform)
+    private static bool TryGetPlayerFromCollider(Collider other, out NetworkObject player)
     {
-        playerTransform = null;
+        player = other.GetComponentInParent<NetworkObject>();
+        if (player == null || !player.IsSpawned)
+            return false;
+
+        var health = player.GetComponent<CwslPlayerHealth>();
+        if (health != null && !health.IsAlive)
+            return false;
+
+        return player.GetComponent<CwslPlayerGold>() != null;
+    }
+
+    private static bool TryResolvePlayer(ulong playerNetworkObjectId, out NetworkObject player)
+    {
+        player = null;
         if (NetworkManager.Singleton == null)
             return false;
 
-        if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(
-                playerNetworkObjectId,
-                out var playerObject))
-            return false;
-
-        playerTransform = playerObject.transform;
-        return true;
-    }
-
-    private void HandleAmountChanged(int previous, int current)
-    {
-        ApplyVisualScale();
-    }
-
-    private void CacheVisual()
-    {
-        coinVisual = transform.childCount > 0 ? transform.GetChild(0) : transform;
-    }
-
-    private void HideCoinVisual()
-    {
-        CacheVisual();
-        if (coinVisual != null)
-            coinVisual.gameObject.SetActive(false);
-    }
-
-    private void ApplyVisualScale()
-    {
-        CacheVisual();
-        if (coinVisual == null)
-            return;
-
-        var t = Mathf.InverseLerp(CwslGameConstants.GoldDropMin, CwslGameConstants.GoldDropMax, goldAmount.Value);
-        var scale = Mathf.Lerp(0.4f, 0.75f, t);
-        coinVisual.localScale = Vector3.one * scale;
+        return NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(
+            playerNetworkObjectId,
+            out player);
     }
 }

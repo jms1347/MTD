@@ -7,6 +7,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using AssetKits.ParticleImage;
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 
 public static class CwslGameSceneSetup
@@ -25,7 +26,7 @@ public static class CwslGameSceneSetup
 
         EnsureFolders();
         EnsureLayers();
-        EnsureGoldCoinFlyPrefab();
+        EnsureGoldFlyCoinPrefab();
         var assets = EnsureGameAssets();
         var playerPrefab = BuildPlayerPrefab();
         var rangedPrefab = BuildMonsterPrefab(CwslMonsterType.Ranged, typeof(CwslRangedMonster), 0.55f);
@@ -90,6 +91,74 @@ public static class CwslGameSceneSetup
         Directory.CreateDirectory(Path.GetDirectoryName(ScenePath)!);
         Directory.CreateDirectory(Path.GetDirectoryName(AssetsPath)!);
         Directory.CreateDirectory($"{RootFolder}/Resources/CwslGold");
+    }
+
+    private static void EnsureGoldFlyCoinPrefab()
+    {
+        const string outputPath = RootFolder + "/Resources/CwslGold/CwslGoldFlyCoin.prefab";
+        const string coinSpritePath = "Assets/AssetKits/ParticleImage/Demo/Sprites/Coin.png";
+
+        var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(coinSpritePath);
+        if (sprite == null)
+        {
+            Debug.LogWarning($"[CwSL] 코인 스프라이트를 찾을 수 없습니다: {coinSpritePath}");
+            return;
+        }
+
+        var existing = AssetDatabase.LoadAssetAtPath<GameObject>(outputPath);
+        GameObject temp;
+        if (existing != null)
+            temp = (GameObject)PrefabUtility.InstantiatePrefab(existing);
+        else
+            temp = BuildGoldFlyCoinObject(sprite);
+
+        ConfigureGoldFlyCoinPrefab(temp, sprite);
+        PrefabUtility.SaveAsPrefabAsset(temp, outputPath);
+        Object.DestroyImmediate(temp);
+    }
+
+    private static GameObject BuildGoldFlyCoinObject(Sprite sprite)
+    {
+        var coinObject = new GameObject(
+            "CwslGoldFlyCoin",
+            typeof(RectTransform),
+            typeof(CanvasRenderer),
+            typeof(Image),
+            typeof(CwslGoldFlyCoin));
+
+        var rect = coinObject.GetComponent<RectTransform>();
+        rect.sizeDelta = new Vector2(20f, 20f);
+
+        var image = coinObject.GetComponent<Image>();
+        image.sprite = sprite;
+        image.raycastTarget = false;
+        image.color = Color.white;
+
+        var trailObject = new GameObject("Trail", typeof(RectTransform), typeof(CwslGoldFlyCoinTrail));
+        trailObject.transform.SetParent(coinObject.transform, false);
+        return coinObject;
+    }
+
+    private static void ConfigureGoldFlyCoinPrefab(GameObject root, Sprite sprite)
+    {
+        root.name = "CwslGoldFlyCoin";
+
+        var image = root.GetComponent<Image>();
+        if (image != null)
+        {
+            image.sprite = sprite;
+            image.raycastTarget = false;
+        }
+
+        if (root.GetComponent<CwslGoldFlyCoin>() == null)
+            root.AddComponent<CwslGoldFlyCoin>();
+
+        var trail = root.GetComponentInChildren<CwslGoldFlyCoinTrail>(true);
+        if (trail == null)
+        {
+            var trailObject = new GameObject("Trail", typeof(RectTransform), typeof(CwslGoldFlyCoinTrail));
+            trailObject.transform.SetParent(root.transform, false);
+        }
     }
 
     private static void EnsureGoldCoinFlyPrefab()
@@ -264,21 +333,25 @@ public static class CwslGameSceneSetup
 
         var collider = root.AddComponent<SphereCollider>();
         collider.isTrigger = true;
-        collider.radius = 0.55f;
+        collider.radius = CwslGameConstants.GoldCoinClaimRadius;
         collider.center = new Vector3(0f, 0.35f, 0f);
 
         var rb = root.AddComponent<Rigidbody>();
         rb.isKinematic = true;
         rb.useGravity = false;
 
-        var coin = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        var coin = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        coin.name = "Coin";
         coin.transform.SetParent(root.transform, false);
         coin.transform.localPosition = new Vector3(0f, 0.35f, 0f);
-        coin.transform.localScale = Vector3.one * 0.45f;
+        coin.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+        coin.transform.localScale = new Vector3(0.42f, 0.05f, 0.42f);
         Object.DestroyImmediate(coin.GetComponent<Collider>());
         var renderer = coin.GetComponent<Renderer>();
         if (renderer != null)
-            renderer.sharedMaterial = CwslMaterialUtil.CreateColored(new Color(1f, 0.84f, 0.1f));
+            renderer.sharedMaterial = CwslMaterialUtil.CreateColored(new Color(1f, 0.84f, 0.12f));
+        coin.AddComponent<CwslGoldCoinWorldVisual>();
+        coin.AddComponent<CwslGoldCoinMaterialFix>();
 
         root.AddComponent<NetworkObject>();
         root.AddComponent<Unity.Netcode.Components.NetworkTransform>();

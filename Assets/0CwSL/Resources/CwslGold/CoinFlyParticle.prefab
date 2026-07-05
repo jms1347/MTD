@@ -1121,7 +1121,7 @@ MonoBehaviour:
     m_ConstantMin: 0
     m_ConstantMax: -9.81
   _targetModule:
-    enabled: 1
+    enabled: 0
   _attractorTarget: {fileID: 0}
   _toTarget:
     m_Mode: 2

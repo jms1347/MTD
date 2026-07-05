@@ -9,9 +9,12 @@ public static class CwslGameConstants
     public const int SkillGoldCost = 1;
     public const int GoldDropMin = 1;
     public const int GoldDropMax = 10;
-    public const float GoldMagnetRadius = 8f;
-    public const float GoldPickupRadius = 1.1f;
-    public const float GoldMagnetSpeed = 14f;
+    public const float GoldDropSpreadRadius = 2.8f;
+    public const float GoldCoinSpreadDuration = 0.48f;
+    public const float GoldCoinClaimRadius = 0.9f;
+    public const float GoldMagnetRadius = 4.5f;
+    public const float GoldMagnetSpeed = 16f;
+    public const float GoldPickupRadius = GoldCoinClaimRadius;
     public const int GiftGoldMinInterval = 1;
     public const float GiftGoldStartInterval = 0.5f;
     public const float GiftGoldMinIntervalSeconds = 0.05f;
