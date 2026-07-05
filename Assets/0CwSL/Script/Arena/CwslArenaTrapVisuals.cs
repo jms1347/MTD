@@ -15,6 +15,8 @@ public static class CwslArenaTrapVisuals
 
     public static void EnsureLocal()
     {
+        CwslLobbyGameSettings.EnsureLoaded();
+
         if (root != null)
             return;
 
@@ -23,8 +25,6 @@ public static class CwslArenaTrapVisuals
 
         if (root.GetComponent<CwslArenaTrapVisualRunner>() == null)
             root.gameObject.AddComponent<CwslArenaTrapVisualRunner>();
-
-        BuildStaticTraps();
     }
 
     public static void ShowOffsideLaser(Vector3 lineStart, Vector3 lineEnd)
@@ -167,6 +167,27 @@ public static class CwslArenaTrapVisuals
         lightningZoneAura = null;
     }
 
+    public static void ShowHazardPadWarning(Vector3 center, float radius, CwslHazardPadKind kind, float durationSeconds)
+    {
+        EnsureLocal();
+
+        var markerRoot = new GameObject("HazardPadWarning");
+        markerRoot.transform.SetParent(root, false);
+        markerRoot.transform.position = center;
+        CwslVfxSpawner.AttachEventWarningZone(
+            CwslGameSession.Instance?.Assets?.karmaHalfZoneAuraVfx,
+            markerRoot.transform,
+            radius * 2f);
+
+        var (title, color) = kind switch
+        {
+            CwslHazardPadKind.Acid => ("산성", new Color(0.45f, 0.95f, 0.35f, 1f)),
+            CwslHazardPadKind.Lava => ("용암", new Color(1f, 0.45f, 0.15f, 1f)),
+            _ => ("물웅덩이", new Color(0.35f, 0.75f, 1f, 1f))
+        };
+        markerRoot.AddComponent<CwslEventZoneWarningMarker>().Begin(durationSeconds, title, color);
+    }
+
     public static void SpawnHazardPad(int padId, CwslHazardPadKind kind, Vector3 center, float radius)
     {
         EnsureLocal();
@@ -245,7 +266,8 @@ public static class CwslArenaTrapVisuals
         Object.Destroy(post.GetComponent<Collider>());
 
         attachAura?.Invoke(zoneRoot.transform, diameter);
-        AddWorldLabel(zoneRoot.transform, title, subtitle);
+        if (CwslLobbyGameSettings.ShowTrapGuideText)
+            AddWorldLabel(zoneRoot.transform, title, subtitle);
     }
 
     private static void AddWorldLabel(Transform parent, string title, string subtitle)

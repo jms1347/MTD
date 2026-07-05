@@ -2,35 +2,77 @@ using Unity.Netcode;
 using UnityEngine;
 
 /// <summary>
-/// 홍명보 보스 — HP 380, 4페이즈(흑/백/홍/금) + 사귀 돌 연동.
+/// 홍명보 보스 — HP 380, 4페이즈(흑/백/홍/금) + 다중 공격 패턴.
 /// </summary>
 public class CwslBossHongmyeongbo : CwslMonsterBase
 {
+    private enum BossAttackKind
+    {
+        ProjectileFan,
+        GroundSlam,
+        SummonAdds,
+        RingBurst
+    }
+
+    private static readonly BossAttackKind[] Phase1Attacks =
+    {
+        BossAttackKind.ProjectileFan,
+        BossAttackKind.GroundSlam
+    };
+
+    private static readonly BossAttackKind[] Phase2Attacks =
+    {
+        BossAttackKind.ProjectileFan,
+        BossAttackKind.SummonAdds,
+        BossAttackKind.RingBurst
+    };
+
+    private static readonly BossAttackKind[] Phase3Attacks =
+    {
+        BossAttackKind.GroundSlam,
+        BossAttackKind.RingBurst,
+        BossAttackKind.ProjectileFan
+    };
+
+    private static readonly BossAttackKind[] Phase4Attacks =
+    {
+        BossAttackKind.ProjectileFan,
+        BossAttackKind.GroundSlam,
+        BossAttackKind.RingBurst,
+        BossAttackKind.SummonAdds
+    };
+
     public static CwslBossHongmyeongbo Active { get; private set; }
 
     private CwslMonsterHealth bossHealth;
     private CwslBossPhase currentPhase = CwslBossPhase.BlackTeleport;
     private float nextTeleportTime;
     private float nextPhaseBallTime;
+    private float nextAttackTime;
     private float teleportResolveTime;
     private Vector3 pendingTeleportPosition;
     private bool teleportPending;
     private bool phaseInitialized;
+    private int attackRotation;
+    private bool scaleApplied;
 
     public CwslBossPhase CurrentPhase => currentPhase;
 
     public override void Initialize(CwslMonsterType type)
     {
         base.Initialize(type);
-        moveSpeed = 2.2f;
+        moveSpeed = 2.8f;
+        ApplyBossScale();
         bossHealth = GetComponent<CwslMonsterHealth>();
         bossHealth?.ConfigureBoss(CwslGameConstants.BossMaxHealth);
         Active = this;
         currentPhase = CwslBossPhase.BlackTeleport;
         nextTeleportTime = Time.time + 4f;
         nextPhaseBallTime = Time.time + CwslGameConstants.BossPhase2BallInterval;
+        nextAttackTime = Time.time + 3f;
         CwslArenaGimmickSystem.Instance?.NotifyBossSpawnedServer();
         EnterPhaseServer(currentPhase, force: true);
+        PlayBossSpawnClientRpc();
     }
 
     public override void OnNetworkDespawn()
@@ -54,13 +96,7 @@ public class CwslBossHongmyeongbo : CwslMonsterBase
 
     public static bool CanReceiveDamageFrom(ulong attackerClientId)
     {
-        if (Active == null || Active.currentPhase != CwslBossPhase.RedFight)
-            return true;
-
-        if (!TryGetClientPosition(attackerClientId, out var position))
-            return false;
-
-        return CwslArenaZones.IsInFightZone(position);
+        return Active != null;
     }
 
     protected override void TickServerAI()
@@ -94,6 +130,8 @@ public class CwslBossHongmyeongbo : CwslMonsterBase
 
     private void TickPhase1Server()
     {
+        TickExtraAttacksServer(CwslGameConstants.BossAttackIntervalPhase1);
+
         if (Time.time >= nextTeleportTime)
             BeginTeleportServer(CwslGameConstants.BossPhase1TeleportCooldown);
 
@@ -102,6 +140,8 @@ public class CwslBossHongmyeongbo : CwslMonsterBase
 
     private void TickPhase2Server()
     {
+        TickExtraAttacksServer(CwslGameConstants.BossAttackIntervalPhase2);
+
         if (Time.time >= nextPhaseBallTime)
         {
             nextPhaseBallTime = Time.time + CwslGameConstants.BossPhase2BallInterval;
@@ -113,6 +153,8 @@ public class CwslBossHongmyeongbo : CwslMonsterBase
 
     private void TickPhase3Server()
     {
+        TickExtraAttacksServer(CwslGameConstants.BossAttackIntervalPhase3);
+
         var fightCenter = new Vector3(
             CwslGameConstants.FightZoneCenterX,
             transform.position.y,
@@ -130,9 +172,218 @@ public class CwslBossHongmyeongbo : CwslMonsterBase
 
     private void TickPhase4Server()
     {
+        TickExtraAttacksServer(CwslGameConstants.BossAttackIntervalPhase4);
+
         var center = Vector3.zero;
         center.y = transform.position.y;
         MoveToward(center, 0.55f);
+    }
+
+    private void TickExtraAttacksServer(float interval)
+    {
+        if (Time.time < nextAttackTime)
+            return;
+
+        nextAttackTime = Time.time + interval;
+        ExecuteRotatingAttackServer();
+    }
+
+    private void ExecuteRotatingAttackServer()
+    {
+        var pool = GetAttackPoolForPhase();
+        if (pool == null || pool.Length == 0)
+            return;
+
+        var kind = pool[attackRotation % pool.Length];
+        attackRotation++;
+
+        switch (kind)
+        {
+            case BossAttackKind.ProjectileFan:
+                AttackProjectileFanServer();
+                break;
+            case BossAttackKind.GroundSlam:
+                AttackGroundSlamServer();
+                break;
+            case BossAttackKind.SummonAdds:
+                AttackSummonAddsServer();
+                break;
+            case BossAttackKind.RingBurst:
+                AttackRingBurstServer();
+                break;
+        }
+    }
+
+    private BossAttackKind[] GetAttackPoolForPhase()
+    {
+        return currentPhase switch
+        {
+            CwslBossPhase.BlackTeleport => Phase1Attacks,
+            CwslBossPhase.WhiteTeamBall => Phase2Attacks,
+            CwslBossPhase.RedFight => Phase3Attacks,
+            CwslBossPhase.GoldFinal => Phase4Attacks,
+            _ => Phase1Attacks
+        };
+    }
+
+    private void AttackProjectileFanServer()
+    {
+        var session = CwslGameSession.Instance;
+        if (session == null || session.Assets.projectilePrefab == null)
+            return;
+
+        var aimDir = transform.forward;
+        if (IsValidTarget(currentTarget))
+        {
+            var flat = currentTarget.transform.position - transform.position;
+            flat.y = 0f;
+            if (flat.sqrMagnitude > 0.01f)
+                aimDir = flat.normalized;
+        }
+
+        var muzzle = GetMuzzlePosition();
+        var count = CwslGameConstants.BossProjectileFanCount;
+        var spread = CwslGameConstants.BossProjectileSpreadDegrees;
+        var step = count > 1 ? spread / (count - 1) : 0f;
+        var startAngle = -spread * 0.5f;
+
+        for (var i = 0; i < count; i++)
+        {
+            var angle = startAngle + step * i;
+            var dir = Quaternion.AngleAxis(angle, Vector3.up) * aimDir;
+            FireBossProjectileServer(muzzle, dir);
+        }
+
+        PlayProjectileFanClientRpc(muzzle, aimDir);
+    }
+
+    private void FireBossProjectileServer(Vector3 muzzle, Vector3 fireDirection)
+    {
+        var session = CwslGameSession.Instance;
+        if (session == null || session.Assets.projectilePrefab == null)
+            return;
+
+        if (fireDirection.sqrMagnitude < 0.0001f)
+            fireDirection = transform.forward;
+        else
+            fireDirection.Normalize();
+
+        var networkObject = CwslNetworkPoolService.Instance?.Get(
+            session.Assets.projectilePrefab,
+            muzzle,
+            Quaternion.LookRotation(fireDirection, Vector3.up));
+        if (networkObject == null)
+            return;
+
+        var projectile = networkObject.GetComponent<CwslMonsterProjectile>();
+        projectile?.Configure(
+            fireDirection,
+            CwslGameConstants.BossProjectileSpeed,
+            CwslGameConstants.BossProjectileLifetime);
+    }
+
+    private void AttackGroundSlamServer()
+    {
+        var center = transform.position;
+        var radius = CwslGameConstants.BossSlamRadius;
+        var radiusSqr = radius * radius;
+
+        foreach (var playerHealth in FindObjectsByType<CwslPlayerHealth>(FindObjectsSortMode.None))
+        {
+            if (playerHealth == null || !playerHealth.IsAlive)
+                continue;
+
+            var flat = playerHealth.transform.position - center;
+            flat.y = 0f;
+            if (flat.sqrMagnitude > radiusSqr)
+                continue;
+
+            playerHealth.TryReceiveExplosionHitServer(CwslGameConstants.BossSlamDamage, playerHealth.transform.position);
+        }
+
+        PlayGroundSlamClientRpc(center, radius);
+    }
+
+    private void AttackRingBurstServer()
+    {
+        var center = transform.position;
+        var radius = CwslGameConstants.BossRingBurstRadius;
+        var radiusSqr = radius * radius;
+
+        foreach (var playerHealth in FindObjectsByType<CwslPlayerHealth>(FindObjectsSortMode.None))
+        {
+            if (playerHealth == null || !playerHealth.IsAlive)
+                continue;
+
+            var flat = playerHealth.transform.position - center;
+            flat.y = 0f;
+            if (flat.sqrMagnitude > radiusSqr)
+                continue;
+
+            playerHealth.TryReceiveExplosionHitServer(CwslGameConstants.BossRingBurstDamage, playerHealth.transform.position);
+        }
+
+        PlayRingBurstClientRpc(center, radius);
+    }
+
+    private void AttackSummonAddsServer()
+    {
+        var spawner = CwslGameSession.Instance?.MonsterSpawner;
+        if (spawner == null)
+            return;
+
+        var count = Random.Range(
+            CwslGameConstants.BossSummonCountMin,
+            CwslGameConstants.BossSummonCountMax + 1);
+
+        var center = transform.position;
+        center.y = CwslGameConstants.SpawnHeight;
+        var minRadius = CwslGameConstants.BossSummonMinRadius;
+        var maxRadius = minRadius + CwslGameConstants.BossSummonSpread;
+
+        if (currentPhase == CwslBossPhase.WhiteTeamBall || currentPhase == CwslBossPhase.GoldFinal)
+            spawner.SpawnMonstersInRingServer(center, count, minRadius, maxRadius, CwslMonsterType.Suicide);
+        else
+            spawner.SpawnMonstersInRingServer(center, count, minRadius, maxRadius, CwslMonsterType.Melee);
+
+        PlaySummonAddsClientRpc(center);
+    }
+
+    private Vector3 GetMuzzlePosition()
+    {
+        var scale = CwslGameConstants.BossVisualScale;
+        return transform.position + Vector3.up * (2.2f * scale) + transform.forward * (1.2f * scale);
+    }
+
+    private void ApplyBossScale()
+    {
+        if (scaleApplied)
+            return;
+
+        var scale = CwslGameConstants.BossVisualScale;
+        if (scale <= 1.01f)
+            return;
+
+        scaleApplied = true;
+
+        for (var i = 0; i < transform.childCount; i++)
+        {
+            var child = transform.GetChild(i);
+            if (child.GetComponent<Renderer>() == null)
+                continue;
+
+            child.localPosition *= scale;
+            child.localScale *= scale;
+        }
+
+        var collider = GetComponent<CapsuleCollider>();
+        if (collider == null)
+            return;
+
+        collider.height = 4.2f * scale;
+        collider.radius = 1.4f * scale;
+        collider.center = new Vector3(0f, 2.1f * scale, 0f);
+        bossHealth?.RefreshBossHitCollider();
     }
 
     private void ChaseTargetServer(float speedMultiplier)
@@ -166,6 +417,8 @@ public class CwslBossHongmyeongbo : CwslMonsterBase
 
         phaseInitialized = true;
         currentPhase = phase;
+        attackRotation = 0;
+        nextAttackTime = Time.time + 2f;
         CwslArenaGimmickSystem.Instance?.EnterBossPhaseServer(phase);
 
         PlayPhaseTransitionClientRpc(transform.position, (int)phase);
@@ -181,7 +434,7 @@ public class CwslBossHongmyeongbo : CwslMonsterBase
         }
     }
 
-    private static Vector3 ResolveFleePositionServer()
+    private Vector3 ResolveFleePositionServer()
     {
         var centroid = Vector3.zero;
         var count = 0;
@@ -201,12 +454,13 @@ public class CwslBossHongmyeongbo : CwslMonsterBase
             centroid /= count;
 
         var extent = CwslGameConstants.ArenaHalfExtent - 3f;
+        var y = transform.position.y;
         var corners = new[]
         {
-            new Vector3(-extent, 1.6f, -extent),
-            new Vector3(extent, 1.6f, -extent),
-            new Vector3(-extent, 1.6f, extent),
-            new Vector3(extent, 1.6f, extent)
+            new Vector3(-extent, y, -extent),
+            new Vector3(extent, y, -extent),
+            new Vector3(-extent, y, extent),
+            new Vector3(extent, y, extent)
         };
 
         var best = corners[0];
@@ -261,5 +515,42 @@ public class CwslBossHongmyeongbo : CwslMonsterBase
     {
         if (System.Enum.IsDefined(typeof(CwslBossPhase), phaseIndex))
             CwslArenaGimmickVisuals.OnBossPhaseChanged((CwslBossPhase)phaseIndex, position);
+    }
+
+    [ClientRpc]
+    private void PlayProjectileFanClientRpc(Vector3 muzzle, Vector3 aimDirection)
+    {
+        var rotation = aimDirection.sqrMagnitude > 0.0001f
+            ? Quaternion.LookRotation(aimDirection.normalized, Vector3.up)
+            : transform.rotation;
+        CwslVfxSpawner.SpawnShadowMuzzleFlash(muzzle, rotation);
+        CwslSimpleVfx.SpawnBurst(muzzle, new Color(0.95f, 0.2f, 0.12f), 2.4f, 0.35f);
+    }
+
+    [ClientRpc]
+    private void PlayGroundSlamClientRpc(Vector3 center, float radius)
+    {
+        CwslSimpleVfx.SpawnBurst(center, new Color(0.9f, 0.15f, 0.1f), radius * 0.55f, 0.45f);
+        CwslArenaAudioFeedback.PlayBossTeleportArrive(center);
+    }
+
+    [ClientRpc]
+    private void PlayRingBurstClientRpc(Vector3 center, float radius)
+    {
+        CwslSimpleVfx.SpawnBurst(center, new Color(1f, 0.85f, 0.2f), radius * 0.45f, 0.4f);
+        CwslSimpleVfx.SpawnBurst(center + Vector3.up * 0.5f, new Color(0.95f, 0.15f, 0.1f), radius * 0.25f, 0.3f);
+    }
+
+    [ClientRpc]
+    private void PlaySummonAddsClientRpc(Vector3 center)
+    {
+        CwslSimpleVfx.SpawnBurst(center, new Color(0.2f, 0.35f, 0.95f), 3.5f, 0.4f);
+    }
+
+    [ClientRpc]
+    private void PlayBossSpawnClientRpc()
+    {
+        CwslBossSpawnToast.Show();
+        CwslSimpleVfx.SpawnBurst(transform.position + Vector3.up * 6f, new Color(0.95f, 0.15f, 0.1f), 8f, 0.55f);
     }
 }

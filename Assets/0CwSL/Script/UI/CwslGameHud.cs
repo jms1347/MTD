@@ -28,7 +28,7 @@ public class CwslGameHud : MonoBehaviour
         var karmaLabel = CreateLabel(canvasObject.transform, "KarmaLabel", new Vector2(16f, -96f), new Vector2(640f, 48f), 28f);
 
         var karmaUi = canvasObject.AddComponent<CwslKarmaUI>();
-        karmaUi.Bind(karmaSystem, karmaLabel);
+        karmaUi.Bind(karmaSystem, CwslTeamGoldCollectedSystem.Instance, karmaLabel);
     }
 
     private static TextMeshProUGUI CreateLabel(Transform parent, string name, Vector2 anchoredPosition, Vector2 size, float fontSize)

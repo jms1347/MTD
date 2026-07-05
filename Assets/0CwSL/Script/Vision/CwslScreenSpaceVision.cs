@@ -16,20 +16,22 @@ public class CwslScreenSpaceVision : MonoBehaviour
     private Transform followTarget;
     private float visionRadius = 14f;
     private bool isBlindVision;
+    private bool isAbsoluteBlind;
 
-    public void Activate(Transform target, float visionRadiusWorld)
+    public void Activate(Transform target, float visionRadiusWorld, bool absoluteBlind = false)
     {
         followTarget = target;
-        SetVisionRadius(visionRadiusWorld);
+        SetVisionRadius(visionRadiusWorld, absoluteBlind);
         EnsureOverlay();
         if (overlay != null)
             overlay.enabled = true;
     }
 
-    public void SetVisionRadius(float visionRadiusWorld)
+    public void SetVisionRadius(float visionRadiusWorld, bool absoluteBlind = false)
     {
+        isAbsoluteBlind = absoluteBlind;
         isBlindVision = visionRadiusWorld <= 0.01f;
-        visionRadius = isBlindVision ? 2.8f : Mathf.Max(6f, visionRadiusWorld);
+        visionRadius = isAbsoluteBlind ? 0f : isBlindVision ? 2.8f : Mathf.Max(6f, visionRadiusWorld);
     }
 
     public void Deactivate()
@@ -46,6 +48,17 @@ public class CwslScreenSpaceVision : MonoBehaviour
         var camera = Camera.main;
         if (camera == null || vignetteMaterial == null)
             return;
+
+        if (isAbsoluteBlind)
+        {
+            vignetteMaterial.SetVector("_Center", new Vector4(0.5f, 0.5f, 0f, 0f));
+            vignetteMaterial.SetFloat("_InnerRadius", 0f);
+            vignetteMaterial.SetFloat("_OuterRadius", 0.001f);
+            vignetteMaterial.SetFloat("_Aspect", (float)Screen.width / Mathf.Max(1f, Screen.height));
+            vignetteMaterial.SetColor("_Color", DarkColor);
+            ApplyScryMask(camera, (float)Screen.width / Mathf.Max(1f, Screen.height));
+            return;
+        }
 
         // 플레이어 발밑(지면)을 스크린 좌표로
         var worldAnchor = followTarget.position;

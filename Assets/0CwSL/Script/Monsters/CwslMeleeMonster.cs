@@ -38,7 +38,7 @@ public class CwslMeleeMonster : CwslMonsterBase
 
         base.Initialize(type);
 
-        moveSpeed = 6.1f;
+        moveSpeed = 1.525f;
 
     }
 

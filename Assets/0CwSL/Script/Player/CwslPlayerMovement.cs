@@ -114,6 +114,8 @@ public class CwslPlayerMovement : NetworkBehaviour
         if (!IsServer || agent == null)
             return;
 
+        GetComponent<CwslBlackHoleEscape>()?.TryRegisterMoveAwayClickServer(worldPoint);
+
         if (playerStun != null && playerStun.IsStunned)
             return;
 
@@ -143,6 +145,33 @@ public class CwslPlayerMovement : NetworkBehaviour
         agent.enabled = true;
         agent.isStopped = false;
         agent.SetDestination(destinationHit.position);
+    }
+
+    public void RequestRammerSteerTo(Vector3 worldPoint)
+    {
+        if (!IsServer || rammerSkill == null || !rammerSkill.IsActiveForCharacter(GetCharacterId()))
+            return;
+
+        GetComponent<CwslBlackHoleEscape>()?.TryRegisterMoveAwayClickServer(worldPoint);
+
+        if (playerStun != null && playerStun.IsStunned)
+            return;
+
+        if (crowdGatherSkill != null && crowdGatherSkill.IsCharging)
+            return;
+
+        if (!NavMesh.SamplePosition(worldPoint, out var hit, 6f, NavMesh.AllAreas))
+            return;
+
+        rammerSkill.SetSteerDestinationServer(hit.position);
+    }
+
+    public void ReleaseRammerSteer()
+    {
+        if (!IsServer || rammerSkill == null)
+            return;
+
+        rammerSkill.ReleaseSteerServer();
     }
 
     public void StopMovement()
@@ -181,7 +210,8 @@ public class CwslPlayerMovement : NetworkBehaviour
     {
         if (agent != null)
             agent.speed = CwslGameConstants.BaseMoveSpeed * speedMultiplier
-                          * (GetComponent<CwslSlowModifier>()?.SpeedMultiplier ?? 1f);
+                          * (GetComponent<CwslSlowModifier>()?.SpeedMultiplier ?? 1f)
+                          * (GetComponent<CwslMoveSpeedBuff>()?.SpeedMultiplier ?? 1f);
     }
 
     private CwslCharacterId GetCharacterId()

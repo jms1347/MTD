@@ -20,6 +20,7 @@ public static class CwslArenaGimmickVisuals
     private static float watchMarkerHideTime;
     private static ulong watchTargetClientId;
     private static AudioSource teamBallRollSource;
+    private static AudioSource blackHoleLoopSource;
     private static GameObject fightZoneAura;
     private static GameObject bossFightShield;
     private static readonly GameObject[] lighthouseGlow = new GameObject[CwslGameConstants.LighthouseCount];
@@ -31,6 +32,8 @@ public static class CwslArenaGimmickVisuals
 
     public static void EnsureLocal()
     {
+        CwslLobbyGameSettings.EnsureLoaded();
+
         if (root != null)
             return;
 
@@ -42,7 +45,6 @@ public static class CwslArenaGimmickVisuals
 
         BuildZoneMarkers();
         BuildLighthouses();
-        BuildTrapPads();
         BuildSilhouette();
         BuildCenterRings();
         BuildTeamBall();
@@ -130,6 +132,15 @@ public static class CwslArenaGimmickVisuals
     {
         CwslArenaAudioFeedback.StopLoop(teamBallRollSource);
         teamBallRollSource = null;
+    }
+
+    private static void StartBlackHoleLoopSound(Transform parent)
+    {
+        CwslArenaAudioFeedback.StopLoop(blackHoleLoopSource);
+        blackHoleLoopSource = CwslArenaAudioFeedback.StartLoop(
+            parent,
+            CwslArenaAudioFeedback.ResolveBlackHoleLoop(),
+            0.72f);
     }
 
     public static void ActivateLighthouse(int index, float duration)
@@ -332,7 +343,11 @@ public static class CwslArenaGimmickVisuals
             "블랙홀",
             "중심으로 조금씩 당김",
             new Color(0.18f, 0.22f, 0.55f),
-            (parent, diameter) => CwslVfxSpawner.AttachBlackHoleVortex(parent, diameter));
+            (parent, diameter) =>
+            {
+                CwslVfxSpawner.AttachBlackHoleVortex(parent, diameter);
+                StartBlackHoleLoopSound(parent);
+            });
 
         AddGimmickSign(
             "KarmaHalfZone",
@@ -399,7 +414,8 @@ public static class CwslArenaGimmickVisuals
                 (parent, diameter) => CwslVfxSpawner.AttachZoneAura(
                     CwslGameSession.Instance?.Assets?.trapPadAuraVfx,
                     parent,
-                    diameter * 0.55f));
+                    diameter * 0.55f),
+                showLabel: CwslLobbyGameSettings.ShowTrapGuideText);
         }
     }
 
@@ -526,7 +542,8 @@ public static class CwslArenaGimmickVisuals
         string title,
         string subtitle,
         Color signColor,
-        System.Action<Transform, float> attachAura)
+        System.Action<Transform, float> attachAura,
+        bool showLabel = true)
     {
         var zoneRoot = new GameObject(name);
         zoneRoot.transform.SetParent(root, false);
@@ -542,7 +559,8 @@ public static class CwslArenaGimmickVisuals
         Object.Destroy(post.GetComponent<Collider>());
 
         attachAura?.Invoke(zoneRoot.transform, diameter);
-        AddWorldLabel(zoneRoot.transform, title, subtitle);
+        if (showLabel)
+            AddWorldLabel(zoneRoot.transform, title, subtitle);
         return zoneRoot;
     }
 

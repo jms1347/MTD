@@ -53,6 +53,12 @@ public class CwslGameSession : NetworkBehaviour
             gameObject.AddComponent<CwslArenaTrapSystem>();
         if (GetComponent<CwslArenaHazardPadSystem>() == null)
             gameObject.AddComponent<CwslArenaHazardPadSystem>();
+        if (GetComponent<CwslArenaBuffSystem>() == null)
+            gameObject.AddComponent<CwslArenaBuffSystem>();
+        if (GetComponent<CwslArenaDynamicZoneSystem>() == null)
+            gameObject.AddComponent<CwslArenaDynamicZoneSystem>();
+        if (GetComponent<CwslTeamGoldCollectedSystem>() == null)
+            gameObject.AddComponent<CwslTeamGoldCollectedSystem>();
     }
 
     public override void OnNetworkSpawn()
@@ -76,7 +82,10 @@ public class CwslGameSession : NetworkBehaviour
             return;
 
         if (CwslKarmaSystem.Instance != null)
+        {
             CwslKarmaSystem.Instance.OnKarmaChanged += HandleKarmaChanged;
+            HandleKarmaChanged(CwslKarmaSystem.Instance.Karma);
+        }
     }
 
     public override void OnNetworkDespawn()
@@ -182,6 +191,19 @@ public class CwslGameSession : NetworkBehaviour
         return true;
     }
 
+    public void CheatAssignCharacterServer(ulong clientId, CwslCharacterId characterId)
+    {
+        if (!IsServerActive() || !CwslLobbyGameSettings.EnableDevCheats)
+            return;
+
+        if (!Enum.IsDefined(typeof(CwslCharacterId), characterId))
+            return;
+
+        assignedCharacters[clientId] = characterId;
+        NotifyAssignmentsChanged();
+        ApplyAssignedCharacterToPlayer(clientId);
+    }
+
     public void ReleaseCharacter(ulong clientId)
     {
         if (!IsServerActive())
@@ -250,7 +272,7 @@ public class CwslGameSession : NetworkBehaviour
 
         var boss = CwslNetworkPoolService.Instance?.Get(
             prefab,
-            new Vector3(0f, 1.6f, 0f),
+            new Vector3(0f, 0f, 0f),
             Quaternion.identity);
         if (boss == null)
             return;

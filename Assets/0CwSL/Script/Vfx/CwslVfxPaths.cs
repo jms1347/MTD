@@ -161,7 +161,7 @@ public static class CwslVfxPaths
         "Assets/Epic Toon FX/Prefabs/Environment/Fog/Black/FogCalmBlack.prefab";
 
     public const string BlackHoleVortex =
-        "Assets/Epic Toon FX/Prefabs/Interactive/Portals/VortexPortal/VortexPortalBlue.prefab";
+        "Assets/Epic Toon FX/Prefabs/Environment/Weather/Whirlwind.prefab";
 
     public const string TrapPadAura =
         "Assets/Epic Toon FX/Prefabs/Interactive/Zone/BasicZone/BasicZoneRed.prefab";
@@ -196,6 +196,21 @@ public static class CwslVfxPaths
     public const string BadGrassAura =
         "Assets/Epic Toon FX/Prefabs/Interactive/Zone/BasicZone/BasicZoneGreen.prefab";
 
+    public const string HealingSpringAura =
+        "Assets/Epic Toon FX/Prefabs/Interactive/Loot/GlowOrb/GlowOrbGreen.prefab";
+
+    public const string TailwindGrassAura =
+        "Assets/Epic Toon FX/Prefabs/Interactive/Zone/SpinZone/SpinZoneBlue.prefab";
+
+    public const string RallyZoneAura =
+        "Assets/Epic Toon FX/Prefabs/Interactive/Zone/BasicZone/BasicZoneBlue.prefab";
+
+    public const string GoldSpringAura =
+        "Assets/Epic Toon FX/Prefabs/Interactive/Loot/GlowOrb/GlowOrbYellow.prefab";
+
+    public const string GoldSpringBurst =
+        "Assets/Epic Toon FX/Prefabs/Interactive/Sparkle/TinySparkle.prefab";
+
     public const string DonationPadGlow =
         "Assets/Epic Toon FX/Prefabs/Interactive/Loot/GlowOrb/GlowOrbYellow.prefab";
 
@@ -228,4 +243,19 @@ public static class CwslVfxPaths
 
     public const string HazardWaterPad =
         "Assets/Epic Toon FX/Prefabs/Environment/Water/Boiling/WaterBoiling.prefab";
+
+    public const string PillBuffBlue =
+        "Assets/Epic Toon FX/Prefabs/Combat/Magic/Buff/MagicBuffBlue.prefab";
+
+    public const string PillBuffGreen =
+        "Assets/Epic Toon FX/Prefabs/Combat/Magic/Buff/MagicBuffGreen.prefab";
+
+    public const string PillBuffYellow =
+        "Assets/Epic Toon FX/Prefabs/Combat/Magic/Buff/MagicBuffYellow.prefab";
+
+    public const string PillSphereBlue =
+        "Assets/Epic Toon FX/Prefabs/Combat/Magic/Sphere/MagicSphereBlue.prefab";
+
+    public const string PillSphereYellow =
+        "Assets/Epic Toon FX/Prefabs/Combat/Magic/Sphere/MagicSphereYellow.prefab";
 }

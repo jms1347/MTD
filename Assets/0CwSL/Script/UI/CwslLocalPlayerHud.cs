@@ -11,6 +11,8 @@ public class CwslLocalPlayerHud : NetworkBehaviour
     private TextMeshProUGUI goldLabel;
     private TextMeshProUGUI hintLabel;
     private TextMeshProUGUI toastLabel;
+    private Transform hudCanvasTransform;
+    private bool introPopupShown;
 
     public override void OnNetworkSpawn()
     {
@@ -28,8 +30,8 @@ public class CwslLocalPlayerHud : NetworkBehaviour
 
         if (playerCharacter != null)
         {
-            playerCharacter.OnCharacterChanged += RefreshHint;
-            RefreshHint(playerCharacter.CharacterId);
+            playerCharacter.OnCharacterChanged += HandleCharacterChangedForHud;
+            HandleCharacterChangedForHud(playerCharacter.CharacterId);
         }
     }
 
@@ -46,7 +48,22 @@ public class CwslLocalPlayerHud : NetworkBehaviour
         if (playerGold != null)
             playerGold.OnGoldChanged -= RefreshGold;
         if (playerCharacter != null)
-            playerCharacter.OnCharacterChanged -= RefreshHint;
+            playerCharacter.OnCharacterChanged -= HandleCharacterChangedForHud;
+    }
+
+    private void HandleCharacterChangedForHud(CwslCharacterId characterId)
+    {
+        RefreshHint(characterId);
+        TryShowCharacterIntroPopup(characterId);
+    }
+
+    private void TryShowCharacterIntroPopup(CwslCharacterId characterId)
+    {
+        if (introPopupShown || hudCanvasTransform == null)
+            return;
+
+        introPopupShown = true;
+        CwslCharacterIntroPopup.Show(characterId);
     }
 
     private void CreateHud()
@@ -71,6 +88,8 @@ public class CwslLocalPlayerHud : NetworkBehaviour
             canvasTransform = canvasObject.transform;
         }
 
+        hudCanvasTransform = canvasTransform;
+
         var hudCanvas = canvasTransform.GetComponent<Canvas>();
         if (hudCanvas != null)
             hudCanvas.sortingOrder = CwslGameConstants.HudCanvasSortOrder;
@@ -82,6 +101,10 @@ public class CwslLocalPlayerHud : NetworkBehaviour
         EnsureToastLabel(canvasTransform);
         EnsureGoldPanel(canvasTransform);
         EnsureKarmaLabel(canvasTransform);
+        CwslCharacterIntroPopup.Ensure(canvasTransform);
+        CwslBossHealthHud.Ensure(canvasTransform);
+        EnsurePartyPanel(canvasTransform);
+        EnsureGameOverHud(canvasTransform);
         EnsureMinimap(canvasTransform);
         if (GetComponent<CwslArenaGimmickVisualRunner>() == null)
             gameObject.AddComponent<CwslArenaGimmickVisualRunner>();
@@ -234,7 +257,24 @@ public class CwslLocalPlayerHud : NetworkBehaviour
 
         var karmaUi = canvasTransform.gameObject.GetComponent<CwslKarmaUI>()
                       ?? canvasTransform.gameObject.AddComponent<CwslKarmaUI>();
-        karmaUi.Bind(CwslKarmaSystem.Instance, karmaLabel);
+        karmaUi.Bind(CwslKarmaSystem.Instance, CwslTeamGoldCollectedSystem.Instance, karmaLabel);
+    }
+
+    private static void EnsurePartyPanel(Transform canvasTransform)
+    {
+        var existing = canvasTransform.Find("CwslPartyPanel");
+        if (existing != null)
+            return;
+
+        var panelObject = new GameObject("CwslPartyPanel", typeof(RectTransform), typeof(Image), typeof(CwslPartyPanel));
+        panelObject.transform.SetParent(canvasTransform, false);
+    }
+
+    private static void EnsureGameOverHud(Transform canvasTransform)
+    {
+        CwslGameOverHud.Ensure(canvasTransform);
+        if (CwslGameFlow.Instance != null)
+            CwslGameOverHud.SetVisible(CwslGameFlow.Instance.AllPlayersDefeated);
     }
 
     private static void EnsureMinimap(Transform canvasTransform)

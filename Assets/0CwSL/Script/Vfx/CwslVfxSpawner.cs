@@ -358,15 +358,14 @@ public static class CwslVfxSpawner
             parent.position,
             Quaternion.identity,
             0f,
-            diameter / 5.5f);
+            diameter / 4.2f);
         if (spawned == null)
             return null;
 
         spawned.transform.SetParent(parent, false);
-        spawned.transform.localPosition = Vector3.zero;
+        spawned.transform.localPosition = Vector3.up * 0.15f;
         spawned.transform.localRotation = Quaternion.identity;
-        DisablePhysics(spawned);
-        RestartParticleSystems(spawned);
+        PrepareEffect(spawned);
         return spawned;
     }
 
@@ -758,6 +757,132 @@ public static class CwslVfxSpawner
             CwslGameSession.Instance?.Assets?.badGrassAuraVfx,
             parent,
             diameter / 6f);
+    }
+
+    public static GameObject AttachHealingSpringAura(Transform parent, float diameter)
+    {
+        var assets = CwslGameSession.Instance?.Assets;
+        return AttachGroundLoop(
+            assets?.healingSpringAuraVfx ?? assets?.karmaHalfZoneAuraVfx,
+            parent,
+            diameter / 5.5f);
+    }
+
+    public static GameObject AttachTailwindGrassAura(Transform parent, float diameter)
+    {
+        var assets = CwslGameSession.Instance?.Assets;
+        return AttachGroundLoop(
+            assets?.tailwindGrassAuraVfx ?? assets?.gatherPullBurstVfx,
+            parent,
+            diameter / 6f);
+    }
+
+    public static GameObject AttachRallyZoneAura(Transform parent, float diameter)
+    {
+        var assets = CwslGameSession.Instance?.Assets;
+        return AttachGroundLoop(
+            assets?.rallyZoneAuraVfx ?? assets?.karmaHalfZoneAuraVfx,
+            parent,
+            diameter / 6f);
+    }
+
+    public static GameObject AttachGoldSpringAura(Transform parent, float diameter)
+    {
+        var assets = CwslGameSession.Instance?.Assets;
+        return AttachGroundLoop(
+            assets?.goldSpringAuraVfx ?? assets?.donationPadGlowVfx,
+            parent,
+            diameter / 5.5f);
+    }
+
+    public static GameObject SpawnGoldSpringBurst(Vector3 position)
+    {
+        var assets = CwslGameSession.Instance?.Assets;
+        return Spawn(
+            assets?.goldSpringBurstVfx ?? assets?.watchSparkleVfx,
+            position,
+            Quaternion.identity,
+            1.2f,
+            1.4f);
+    }
+
+    public static GameObject SpawnPillBurst(Vector3 position, CwslPillType pillType)
+    {
+        var assets = CwslGameSession.Instance?.Assets;
+        var prefab = pillType switch
+        {
+            CwslPillType.Green => assets?.pillBuffGreenVfx,
+            CwslPillType.Yellow => assets?.pillBuffYellowVfx,
+            _ => assets?.pillBuffBlueVfx
+        };
+
+        var spawned = Spawn(prefab, position, Quaternion.identity, 2f, 1.15f);
+        if (spawned != null)
+            PrepareEffect(spawned);
+        return spawned;
+    }
+
+    public static GameObject AttachPillSpeedAura(Transform parent)
+    {
+        if (parent == null)
+            return null;
+
+        var assets = CwslGameSession.Instance?.Assets;
+        var spawned = Spawn(
+            assets?.pillSphereBlueVfx ?? assets?.fortifyAuraVfx,
+            parent.position + Vector3.up * 0.9f,
+            Quaternion.identity,
+            0f,
+            1.8f);
+        if (spawned == null)
+            return null;
+
+        spawned.transform.SetParent(parent, false);
+        spawned.transform.localPosition = Vector3.up * 0.9f;
+        PrepareEffect(spawned);
+        return spawned;
+    }
+
+    public static GameObject AttachPillFreeSkillAura(Transform parent)
+    {
+        if (parent == null)
+            return null;
+
+        var assets = CwslGameSession.Instance?.Assets;
+        var spawned = Spawn(
+            assets?.pillSphereYellowVfx ?? assets?.pressConferenceRingVfx,
+            parent.position + Vector3.up * 0.9f,
+            Quaternion.identity,
+            0f,
+            1.8f);
+        if (spawned == null)
+            return null;
+
+        spawned.transform.SetParent(parent, false);
+        spawned.transform.localPosition = Vector3.up * 0.9f;
+        PrepareEffect(spawned);
+        return spawned;
+    }
+
+    public static GameObject AttachPillHealAura(Transform parent)
+    {
+        if (parent == null)
+            return null;
+
+        var assets = CwslGameSession.Instance?.Assets;
+        var spawned = Spawn(
+            assets?.pillBuffYellowVfx ?? assets?.pillSphereYellowVfx,
+            parent.position + Vector3.up * 0.9f,
+            Quaternion.identity,
+            0f,
+            1.6f);
+        if (spawned == null)
+            return null;
+
+        spawned.transform.SetParent(parent, false);
+        spawned.transform.localPosition = Vector3.up * 0.9f;
+        PrepareEffect(spawned);
+        return spawned;
     }
 
     public static GameObject AttachDonationPadGlow(Transform parent, float scale)

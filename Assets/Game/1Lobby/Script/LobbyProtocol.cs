@@ -18,6 +18,8 @@ public class LobbyMessage
     public bool isReady;
     public LobbyPlayerData[] players;
     public string error;
+    public bool enableDevCheats;
+    public bool showTrapGuideText;
 
     public const string JoinRequest = "join_request";
     public const string JoinAccepted = "join_accepted";
@@ -47,7 +49,14 @@ public class LobbyMessage
         players = players
     };
 
-    public static LobbyMessage Start() => new() { type = StartGame };
+    public static LobbyMessage Start() => StartWithOptions(false, true);
+
+    public static LobbyMessage StartWithOptions(bool enableDevCheats, bool showTrapGuideText) => new()
+    {
+        type = StartGame,
+        enableDevCheats = enableDevCheats,
+        showTrapGuideText = showTrapGuideText
+    };
 
     public static LobbyMessage Leave(string playerId) => new()
     {

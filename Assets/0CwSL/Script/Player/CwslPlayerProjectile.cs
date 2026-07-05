@@ -138,9 +138,15 @@ public class CwslPlayerProjectile : NetworkBehaviour, ICwslPooledNetworkObject
                 monsterLayerMask,
                 QueryTriggerInteraction.Collide);
 
+            System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+
             foreach (var hit in hits)
             {
                 if (ShouldIgnoreCollider(hit.collider))
+                    continue;
+
+                var monsterHealth = hit.collider.GetComponentInParent<CwslMonsterHealth>();
+                if (ShouldSkipMonsterForProjectile(monsterHealth))
                     continue;
 
                 TryDamageCollider(hit.collider);
@@ -151,6 +157,14 @@ public class CwslPlayerProjectile : NetworkBehaviour, ICwslPooledNetworkObject
 
         TryHitMonstersAt(to);
         TryFlatDirectionHit(from, to);
+    }
+
+    private bool ShouldSkipMonsterForProjectile(CwslMonsterHealth monsterHealth)
+    {
+        if (monsterHealth == null || !monsterHealth.IsBoss)
+            return false;
+
+        return homingTarget != null && homingTarget != monsterHealth;
     }
 
     private void TryHitMonstersAt(Vector3 position)
@@ -167,6 +181,10 @@ public class CwslPlayerProjectile : NetworkBehaviour, ICwslPooledNetworkObject
         foreach (var hit in hits)
         {
             if (ShouldIgnoreCollider(hit))
+                continue;
+
+            var monsterHealth = hit.GetComponentInParent<CwslMonsterHealth>();
+            if (ShouldSkipMonsterForProjectile(monsterHealth))
                 continue;
 
             TryDamageCollider(hit);
@@ -197,13 +215,6 @@ public class CwslPlayerProjectile : NetworkBehaviour, ICwslPooledNetworkObject
     /// </summary>
     private void TryFlatDirectionHit(Vector3 from, Vector3 to)
     {
-        if (homingTarget != null && homingTarget.IsAlive)
-        {
-            if (IsFlatHit(from, to, homingTarget))
-                TryDamageMonster(homingTarget);
-            return;
-        }
-
         var flatDir = direction;
         flatDir.y = 0f;
         if (flatDir.sqrMagnitude < 0.0001f)
@@ -226,7 +237,7 @@ public class CwslPlayerProjectile : NetworkBehaviour, ICwslPooledNetworkObject
         var monsters = FindObjectsByType<CwslMonsterHealth>(FindObjectsSortMode.None);
         foreach (var monster in monsters)
         {
-            if (monster == null || !monster.IsAlive)
+            if (monster == null || !monster.IsAlive || ShouldSkipMonsterForProjectile(monster))
                 continue;
 
             if (!IsFlatHit(from, to, monster, flatDx, flatDz, fromX, fromZ, reach, hitRadius))
@@ -274,7 +285,7 @@ public class CwslPlayerProjectile : NetworkBehaviour, ICwslPooledNetworkObject
         float reach,
         float hitRadius)
     {
-        var pos = monster.transform.position;
+        var pos = monster.GetFlatHitPoint();
         var relX = pos.x - fromX;
         var relZ = pos.z - fromZ;
         var projected = relX * flatDx + relZ * flatDz;
@@ -288,9 +299,8 @@ public class CwslPlayerProjectile : NetworkBehaviour, ICwslPooledNetworkObject
 
     private static float GetMonsterFlatRadius(CwslMonsterHealth monster)
     {
-        var capsule = monster.GetComponent<CapsuleCollider>();
-        return capsule != null
-            ? capsule.radius
+        return monster != null
+            ? monster.GetFlatHitRadius()
             : CwslGameConstants.MonsterHitMinRadius;
     }
 
@@ -300,7 +310,7 @@ public class CwslPlayerProjectile : NetworkBehaviour, ICwslPooledNetworkObject
             return;
 
         var monsterHealth = collider.GetComponentInParent<CwslMonsterHealth>();
-        if (monsterHealth == null || !monsterHealth.IsAlive)
+        if (monsterHealth == null || !monsterHealth.IsAlive || ShouldSkipMonsterForProjectile(monsterHealth))
             return;
 
         TryDamageMonster(monsterHealth);
@@ -311,7 +321,7 @@ public class CwslPlayerProjectile : NetworkBehaviour, ICwslPooledNetworkObject
         if (!configured || !CanHitNow() || monsterHealth == null || !monsterHealth.IsAlive)
             return;
 
-        if (homingTarget != null && monsterHealth != homingTarget)
+        if (ShouldSkipMonsterForProjectile(monsterHealth))
             return;
 
         var networkObject = monsterHealth.NetworkObject;

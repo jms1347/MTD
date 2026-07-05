@@ -41,6 +41,33 @@ public class CwslPlayerCharacter : NetworkBehaviour
         syncedCharacterId.Value = (int)characterId;
     }
 
+    public void CheatCycleCharacterServer()
+    {
+        if (!IsServer || !CwslLobbyGameSettings.EnableDevCheats)
+            return;
+
+        var session = CwslGameSession.Instance;
+        if (session == null)
+            return;
+
+        var all = CwslCharacterCatalog.All;
+        if (all.Count == 0)
+            return;
+
+        var currentIndex = 0;
+        for (var i = 0; i < all.Count; i++)
+        {
+            if (all[i].Id != CharacterId)
+                continue;
+
+            currentIndex = i;
+            break;
+        }
+
+        var nextId = all[(currentIndex + 1) % all.Count].Id;
+        session.CheatAssignCharacterServer(OwnerClientId, nextId);
+    }
+
     public void RequestSelect(CwslCharacterId characterId)
     {
         if (!IsOwner)

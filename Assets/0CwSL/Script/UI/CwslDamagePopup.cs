@@ -47,9 +47,12 @@ public class CwslDamagePopup : MonoBehaviour
 
         if (damageText != null)
         {
-            damageText.text = kind == CwslDamagePopupKind.Blocked
-                ? "BLOCK"
-                : Mathf.CeilToInt(damage).ToString();
+            damageText.text = kind switch
+            {
+                CwslDamagePopupKind.Blocked => "BLOCK",
+                CwslDamagePopupKind.Heal => $"+{Mathf.CeilToInt(damage)}",
+                _ => Mathf.CeilToInt(damage).ToString()
+            };
             baseColor = ResolveColor(kind);
             damageText.color = baseColor;
             damageText.enabled = true;
@@ -135,6 +138,7 @@ public class CwslDamagePopup : MonoBehaviour
             CwslDamagePopupKind.Projectile => new Color(0.95f, 0.5f, 1f, 1f),
             CwslDamagePopupKind.Blocked => new Color(0.45f, 0.85f, 1f, 1f),
             CwslDamagePopupKind.Poison => new Color(0.35f, 1f, 0.35f, 1f),
+            CwslDamagePopupKind.Heal => new Color(0.35f, 1f, 0.55f, 1f),
             _ => new Color(1f, 0.92f, 0.28f, 1f)
         };
     }

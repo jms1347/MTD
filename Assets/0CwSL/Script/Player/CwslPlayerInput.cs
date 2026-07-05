@@ -16,6 +16,7 @@ public class CwslPlayerInput : NetworkBehaviour
     private bool skillHeld;
     private bool groundTargeting;
     private bool attackMovePending;
+    private float nextRammerSteerRpcTime;
 
     public override void OnNetworkSpawn()
     {
@@ -32,12 +33,13 @@ public class CwslPlayerInput : NetworkBehaviour
             playerCamera = Camera.main;
     }
 
-    // TODO(릴리즈): 테스트용 치트키(C/R/U 등) — 정식 버전 전에 제거 예정. 현재는 보류(유지).
+    // TODO(릴리즈): 테스트용 치트키(V/R/U) — 로비 설정으로 비활성 가능.
     private void Update()
     {
         if (!IsOwner || !IsSpawned)
             return;
 
+        CwslLobbyGameSettings.EnsureLoaded();
         HandleCheatInput();
 
         if (playerHealth != null && !playerHealth.IsAlive)
@@ -54,6 +56,7 @@ public class CwslPlayerInput : NetworkBehaviour
 
         HandleGroundTargetPreview();
         HandleAttackMovePreview();
+        HandleRammerSteerInput();
         HandleMoveInput();
         HandleSelectInput();
         HandleAttackInput();
@@ -61,14 +64,15 @@ public class CwslPlayerInput : NetworkBehaviour
         HandleGiftInput();
     }
 
-    // TODO(릴리즈): 테스트용 — C키 캐릭터 전환. 본게임에서는 비활성(입장 시 랜덤 배정).
-    private void HandleCharacterSwitchInput()
-    {
-    }
-
-    // TODO(릴리즈): 테스트용 — R(부활), U(카르마). 정식 버전 전 제거 예정.
+    // TODO(릴리즈): 테스트용 — V(캐릭터), R(부활), U(카르마). 로비 설정으로 비활성 가능.
     private void HandleCheatInput()
     {
+        if (!CwslLobbyGameSettings.EnableDevCheats)
+            return;
+
+        if (Input.GetKeyDown(KeyCode.V))
+            CheatCycleCharacterServerRpc();
+
         if (Input.GetKeyDown(KeyCode.R))
             CheatReviveServerRpc();
 
@@ -106,6 +110,9 @@ public class CwslPlayerInput : NetworkBehaviour
         if (!Input.GetMouseButtonDown(1))
             return;
 
+        if (playerCharacter != null && playerCharacter.CharacterId == CwslCharacterId.MomentumRammer)
+            return;
+
         if (groundTargeting)
         {
             CancelGroundTargeting();
@@ -123,6 +130,44 @@ public class CwslPlayerInput : NetworkBehaviour
 
         CwslMoveDestinationMarker.Show(point);
         MoveToServerRpc(point);
+    }
+
+    private void HandleRammerSteerInput()
+    {
+        if (playerCharacter == null || playerCharacter.CharacterId != CwslCharacterId.MomentumRammer)
+            return;
+
+        if (groundTargeting)
+        {
+            if (Input.GetMouseButtonDown(1))
+                CancelGroundTargeting();
+            return;
+        }
+
+        if (attackMovePending)
+        {
+            if (Input.GetMouseButtonDown(1))
+                CancelAttackMovePending();
+            return;
+        }
+
+        if (Input.GetMouseButton(1))
+        {
+            if (!CwslMouseGround.TryGetGroundPoint(playerCamera, out var point, out _))
+                return;
+
+            CwslMoveDestinationMarker.Show(point);
+            if (Input.GetMouseButtonDown(1) || Time.time >= nextRammerSteerRpcTime)
+            {
+                nextRammerSteerRpcTime = Time.time + CwslGameConstants.RammerSteerRpcIntervalSeconds;
+                SteerRammerServerRpc(point);
+            }
+
+            return;
+        }
+
+        if (Input.GetMouseButtonUp(1))
+            ReleaseRammerSteerServerRpc();
     }
 
     private void HandleSelectInput()
@@ -350,6 +395,18 @@ public class CwslPlayerInput : NetworkBehaviour
     }
 
     [ServerRpc]
+    private void SteerRammerServerRpc(Vector3 worldPoint)
+    {
+        movement?.RequestRammerSteerTo(worldPoint);
+    }
+
+    [ServerRpc]
+    private void ReleaseRammerSteerServerRpc()
+    {
+        movement?.ReleaseRammerSteer();
+    }
+
+    [ServerRpc]
     private void SelectTargetServerRpc(NetworkObjectReference targetRef)
     {
         if (!targetRef.TryGet(out var target))
@@ -416,14 +473,29 @@ public class CwslPlayerInput : NetworkBehaviour
     }
 
     [ServerRpc]
+    private void CheatCycleCharacterServerRpc()
+    {
+        if (!CwslLobbyGameSettings.EnableDevCheats)
+            return;
+
+        playerCharacter?.CheatCycleCharacterServer();
+    }
+
+    [ServerRpc]
     private void CheatReviveServerRpc()
     {
+        if (!CwslLobbyGameSettings.EnableDevCheats)
+            return;
+
         playerHealth?.CheatReviveServer();
     }
 
     [ServerRpc]
     private void CheatAddKarmaServerRpc()
     {
+        if (!CwslLobbyGameSettings.EnableDevCheats)
+            return;
+
         CwslKarmaSystem.Instance?.AddKarmaServer(CwslGameConstants.CheatKarmaIncrement);
     }
 }

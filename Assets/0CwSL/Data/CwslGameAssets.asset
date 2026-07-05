@@ -53,7 +53,8 @@ MonoBehaviour:
   fogZoneLivelyVfx: {fileID: 183136, guid: 223b998603e7da64daa74a527588ce73, type: 3}
   fogZoneLocalVfx: {fileID: 143018, guid: 4ef67ccc10cbe6c4494cb37e4a2cad03, type: 3}
   goldLeakZoneAuraVfx: {fileID: 183362, guid: 3f97cdb2dde8d7f44a37ce3a93c2bf69, type: 3}
-  blackHoleVortexVfx: {fileID: 1209815176174424, guid: 6c4162965c7215f4a8c116238adb30ec, type: 3}
+  blackHoleVortexVfx: {fileID: 185918, guid: e83fb83871ed1ac4d978b22b0f2a4d71, type: 3}
+  blackHoleLoopSound: {fileID: 0}
   trapPadAuraVfx: {fileID: 197318, guid: c82022460ac6d274cb9e2aefc6da9dc9, type: 3}
   trapPadTriggerVfx: {fileID: 0}
   karmaHalfZoneAuraVfx: {fileID: 131378, guid: 79cd481c8e7a27a44ba9a78fbb16b903, type: 3}
@@ -64,6 +65,11 @@ MonoBehaviour:
   bossFightShieldVfx: {fileID: 1527444747669750, guid: d689eae7844400f4883b231a5cd72279, type: 3}
   fakeGoldExplosionVfx: {fileID: 134664, guid: 5b2df17ecc30d7b44909bcc7d4a4febd, type: 3}
   badGrassAuraVfx: {fileID: 191608, guid: 087da436576d35542825d392925d79c4, type: 3}
+  healingSpringAuraVfx: {fileID: 195760, guid: 87009d6220cf83e4d83a95436b7baadf, type: 3}
+  tailwindGrassAuraVfx: {fileID: 124416, guid: 9b95de169c5cf5b46b404f6f2bed4afb, type: 3}
+  rallyZoneAuraVfx: {fileID: 131378, guid: 79cd481c8e7a27a44ba9a78fbb16b903, type: 3}
+  goldSpringAuraVfx: {fileID: 184882, guid: 661f21b6e6d0a6543a4a1a9122f017b0, type: 3}
+  goldSpringBurstVfx: {fileID: 109358, guid: b043edfe6ed22be46b3d939fd3f3e5bb, type: 3}
   donationPadGlowVfx: {fileID: 184882, guid: 661f21b6e6d0a6543a4a1a9122f017b0, type: 3}
   offsideLaserMissileVfx: {fileID: 169190, guid: 7cf0c810c7ede2c42a2e71ac3c0e257d, type: 3}
   lightningStrikeVfx: {fileID: 167788, guid: 76d4aad90bac27a4588a3efc2f93d6f2, type: 3}
@@ -75,6 +81,11 @@ MonoBehaviour:
   hazardAcidPadVfx: {fileID: 112986, guid: e370423ba226169489d92631df31f5af, type: 3}
   hazardLavaPadVfx: {fileID: 129292, guid: d8ac9950df006754ea1bf8311f5c97bc, type: 3}
   hazardWaterPadVfx: {fileID: 130202, guid: 69650b375a92f8e4c8ac8682d63f7451, type: 3}
+  pillBuffBlueVfx: {fileID: 145256, guid: 7b117ab47ae99e74fbb811d488c1eb17, type: 3}
+  pillBuffGreenVfx: {fileID: 187180, guid: 1ed56f4c486ff6141a344e5e5714e1b9, type: 3}
+  pillBuffYellowVfx: {fileID: 147642, guid: 685c97d007af49549b239b56b6d2000a, type: 3}
+  pillSphereBlueVfx: {fileID: 110446, guid: f6322404d6e3b914aa01ac044fb9415e, type: 3}
+  pillSphereYellowVfx: {fileID: 171482, guid: 5bc71fb5e90182941b584e88079e3ec5, type: 3}
   offsideHornSound: {fileID: 8300000, guid: ffd99eb29b9d64948b1c2da37db4f6f6, type: 3}
   horseGallopSound: {fileID: 8300000, guid: 1c9126a3c46df7646a547596f0bdf059, type: 3}
   rammerStunSound: {fileID: 8300000, guid: d097d189607736745b2dc78fd5b9089d, type: 3}
@@ -97,4 +108,5 @@ MonoBehaviour:
   playerMissilePrefab: {fileID: 1119159180590963851, guid: 4146e1dbd4978cd4bbacf7eeaca4b646, type: 3}
   bossPrefab: {fileID: 4975743835310029067, guid: 947ba38eea4204749ba65b99196b3922, type: 3}
   goldPickupPrefab: {fileID: 8285741258449009015, guid: 5f1905539d50fc14a91e5ff699dab977, type: 3}
+  pillPickupPrefab: {fileID: 531872116740505062, guid: bd2a9bb87d18f6345a31ecf6fe1eca29, type: 3}
   graveVisualPrefab: {fileID: 4056276277256171079, guid: a3df36c37be413247bb6f0bb0124a224, type: 3}

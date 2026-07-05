@@ -284,7 +284,9 @@ public class LobbyNetworkManager : MonoBehaviour
             return;
         }
 
-        Broadcast(LobbyMessage.Start());
+        Broadcast(LobbyMessage.StartWithOptions(
+            CwslLobbyGameSettings.EnableDevCheats,
+            CwslLobbyGameSettings.ShowTrapGuideText));
         BeginGameSceneLoad();
     }
 
@@ -422,6 +424,9 @@ public class LobbyNetworkManager : MonoBehaviour
                 ApplyPlayerList(message.players);
                 break;
             case LobbyMessage.StartGame:
+                CwslLobbyGameSettings.ApplyFromLobbyBroadcast(
+                    message.enableDevCheats,
+                    message.showTrapGuideText);
                 BeginGameSceneLoad();
                 break;
             case LobbyMessage.Error:
@@ -571,6 +576,13 @@ public class LobbyNetworkManager : MonoBehaviour
 
     private void BeginGameSceneLoad()
     {
+        if (IsHost)
+        {
+            CwslLobbyGameSettings.ApplyFromLobbyBroadcast(
+                CwslLobbyGameSettings.EnableDevCheats,
+                CwslLobbyGameSettings.ShowTrapGuideText);
+        }
+
         pendingNetcodeHost = IsHost;
         pendingNetcodeClient = IsClient && !IsHost;
         pendingNetcodeHostAddress = HostAddress;

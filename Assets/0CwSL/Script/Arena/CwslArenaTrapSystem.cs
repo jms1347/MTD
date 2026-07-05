@@ -20,7 +20,6 @@ public class CwslArenaTrapSystem : NetworkBehaviour
     private bool lightningActive;
     private bool lightningWarningActive;
     private bool meteorEventActive;
-    private readonly float[] donationPadCooldownUntil = new float[CwslGameConstants.DonationPadCount];
 
     private void Awake()
     {
@@ -109,14 +108,15 @@ public class CwslArenaTrapSystem : NetworkBehaviour
             if (padIndex < 0)
                 continue;
 
-            if (Time.time < donationPadCooldownUntil[padIndex])
+            var dynamicZones = CwslArenaDynamicZoneSystem.Instance;
+            if (dynamicZones != null && dynamicZones.IsDonationOnCooldown(padIndex))
                 continue;
 
             var gold = playerObject.GetComponent<CwslPlayerGold>();
             if (gold == null || gold.Gold <= 0)
                 continue;
 
-            donationPadCooldownUntil[padIndex] = Time.time + CwslGameConstants.DonationPadCooldownSeconds;
+            dynamicZones?.MarkDonationTriggered(padIndex);
             var origin = playerObject.transform.position;
             CwslGoldDropService.ScatterPlayerGoldAcrossArena(gold, origin);
             PlayDonationScatterClientRpc(origin, padIndex);

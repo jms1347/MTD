@@ -66,7 +66,6 @@ public class CwslArenaGimmickSystem : NetworkBehaviour
     private readonly float[] lighthouseStandTime = new float[CwslGameConstants.LighthouseCount];
     private readonly float[] lighthouseChargeSyncTime = new float[CwslGameConstants.LighthouseCount];
     private static readonly float[] lighthouseActiveUntilSynced = new float[CwslGameConstants.LighthouseCount];
-    private readonly float[] trapPadCooldownUntil = new float[CwslGameConstants.TrapPadCount];
 
     public bool SilhouetteActive => silhouetteActive.Value;
     public bool PressConferenceActive => pressConferenceActive.Value;
@@ -389,12 +388,16 @@ public class CwslArenaGimmickSystem : NetworkBehaviour
 
     private void TickTrapPadsServer()
     {
-        if (NetworkManager.Singleton == null)
+        var dynamicZones = CwslArenaDynamicZoneSystem.Instance;
+        if (dynamicZones == null || NetworkManager.Singleton == null)
             return;
 
-        for (var padIndex = 0; padIndex < CwslGameConstants.TrapPadCount; padIndex++)
+        foreach (var zone in dynamicZones.GetActiveZones())
         {
-            if (Time.time < trapPadCooldownUntil[padIndex])
+            if (zone.Kind != CwslDynamicZoneKind.TrapSuicide && zone.Kind != CwslDynamicZoneKind.TrapRanged)
+                continue;
+
+            if (dynamicZones.IsTrapOnCooldown(zone.Id))
                 continue;
 
             foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
@@ -407,10 +410,10 @@ public class CwslArenaGimmickSystem : NetworkBehaviour
                 if (health == null || !health.IsAlive)
                     continue;
 
-                if (!CwslArenaZones.IsOnTrapPad(playerObject.transform.position, padIndex, out var padCenter))
+                if (!CwslArenaZones.IsOnTrapPad(playerObject.transform.position, zone.Id, out var padCenter))
                     continue;
 
-                TriggerTrapPadServer(padIndex, padCenter, playerObject.transform.position);
+                TriggerTrapPadServer(zone.Id, padCenter, playerObject.transform.position);
                 break;
             }
         }
@@ -418,7 +421,8 @@ public class CwslArenaGimmickSystem : NetworkBehaviour
 
     private void TriggerTrapPadServer(int padIndex, Vector3 padCenter, Vector3 triggerPosition)
     {
-        trapPadCooldownUntil[padIndex] = Time.time + CwslGameConstants.TrapPadCooldownSeconds;
+        var dynamicZones = CwslArenaDynamicZoneSystem.Instance;
+        dynamicZones?.MarkTrapTriggered(padIndex);
         var spawnCount = Random.Range(
             CwslGameConstants.TrapPadSpawnMin,
             CwslGameConstants.TrapPadSpawnMax + 1);

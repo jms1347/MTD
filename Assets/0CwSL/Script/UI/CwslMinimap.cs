@@ -239,8 +239,14 @@ public class CwslMinimap : MonoBehaviour
 
     private static bool ShouldFilterMinimapByWorldVision()
     {
+        if (CwslPlayerVision.Local == null)
+            return true;
+
+        if (CwslPlayerVision.Local.IsAbsoluteBlindVision)
+            return true;
+
         // 시야 0 캐릭터는 월드는 어둡지만, 미니맵은 UI 정보로 전체 표시
-        return CwslPlayerVision.Local == null || !CwslPlayerVision.Local.IsBlindVision;
+        return !CwslPlayerVision.Local.IsBlindVision;
     }
 
     private static (Color color, float size) GetMonsterStyle(CwslMonsterType type)
@@ -250,7 +256,7 @@ public class CwslMinimap : MonoBehaviour
             CwslMonsterType.Ranged => (new Color(0.7f, 0.35f, 1f), 7f),
             CwslMonsterType.Suicide => (new Color(1f, 0.55f, 0.2f), 7f),
             CwslMonsterType.Melee => (new Color(0.9f, 0.35f, 0.4f), 7f),
-            CwslMonsterType.BossHongmyeongbo => (new Color(1f, 0.15f, 0.15f), 16f),
+            CwslMonsterType.BossHongmyeongbo => (new Color(1f, 0.15f, 0.15f), 42f),
             _ => (new Color(0.9f, 0.9f, 0.9f), 6f)
         };
     }

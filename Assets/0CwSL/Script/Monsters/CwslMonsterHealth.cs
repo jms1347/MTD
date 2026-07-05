@@ -29,6 +29,20 @@ public class CwslMonsterHealth : NetworkBehaviour, ICwslPooledNetworkObject
         return transform.position + Vector3.up * CwslGameConstants.MonsterHitCenterY;
     }
 
+    public Vector3 GetFlatHitPoint()
+    {
+        var worldCenter = GetAimPoint();
+        return new Vector3(worldCenter.x, transform.position.y, worldCenter.z);
+    }
+
+    public float GetFlatHitRadius()
+    {
+        var capsule = GetComponent<CapsuleCollider>();
+        return capsule != null
+            ? capsule.radius
+            : CwslGameConstants.MonsterHitMinRadius;
+    }
+
     public event Action<CwslMonsterHealth, ulong> OnKilled;
     public event Action<CwslMonsterHealth, float, ulong> OnDamaged;
 
@@ -50,6 +64,7 @@ public class CwslMonsterHealth : NetworkBehaviour, ICwslPooledNetworkObject
         isExecutive = false;
         dropGoldAmount = 0;
         maxHealth = bossMaxHealth;
+        RefreshBossHitCollider();
         if (IsServer)
             health.Value = bossMaxHealth;
     }
@@ -111,6 +126,12 @@ public class CwslMonsterHealth : NetworkBehaviour, ICwslPooledNetworkObject
 
     private void EnsureCombatHitCollider()
     {
+        if (GetComponent<CwslBossHongmyeongbo>() != null)
+        {
+            RefreshBossHitCollider();
+            return;
+        }
+
         var capsule = GetComponent<CapsuleCollider>();
         if (capsule == null)
             return;
@@ -126,18 +147,34 @@ public class CwslMonsterHealth : NetworkBehaviour, ICwslPooledNetworkObject
             capsule.radius = 0.72f;
     }
 
+    public void RefreshBossHitCollider()
+    {
+        var capsule = GetComponent<CapsuleCollider>();
+        if (capsule == null)
+            return;
+
+        var scale = CwslGameConstants.BossVisualScale;
+        capsule.isTrigger = true;
+        capsule.direction = 1;
+        capsule.height = 4.2f * scale;
+        capsule.radius = 1.4f * scale;
+        capsule.center = new Vector3(0f, 2.1f * scale, 0f);
+    }
+
     public void DamageFromPlayer(ulong attackerClientId, float amount)
     {
         if (!IsServer || !IsAlive || amount <= 0f)
             return;
+
+        var scaledAmount = ApplyAttackerBuffs(attackerClientId, amount);
 
         if (IsBoss)
         {
             if (!CwslBossHongmyeongbo.CanReceiveDamageFrom(attackerClientId))
                 return;
 
-            health.Value = Mathf.Max(0f, health.Value - amount);
-            ShowDamagePopupClientRpc(transform.position + Vector3.up * 1.2f, amount, (int)CwslDamagePopupKind.Monster);
+            health.Value = Mathf.Max(0f, health.Value - scaledAmount);
+            ShowDamagePopupClientRpc(transform.position + Vector3.up * 1.2f, scaledAmount, (int)CwslDamagePopupKind.Monster);
             OnDamaged?.Invoke(this, health.Value, attackerClientId);
             GetComponent<CwslBossHongmyeongbo>()?.NotifyDamagedServer(health.Value);
 
@@ -147,8 +184,24 @@ public class CwslMonsterHealth : NetworkBehaviour, ICwslPooledNetworkObject
             return;
         }
 
-        ShowDamagePopupClientRpc(transform.position + Vector3.up * 1.2f, amount, (int)CwslDamagePopupKind.Monster);
+        ShowDamagePopupClientRpc(transform.position + Vector3.up * 1.2f, scaledAmount, (int)CwslDamagePopupKind.Monster);
         Die(attackerClientId);
+    }
+
+    private static float ApplyAttackerBuffs(ulong attackerClientId, float amount)
+    {
+        if (NetworkManager.Singleton == null)
+            return amount;
+
+        foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
+        {
+            if (client.ClientId != attackerClientId || client.PlayerObject == null)
+                continue;
+
+            return amount * CwslArenaBuffSystem.GetPlayerDamageMultiplier(client.PlayerObject.transform.position);
+        }
+
+        return amount;
     }
 
     public void ForceKillServer(ulong attackerClientId = ulong.MaxValue, bool dropGold = true)
@@ -177,8 +230,8 @@ public class CwslMonsterHealth : NetworkBehaviour, ICwslPooledNetworkObject
     private void Die(ulong attackerClientId, bool dropGold = true)
     {
         health.Value = 0f;
-        if (dropGold && dropGoldAmount > 0)
-            CwslGoldDropService.SpawnDrop(transform.position, dropGoldAmount);
+        if (dropGold && !IsBoss)
+            CwslPillDropService.RollMonsterLoot(transform.position);
         OnKilled?.Invoke(this, attackerClientId);
         PlayDeathClientRpc(transform.position, (int)MonsterType);
 

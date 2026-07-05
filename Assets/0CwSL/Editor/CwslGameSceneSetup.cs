@@ -36,6 +36,7 @@ public static class CwslGameSceneSetup
         var projectilePrefab = BuildProjectilePrefab();
         var playerMissilePrefab = BuildPlayerMissilePrefab();
         var goldPickupPrefab = BuildGoldPickupPrefab();
+        var pillPickupPrefab = BuildPillPickupPrefab();
         var graveVisualPrefab = BuildGraveVisualPrefab();
 
         assets.playerPrefab = playerPrefab;
@@ -46,6 +47,7 @@ public static class CwslGameSceneSetup
         assets.projectilePrefab = projectilePrefab;
         assets.playerMissilePrefab = playerMissilePrefab;
         assets.goldPickupPrefab = goldPickupPrefab;
+        assets.pillPickupPrefab = pillPickupPrefab;
         assets.graveVisualPrefab = graveVisualPrefab;
         assets.darkMissileVfx = LoadPrefab(CwslVfxPaths.RangedProjectileVisual);
         assets.shadowProjectileHitVfx = LoadPrefab(CwslVfxPaths.ShadowProjectileHit);
@@ -90,6 +92,11 @@ public static class CwslGameSceneSetup
         assets.bossFightShieldVfx = LoadPrefab(CwslVfxPaths.BossFightShield);
         assets.fakeGoldExplosionVfx = LoadPrefab(CwslVfxPaths.FakeGoldExplosion);
         assets.badGrassAuraVfx = LoadPrefab(CwslVfxPaths.BadGrassAura);
+        assets.healingSpringAuraVfx = LoadPrefab(CwslVfxPaths.HealingSpringAura);
+        assets.tailwindGrassAuraVfx = LoadPrefab(CwslVfxPaths.TailwindGrassAura);
+        assets.rallyZoneAuraVfx = LoadPrefab(CwslVfxPaths.RallyZoneAura);
+        assets.goldSpringAuraVfx = LoadPrefab(CwslVfxPaths.GoldSpringAura);
+        assets.goldSpringBurstVfx = LoadPrefab(CwslVfxPaths.GoldSpringBurst);
         assets.donationPadGlowVfx = LoadPrefab(CwslVfxPaths.DonationPadGlow);
         assets.offsideLaserMissileVfx = LoadPrefab(CwslVfxPaths.OffsideLaserMissile);
         assets.lightningStrikeVfx = LoadPrefab(CwslVfxPaths.LightningStrike);
@@ -101,6 +108,11 @@ public static class CwslGameSceneSetup
         assets.hazardAcidPadVfx = LoadPrefab(CwslVfxPaths.HazardAcidPad);
         assets.hazardLavaPadVfx = LoadPrefab(CwslVfxPaths.HazardLavaPad);
         assets.hazardWaterPadVfx = LoadPrefab(CwslVfxPaths.HazardWaterPad);
+        assets.pillBuffBlueVfx = LoadPrefab(CwslVfxPaths.PillBuffBlue);
+        assets.pillBuffGreenVfx = LoadPrefab(CwslVfxPaths.PillBuffGreen);
+        assets.pillBuffYellowVfx = LoadPrefab(CwslVfxPaths.PillBuffYellow);
+        assets.pillSphereBlueVfx = LoadPrefab(CwslVfxPaths.PillSphereBlue);
+        assets.pillSphereYellowVfx = LoadPrefab(CwslVfxPaths.PillSphereYellow);
         assets.suicideExplosionVfx = LoadPrefab(CwslVfxPaths.SuicideExplosion);
         assets.meleeHitVfx = LoadPrefab(CwslVfxPaths.MeleeHit);
         assets.enemyDeathVfx = LoadPrefab(CwslVfxPaths.EnemyDeath);
@@ -134,6 +146,7 @@ public static class CwslGameSceneSetup
         RegisterPrefab(networkPrefabs, projectilePrefab);
         RegisterPrefab(networkPrefabs, playerMissilePrefab);
         RegisterPrefab(networkPrefabs, goldPickupPrefab);
+        RegisterPrefab(networkPrefabs, pillPickupPrefab);
         EditorUtility.SetDirty(networkPrefabs);
 
         BuildScene(assets, networkPrefabs);
@@ -386,6 +399,9 @@ public static class CwslGameSceneSetup
         root.AddComponent<CwslPlayerSpawnOffset>();
         root.AddComponent<CwslPlayerVision>();
         root.AddComponent<CwslPlayerVisionDebuff>();
+        root.AddComponent<CwslPlayerPillBuff>();
+        root.AddComponent<CwslBlackHoleEscape>();
+        root.AddComponent<CwslPlayerProfile>();
         root.AddComponent<CwslLocalPlayerHud>();
 
         return SavePrefab(root, $"{PrefabFolder}/CwslPlayer.prefab");
@@ -424,6 +440,37 @@ public static class CwslGameSceneSetup
         root.AddComponent<CwslGoldPickup>();
 
         return SavePrefab(root, $"{PrefabFolder}/CwslGoldPickup.prefab");
+    }
+
+    private static GameObject BuildPillPickupPrefab()
+    {
+        var root = new GameObject("CwslPillPickup");
+        root.layer = LayerMask.NameToLayer(CwslGameConstants.LayerGold);
+
+        var collider = root.AddComponent<SphereCollider>();
+        collider.isTrigger = true;
+        collider.radius = CwslGameConstants.GoldCoinClaimRadius;
+        collider.center = new Vector3(0f, 0.35f, 0f);
+
+        var rb = root.AddComponent<Rigidbody>();
+        rb.isKinematic = true;
+        rb.useGravity = false;
+
+        var pill = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        pill.name = "Pill";
+        pill.transform.SetParent(root.transform, false);
+        pill.transform.localPosition = new Vector3(0f, 0.35f, 0f);
+        pill.transform.localRotation = Quaternion.identity;
+        pill.transform.localScale = new Vector3(0.28f, 0.14f, 0.28f);
+        Object.DestroyImmediate(pill.GetComponent<Collider>());
+        CwslMaterialUtil.ApplyColor(pill.GetComponent<Renderer>(), CwslPillWorldVisual.ResolveColor(CwslPillType.Blue));
+        pill.AddComponent<CwslPillWorldVisual>();
+
+        root.AddComponent<NetworkObject>();
+        root.AddComponent<Unity.Netcode.Components.NetworkTransform>();
+        root.AddComponent<CwslPillPickup>();
+
+        return SavePrefab(root, $"{PrefabFolder}/CwslPillPickup.prefab");
     }
 
     private static GameObject BuildGraveVisualPrefab()
@@ -573,7 +620,7 @@ public static class CwslGameSceneSetup
         plane.transform.localScale = new Vector3(8f, 1f, 8f);
         var planeRenderer = plane.GetComponent<Renderer>();
         if (planeRenderer != null)
-            planeRenderer.sharedMaterial = CwslMaterialUtil.CreateMatteColored(new Color(0.2f, 0.28f, 0.22f));
+            planeRenderer.sharedMaterial = CwslMaterialUtil.CreateMatteColored(CwslGameConstants.ArenaFloorColor);
 
         var navMeshSurface = plane.AddComponent<NavMeshSurface>();
         navMeshSurface.center = new Vector3(0f, 0f, 0f);
@@ -616,6 +663,7 @@ public static class CwslGameSceneSetup
         var systems = new GameObject("CwslGameSystems");
         systems.AddComponent<NetworkObject>();
         systems.AddComponent<CwslKarmaSystem>();
+        systems.AddComponent<CwslTeamGoldCollectedSystem>();
         systems.AddComponent<CwslMonsterSpawner>();
         systems.AddComponent<CwslGameSession>();
         systems.AddComponent<CwslGameFlow>();
@@ -624,6 +672,8 @@ public static class CwslGameSceneSetup
         systems.AddComponent<CwslArenaGimmickSystem>();
         systems.AddComponent<CwslArenaTrapSystem>();
         systems.AddComponent<CwslArenaHazardPadSystem>();
+        systems.AddComponent<CwslArenaBuffSystem>();
+        systems.AddComponent<CwslArenaDynamicZoneSystem>();
 
         var session = systems.GetComponent<CwslGameSession>();
         var sessionSerialized = new SerializedObject(session);

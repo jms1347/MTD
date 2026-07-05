@@ -35,29 +35,16 @@ public class CwslLocalVisionSystem : MonoBehaviour
         var origin = playerVision.VisionOrigin;
         var radius = playerVision.EffectiveVisionRadius;
         var blind = playerVision.VisionRadius <= 0.01f;
+        var absoluteBlind = playerVision.IsAbsoluteBlindVision;
 
-        RefreshMonsters(origin, radius, blind);
-        RefreshGold(origin, radius, blind);
-        RefreshOtherPlayers(origin, radius, blind);
-        RefreshProjectiles(origin, radius, blind);
+        RefreshMonsters(origin, radius, blind, absoluteBlind);
+        RefreshGold(origin, radius, blind, absoluteBlind);
+        RefreshPills(origin, radius, blind, absoluteBlind);
+        RefreshOtherPlayers(origin, radius, blind, absoluteBlind);
+        RefreshProjectiles(origin, radius, blind, absoluteBlind);
     }
 
-    private float EvaluateCombinedVisibility(
-        Vector3 origin,
-        Vector3 worldPosition,
-        float radius,
-        bool blind,
-        bool isProjectile)
-    {
-        var visibility = EvaluateVisibility(origin, worldPosition, radius, blind, isProjectile);
-        if (playerVision == null || !playerVision.HasActiveScry)
-            return visibility;
-
-        var scryVisibility = playerVision.TryGetScryVisibility(worldPosition, isProjectile);
-        return Mathf.Max(visibility, scryVisibility);
-    }
-
-    private void RefreshMonsters(Vector3 origin, float radius, bool blind)
+    private void RefreshMonsters(Vector3 origin, float radius, bool blind, bool absoluteBlind)
     {
         var monsters = FindObjectsByType<CwslMonsterBase>(FindObjectsSortMode.None);
         foreach (var monster in monsters)
@@ -72,12 +59,12 @@ public class CwslLocalVisionSystem : MonoBehaviour
                 continue;
             }
 
-            var visibility = EvaluateCombinedVisibility(origin, monster.transform.position, radius, blind, isProjectile: false);
+            var visibility = EvaluateCombinedVisibility(origin, monster.transform.position, radius, blind, absoluteBlind, isProjectile: false);
             SetOccludeeVisibility(monster.gameObject, visibility);
         }
     }
 
-    private void RefreshGold(Vector3 origin, float radius, bool blind)
+    private void RefreshGold(Vector3 origin, float radius, bool blind, bool absoluteBlind)
     {
         var pickups = FindObjectsByType<CwslGoldPickup>(FindObjectsSortMode.None);
         foreach (var pickup in pickups)
@@ -85,12 +72,25 @@ public class CwslLocalVisionSystem : MonoBehaviour
             if (pickup == null)
                 continue;
 
-            var visibility = EvaluateCombinedVisibility(origin, pickup.transform.position, radius, blind, isProjectile: false);
+            var visibility = EvaluateCombinedVisibility(origin, pickup.transform.position, radius, blind, absoluteBlind, isProjectile: false);
             SetOccludeeVisibility(pickup.gameObject, visibility);
         }
     }
 
-    private void RefreshOtherPlayers(Vector3 origin, float radius, bool blind)
+    private void RefreshPills(Vector3 origin, float radius, bool blind, bool absoluteBlind)
+    {
+        var pickups = FindObjectsByType<CwslPillPickup>(FindObjectsSortMode.None);
+        foreach (var pickup in pickups)
+        {
+            if (pickup == null)
+                continue;
+
+            var visibility = EvaluateCombinedVisibility(origin, pickup.transform.position, radius, blind, absoluteBlind, isProjectile: false);
+            SetOccludeeVisibility(pickup.gameObject, visibility);
+        }
+    }
+
+    private void RefreshOtherPlayers(Vector3 origin, float radius, bool blind, bool absoluteBlind)
     {
         var players = FindObjectsByType<CwslPlayerHealth>(FindObjectsSortMode.None);
         foreach (var health in players)
@@ -98,12 +98,18 @@ public class CwslLocalVisionSystem : MonoBehaviour
             if (health == null || health.transform == transform)
                 continue;
 
+            if (absoluteBlind)
+            {
+                SetOccludeeVisibility(health.gameObject, 0f);
+                continue;
+            }
+
             // 팀원(다른 플레이어)은 시야와 무관하게 항상 표시
             SetOccludeeVisibility(health.gameObject, 1f);
         }
     }
 
-    private void RefreshProjectiles(Vector3 origin, float radius, bool blind)
+    private void RefreshProjectiles(Vector3 origin, float radius, bool blind, bool absoluteBlind)
     {
         // 적 미사일: 시야 밖/경계에서는 거의 안 보여서 피격 원인을 알기 어렵게
         var projectiles = FindObjectsByType<CwslMonsterProjectile>(FindObjectsSortMode.None);
@@ -112,9 +118,30 @@ public class CwslLocalVisionSystem : MonoBehaviour
             if (projectile == null)
                 continue;
 
-            var visibility = EvaluateCombinedVisibility(origin, projectile.transform.position, radius, blind, isProjectile: true);
+            var visibility = EvaluateCombinedVisibility(origin, projectile.transform.position, radius, blind, absoluteBlind, isProjectile: true);
             SetOccludeeVisibility(projectile.gameObject, visibility);
         }
+    }
+
+    private float EvaluateCombinedVisibility(
+        Vector3 origin,
+        Vector3 worldPosition,
+        float radius,
+        bool blind,
+        bool absoluteBlind,
+        bool isProjectile)
+    {
+        if (absoluteBlind)
+            return playerVision != null
+                ? playerVision.TryGetScryVisibility(worldPosition, isProjectile)
+                : 0f;
+
+        var visibility = EvaluateVisibility(origin, worldPosition, radius, blind, isProjectile);
+        if (playerVision == null || !playerVision.HasActiveScry)
+            return visibility;
+
+        var scryVisibility = playerVision.TryGetScryVisibility(worldPosition, isProjectile);
+        return Mathf.Max(visibility, scryVisibility);
     }
 
     /// <summary>

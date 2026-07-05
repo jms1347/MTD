@@ -28,6 +28,7 @@ public class CwslMissileTankSkill : CwslPlayerSkillBase
     private CwslPlayerSelection selection;
     private CwslPlayerCannonAim cannonAim;
     private CwslPlayerGold playerGold;
+    private CwslPlayerPillBuff pillBuff;
     private CwslPlayerMovement movement;
     private CwslPlayerCombat combat;
     private NavMeshAgent navAgent;
@@ -52,6 +53,7 @@ public class CwslMissileTankSkill : CwslPlayerSkillBase
         selection = GetComponent<CwslPlayerSelection>();
         cannonAim = GetComponent<CwslPlayerCannonAim>();
         playerGold = GetComponent<CwslPlayerGold>();
+        pillBuff = GetComponent<CwslPlayerPillBuff>();
         movement = GetComponent<CwslPlayerMovement>();
         combat = GetComponent<CwslPlayerCombat>();
         navAgent = GetComponent<NavMeshAgent>();
@@ -181,13 +183,13 @@ public class CwslMissileTankSkill : CwslPlayerSkillBase
     private bool TryFireDualWieldServer()
     {
         var dualCost = CwslGameConstants.MissileDualWieldGoldCost;
-        if (playerGold == null || playerGold.Gold < dualCost)
+        if (!CanAffordSkillGold(dualCost))
         {
             GetComponent<CwslPlayerSkills>()?.NotifyGoldInsufficientServer();
             return false;
         }
 
-        if (!playerGold.TrySpendGoldServer(dualCost))
+        if (!TrySpendSkillGold(dualCost))
         {
             GetComponent<CwslPlayerSkills>()?.NotifyGoldInsufficientServer();
             return false;
@@ -410,5 +412,27 @@ public class CwslMissileTankSkill : CwslPlayerSkillBase
         cannonAim?.SnapAimClient(aimPoint);
         var visual = transform.Find("Visual");
         visual?.GetComponent<CwslPlayerGunShootVisual>()?.PlayDualShoot(aimPoint);
+    }
+
+    private bool CanAffordSkillGold(int amount)
+    {
+        if (!CwslGameConstants.SkillsConsumeGold)
+            return true;
+
+        if (pillBuff != null && pillBuff.CanAffordSkillGold(playerGold, amount))
+            return true;
+
+        return playerGold != null && playerGold.Gold >= amount;
+    }
+
+    private bool TrySpendSkillGold(int amount)
+    {
+        if (!CwslGameConstants.SkillsConsumeGold)
+            return true;
+
+        if (pillBuff != null && pillBuff.TrySpendSkillGold(playerGold, amount))
+            return true;
+
+        return playerGold != null && playerGold.TrySpendGoldServer(amount);
     }
 }

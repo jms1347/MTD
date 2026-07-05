@@ -9,6 +9,7 @@ public static class CwslArenaAudioFeedback
     private static AudioClip teamBallHitClip;
     private static AudioClip cornerStoneBreakClip;
     private static AudioClip bossWatchStartClip;
+    private static AudioClip blackHoleLoopClip;
 
     public static void Initialize(CwslGameAssets assets)
     {
@@ -22,9 +23,12 @@ public static class CwslArenaAudioFeedback
         teamBallHitClip = assets.teamBallHitSound;
         cornerStoneBreakClip = assets.cornerStoneBreakSound;
         bossWatchStartClip = assets.bossWatchStartSound;
+        blackHoleLoopClip = assets.blackHoleLoopSound;
     }
 
     public static AudioClip ResolveTeamBallRoll() => teamBallRollClip;
+
+    public static AudioClip ResolveBlackHoleLoop() => blackHoleLoopClip;
 
     public static void PlayBossTeleportCast(Vector3 position) =>
         PlayOneShot(position, bossTeleportCastClip, 1f);

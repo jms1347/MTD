@@ -69,6 +69,9 @@ public class CwslPlayerHealth : NetworkBehaviour
         if (!IsServer || !IsAlive)
             return true;
 
+        if (CwslShieldBubbleProtection.IsPlayerProtectedServer(this))
+            return true;
+
         return ApplyDamageServer(damage, CwslDamagePopupKind.Projectile, hitPosition);
     }
 
@@ -106,10 +109,10 @@ public class CwslPlayerHealth : NetworkBehaviour
         return true;
     }
 
-    // TODO(릴리즈): R키 치트용 — 정식 버전 전 제거
+    // TODO(릴리즈): R키 치트용 — 로비 설정으로 비활성 가능
     public void CheatReviveServer()
     {
-        if (!IsServer)
+        if (!IsServer || !CwslLobbyGameSettings.EnableDevCheats)
             return;
 
         if (isDead.Value)
@@ -155,9 +158,30 @@ public class CwslPlayerHealth : NetworkBehaviour
         ApplyDamageServer(damage, CwslDamagePopupKind.Poison, hitPosition);
     }
 
+    public void TryHealServer(float amount, bool showPopup = true)
+    {
+        if (!IsServer || !IsAlive || amount <= 0f)
+            return;
+
+        var maxHealth = CwslGameConstants.PlayerMaxHealth;
+        if (health.Value >= maxHealth)
+            return;
+
+        var healed = Mathf.Min(amount, maxHealth - health.Value);
+        if (healed <= 0f)
+            return;
+
+        health.Value += healed;
+        if (showPopup)
+            ShowHealPopupClientRpc(GetDamagePopupAnchor(), healed);
+    }
+
     private bool ApplyDamageServer(float amount, CwslDamagePopupKind popupKind, Vector3 feedbackPosition)
     {
         if (!IsServer || !IsAlive || amount <= 0f)
+            return true;
+
+        if (CwslShieldBubbleProtection.IsPlayerProtectedServer(this))
             return true;
 
         if (CanBlockNow() && fortifySkill.TryBlockDamageServer())
@@ -194,6 +218,7 @@ public class CwslPlayerHealth : NetworkBehaviour
         movement?.SetAgentEnabled(true);
         OnRevived?.Invoke();
         PlayReviveClientRpc();
+        CwslGameFlow.Instance?.NotifyPlayerStateChangedServer();
     }
 
     private void DieServer()
@@ -213,12 +238,19 @@ public class CwslPlayerHealth : NetworkBehaviour
         OnDied?.Invoke();
         PlayDeathClientRpc(transform.position);
         playerGrave?.BeginTombstoneServer(goldAtDeath);
+        CwslGameFlow.Instance?.NotifyPlayerStateChangedServer();
     }
 
     [ClientRpc]
     private void ShowDamagePopupClientRpc(Vector3 position, float amount, int kind)
     {
         CwslDamagePopupPool.Play(position, amount, (CwslDamagePopupKind)kind);
+    }
+
+    [ClientRpc]
+    private void ShowHealPopupClientRpc(Vector3 position, float amount)
+    {
+        CwslDamagePopupPool.Play(position, amount, CwslDamagePopupKind.Heal);
     }
 
     [ClientRpc]

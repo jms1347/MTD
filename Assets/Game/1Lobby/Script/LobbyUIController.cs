@@ -26,11 +26,15 @@ public class LobbyUIController : MonoBehaviour
     private Button readyButton;
     private Button startButton;
 
+    private Toggle devCheatsToggle;
+    private Toggle trapGuideToggle;
+
     private bool isReady;
 
     private void Start()
     {
         EnsureEventSystem();
+        CwslLobbyGameSettings.LoadFromPlayerPrefs();
         localIp = LobbyNetworkAddress.GetLocalIPv4();
         BuildUI();
         BindNetwork();
@@ -113,7 +117,7 @@ public class LobbyUIController : MonoBehaviour
         errorText.color = new Color(1f, 0.45f, 0.45f, 1f);
 
         connectPanel = CreatePanel("ConnectPanel", background.transform, new Color(0f, 0f, 0f, 0.2f));
-        SetupCenterPanel(connectPanel, 460f);
+        SetupCenterPanel(connectPanel, 540f);
 
         CreateLabel("NameLabel", connectPanel.transform, "닉네임", 22,
             new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(-220f, -40f), new Vector2(160f, 30f)).alignment = TextAlignmentOptions.MidlineLeft;
@@ -128,35 +132,87 @@ public class LobbyUIController : MonoBehaviour
             new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(-220f, -180f), new Vector2(160f, 30f)).alignment = TextAlignmentOptions.MidlineLeft;
         joinIpInput = CreateInputField("JoinIpInput", connectPanel.transform, "127.0.0.1", new Vector2(120f, -180f), new Vector2(360f, 44f));
 
+        CreateLabel("OptionsTitle", connectPanel.transform, "게임 옵션", 22,
+            new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -250f), new Vector2(640f, 30f));
+
+        devCheatsToggle = CreateToggle(
+            "DevCheatsToggle",
+            connectPanel.transform,
+            "치트키 사용 (V 캐릭터 / U 업보 / R 부활)",
+            new Vector2(0f, -300f),
+            new Vector2(640f, 36f),
+            CwslLobbyGameSettings.EnableDevCheats);
+        devCheatsToggle.onValueChanged.AddListener(OnDevCheatsToggleChanged);
+
+        trapGuideToggle = CreateToggle(
+            "TrapGuideToggle",
+            connectPanel.transform,
+            "함정 가이드 텍스트 표시",
+            new Vector2(0f, -350f),
+            new Vector2(640f, 36f),
+            CwslLobbyGameSettings.ShowTrapGuideText);
+        trapGuideToggle.onValueChanged.AddListener(OnTrapGuideToggleChanged);
+
         var hostButton = CreateButton("HostButton", connectPanel.transform, "방 만들기 (호스트)",
-            new Vector2(-150f, -300f), new Vector2(260f, 52f), new Color(0.2f, 0.55f, 0.95f, 1f));
+            new Vector2(-150f, -430f), new Vector2(260f, 52f), new Color(0.2f, 0.55f, 0.95f, 1f));
         hostButton.onClick.AddListener(OnHostClicked);
 
         var joinButton = CreateButton("JoinButton", connectPanel.transform, "참가하기",
-            new Vector2(150f, -300f), new Vector2(260f, 52f), new Color(0.2f, 0.75f, 0.45f, 1f));
+            new Vector2(150f, -430f), new Vector2(260f, 52f), new Color(0.2f, 0.75f, 0.45f, 1f));
         joinButton.onClick.AddListener(OnJoinClicked);
 
         roomPanel = CreatePanel("RoomPanel", background.transform, new Color(0f, 0f, 0f, 0.2f));
-        SetupCenterPanel(roomPanel, 460f);
+        SetupCenterPanel(roomPanel, 520f);
         roomPanel.SetActive(false);
 
         CreateLabel("PlayerListTitle", roomPanel.transform, "플레이어 목록", 24,
             new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -30f), new Vector2(640f, 36f));
 
         playerListText = CreateLabel("PlayerList", roomPanel.transform, "", 22,
-            new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -180f), new Vector2(640f, 240f));
+            new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -150f), new Vector2(640f, 200f));
         playerListText.alignment = TextAlignmentOptions.TopLeft;
 
+        CreateLabel("RoomOptionsTitle", roomPanel.transform, "게임 옵션 (호스트 시작 시 적용)", 20,
+            new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -250f), new Vector2(640f, 28f));
+
+        var roomDevCheatsToggle = CreateToggle(
+            "RoomDevCheatsToggle",
+            roomPanel.transform,
+            "치트키 사용 (V 캐릭터 / U 업보 / R 부활)",
+            new Vector2(0f, -290f),
+            new Vector2(640f, 36f),
+            CwslLobbyGameSettings.EnableDevCheats);
+        roomDevCheatsToggle.onValueChanged.AddListener(OnDevCheatsToggleChanged);
+        roomDevCheatsToggle.onValueChanged.AddListener(value =>
+        {
+            if (devCheatsToggle != null)
+                devCheatsToggle.SetIsOnWithoutNotify(value);
+        });
+
+        var roomTrapGuideToggle = CreateToggle(
+            "RoomTrapGuideToggle",
+            roomPanel.transform,
+            "함정 가이드 텍스트 표시",
+            new Vector2(0f, -340f),
+            new Vector2(640f, 36f),
+            CwslLobbyGameSettings.ShowTrapGuideText);
+        roomTrapGuideToggle.onValueChanged.AddListener(OnTrapGuideToggleChanged);
+        roomTrapGuideToggle.onValueChanged.AddListener(value =>
+        {
+            if (trapGuideToggle != null)
+                trapGuideToggle.SetIsOnWithoutNotify(value);
+        });
+
         readyButton = CreateButton("ReadyButton", roomPanel.transform, "준비",
-            new Vector2(-150f, -320f), new Vector2(220f, 52f), new Color(0.95f, 0.72f, 0.2f, 1f));
+            new Vector2(-150f, -400f), new Vector2(220f, 52f), new Color(0.95f, 0.72f, 0.2f, 1f));
         readyButton.onClick.AddListener(OnReadyClicked);
 
         startButton = CreateButton("StartButton", roomPanel.transform, "게임 시작",
-            new Vector2(150f, -320f), new Vector2(220f, 52f), new Color(0.2f, 0.55f, 0.95f, 1f));
+            new Vector2(150f, -400f), new Vector2(220f, 52f), new Color(0.2f, 0.55f, 0.95f, 1f));
         startButton.onClick.AddListener(OnStartClicked);
 
         var leaveButton = CreateButton("LeaveButton", roomPanel.transform, "나가기",
-            new Vector2(0f, -380f), new Vector2(220f, 44f), new Color(0.75f, 0.25f, 0.25f, 1f));
+            new Vector2(0f, -460f), new Vector2(220f, 44f), new Color(0.75f, 0.25f, 0.25f, 1f));
         leaveButton.onClick.AddListener(() => network.LeaveRoom());
     }
 
@@ -215,6 +271,16 @@ public class LobbyUIController : MonoBehaviour
     }
 
     private void OnStartClicked() => network.StartGame();
+
+    private void OnDevCheatsToggleChanged(bool enabled)
+    {
+        CwslLobbyGameSettings.SetFromLobbyUi(enabled, CwslLobbyGameSettings.ShowTrapGuideText);
+    }
+
+    private void OnTrapGuideToggleChanged(bool enabled)
+    {
+        CwslLobbyGameSettings.SetFromLobbyUi(CwslLobbyGameSettings.EnableDevCheats, enabled);
+    }
 
     private bool TryGetPort(out int port)
     {
@@ -412,5 +478,62 @@ public class LobbyUIController : MonoBehaviour
         Stretch(labelObject);
 
         return buttonObject.GetComponent<Button>();
+    }
+
+    private static Toggle CreateToggle(
+        string name,
+        Transform parent,
+        string label,
+        Vector2 anchoredPosition,
+        Vector2 size,
+        bool isOn)
+    {
+        var toggleObject = new GameObject(name, typeof(RectTransform), typeof(Toggle));
+        toggleObject.transform.SetParent(parent, false);
+
+        var rect = toggleObject.GetComponent<RectTransform>();
+        rect.anchorMin = new Vector2(0.5f, 1f);
+        rect.anchorMax = new Vector2(0.5f, 1f);
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.anchoredPosition = anchoredPosition;
+        rect.sizeDelta = size;
+
+        var background = new GameObject("Background", typeof(RectTransform), typeof(Image));
+        background.transform.SetParent(toggleObject.transform, false);
+        var backgroundRect = background.GetComponent<RectTransform>();
+        backgroundRect.anchorMin = new Vector2(0f, 0.5f);
+        backgroundRect.anchorMax = new Vector2(0f, 0.5f);
+        backgroundRect.pivot = new Vector2(0f, 0.5f);
+        backgroundRect.sizeDelta = new Vector2(28f, 28f);
+        backgroundRect.anchoredPosition = new Vector2(-300f, 0f);
+        background.GetComponent<Image>().color = new Color(0.12f, 0.14f, 0.2f, 1f);
+
+        var checkmark = new GameObject("Checkmark", typeof(RectTransform), typeof(Image));
+        checkmark.transform.SetParent(background.transform, false);
+        var checkRect = checkmark.GetComponent<RectTransform>();
+        checkRect.anchorMin = Vector2.zero;
+        checkRect.anchorMax = Vector2.one;
+        checkRect.offsetMin = new Vector2(6f, 6f);
+        checkRect.offsetMax = new Vector2(-6f, -6f);
+        checkmark.GetComponent<Image>().color = new Color(0.35f, 0.85f, 0.55f, 1f);
+
+        var labelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
+        labelObject.transform.SetParent(toggleObject.transform, false);
+        var labelRect = labelObject.GetComponent<RectTransform>();
+        labelRect.anchorMin = new Vector2(0f, 0f);
+        labelRect.anchorMax = new Vector2(1f, 1f);
+        labelRect.offsetMin = new Vector2(56f, 0f);
+        labelRect.offsetMax = Vector2.zero;
+        var labelText = labelObject.GetComponent<TextMeshProUGUI>();
+        labelText.text = label;
+        labelText.fontSize = 20f;
+        labelText.alignment = TextAlignmentOptions.MidlineLeft;
+        labelText.color = new Color(0.92f, 0.94f, 0.98f, 1f);
+
+        var toggle = toggleObject.GetComponent<Toggle>();
+        toggle.targetGraphic = background.GetComponent<Image>();
+        toggle.graphic = checkmark.GetComponent<Image>();
+        toggle.isOn = isOn;
+        return toggle;
     }
 }

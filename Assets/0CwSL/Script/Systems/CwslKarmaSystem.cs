@@ -11,7 +11,8 @@ public class CwslKarmaSystem : NetworkBehaviour
         NetworkVariableWritePermission.Server);
 
     public long Karma => karma.Value;
-    public bool IsBossThresholdReached => karma.Value >= CwslGameConstants.BossKarmaThreshold;
+    public bool IsBossThresholdReached =>
+        karma.Value >= CwslGameConstants.BossKarmaThreshold;
 
     public event System.Action<long> OnKarmaChanged;
 

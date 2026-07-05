@@ -19,6 +19,11 @@ public static class CwslSkillGoldFeedback
         ShowToast(message);
     }
 
+    public static void ShowMessage(string message, float durationSeconds = ToastDurationSeconds)
+    {
+        ShowToast(message, durationSeconds);
+    }
+
     public static void PlayFailSound()
     {
         CwslGatherAudioFeedback.PlaySkillGoldFail(Vector3.zero);
@@ -33,7 +38,7 @@ public static class CwslSkillGoldFeedback
         }
     }
 
-    private static void ShowToast(string message)
+    private static void ShowToast(string message, float durationSeconds = ToastDurationSeconds)
     {
         if (toastLabel == null)
         {
@@ -43,6 +48,6 @@ public static class CwslSkillGoldFeedback
 
         toastLabel.text = message;
         toastLabel.gameObject.SetActive(true);
-        toastHideTime = Time.unscaledTime + ToastDurationSeconds;
+        toastHideTime = Time.unscaledTime + durationSeconds;
     }
 }

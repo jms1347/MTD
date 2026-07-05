@@ -45,6 +45,7 @@ public class CwslGameAssets : ScriptableObject
     public GameObject fogZoneLocalVfx;
     public GameObject goldLeakZoneAuraVfx;
     public GameObject blackHoleVortexVfx;
+    public AudioClip blackHoleLoopSound;
     public GameObject trapPadAuraVfx;
     public GameObject trapPadTriggerVfx;
     public GameObject karmaHalfZoneAuraVfx;
@@ -55,6 +56,11 @@ public class CwslGameAssets : ScriptableObject
     public GameObject bossFightShieldVfx;
     public GameObject fakeGoldExplosionVfx;
     public GameObject badGrassAuraVfx;
+    public GameObject healingSpringAuraVfx;
+    public GameObject tailwindGrassAuraVfx;
+    public GameObject rallyZoneAuraVfx;
+    public GameObject goldSpringAuraVfx;
+    public GameObject goldSpringBurstVfx;
     public GameObject donationPadGlowVfx;
     public GameObject offsideLaserMissileVfx;
     public GameObject lightningStrikeVfx;
@@ -66,6 +72,11 @@ public class CwslGameAssets : ScriptableObject
     public GameObject hazardAcidPadVfx;
     public GameObject hazardLavaPadVfx;
     public GameObject hazardWaterPadVfx;
+    public GameObject pillBuffBlueVfx;
+    public GameObject pillBuffGreenVfx;
+    public GameObject pillBuffYellowVfx;
+    public GameObject pillSphereBlueVfx;
+    public GameObject pillSphereYellowVfx;
     public AudioClip offsideHornSound;
     public AudioClip horseGallopSound;
     public AudioClip rammerStunSound;
@@ -89,5 +100,6 @@ public class CwslGameAssets : ScriptableObject
     public GameObject playerMissilePrefab;
     public GameObject bossPrefab;
     public GameObject goldPickupPrefab;
+    public GameObject pillPickupPrefab;
     public GameObject graveVisualPrefab;
 }

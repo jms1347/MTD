@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.AI;
 
 /// <summary>
-/// 질주자: 관성 이동·충돌, Q 홀드 날개 펼치기(날 확대·골드 소모·광역 피해, 아군 포함).
+/// 질주자: 전령식 우클릭 홀드 조향·관성 이동·충돌, Q 홀드 날개 펼치기(날 확대·골드 소모·광역 피해, 아군 포함).
 /// </summary>
 public class CwslMomentumRammerSkill : CwslPlayerSkillBase
 {
@@ -32,11 +32,13 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
     private CwslPlayerHealth playerHealth;
     private CwslPlayerStun playerStun;
     private CwslPlayerGold playerGold;
+    private CwslPlayerPillBuff pillBuff;
     private CwslPlayerBodyCollider bodyCollider;
 
     private Vector3 moveDirection = Vector3.forward;
     private Vector3 destination;
     private bool hasDestination;
+    private bool steerHeld;
     private bool momentumActive;
     private float wingSpreadStartTime;
     private float nextGoldSpendTime;
@@ -59,6 +61,7 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
         playerHealth = GetComponent<CwslPlayerHealth>();
         playerStun = GetComponent<CwslPlayerStun>();
         playerGold = GetComponent<CwslPlayerGold>();
+        pillBuff = GetComponent<CwslPlayerPillBuff>();
         bodyCollider = GetComponent<CwslPlayerBodyCollider>();
         moveDirection = transform.forward.sqrMagnitude > 0.0001f ? transform.forward : Vector3.forward;
         moveDirection.y = 0f;
@@ -106,6 +109,7 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
         syncedSpeed.Value = 0f;
         momentumActive = false;
         hasDestination = false;
+        steerHeld = false;
         playerStun?.ClearStunServer();
 
         if (enableAgent)
@@ -136,7 +140,7 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
                (playerHealth == null || playerHealth.IsAlive) &&
                !IsStunned &&
                !isWingSpreadActive.Value &&
-               (playerGold == null || playerGold.Gold >= CwslGameConstants.RammerWingSpreadStartGoldCost);
+               CanAffordSkillGold(CwslGameConstants.RammerWingSpreadStartGoldCost);
     }
 
     public override void OnSkillPressedServer(ulong senderClientId)
@@ -148,7 +152,7 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
             isWingSpreadActive.Value)
             return;
 
-        if (playerGold == null || !playerGold.TrySpendGoldServer(CwslGameConstants.RammerWingSpreadStartGoldCost, playSpendEffect: false))
+        if (!TrySpendSkillGold(CwslGameConstants.RammerWingSpreadStartGoldCost, playSpendEffect: false))
         {
             GetComponent<CwslPlayerSkills>()?.NotifyGoldInsufficientServer();
             return;
@@ -195,7 +199,7 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
         if (Time.time >= nextGoldSpendTime)
         {
             nextGoldSpendTime = Time.time + CwslGameConstants.RammerWingSpreadGoldIntervalSeconds;
-            if (playerGold == null || !playerGold.TrySpendGoldServer(CwslGameConstants.RammerWingSpreadTickGoldCost, playSpendEffect: false))
+            if (!TrySpendSkillGold(CwslGameConstants.RammerWingSpreadTickGoldCost, playSpendEffect: false))
             {
                 StopWingSpreadServer();
                 return;
@@ -222,19 +226,28 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
 
     public void SetDestinationServer(Vector3 worldPoint)
     {
-        if (!IsServer ||
-            playerCharacter == null ||
-            playerCharacter.CharacterId != CwslCharacterId.MomentumRammer ||
-            (playerHealth != null && !playerHealth.IsAlive) ||
-            IsStunned)
+        if (!CanAcceptSteerServer())
             return;
 
-        destination = worldPoint;
-        destination.y = transform.position.y;
-        hasDestination = true;
+        steerHeld = false;
+        ApplyDestinationServer(worldPoint, snapDirection: true);
+    }
 
-        if (!momentumActive)
-            BeginMomentumMode();
+    public void SetSteerDestinationServer(Vector3 worldPoint)
+    {
+        if (!CanAcceptSteerServer())
+            return;
+
+        steerHeld = true;
+        ApplyDestinationServer(worldPoint, snapDirection: false);
+    }
+
+    public void ReleaseSteerServer()
+    {
+        if (!IsServer)
+            return;
+
+        steerHeld = false;
     }
 
     public void StopMomentumServer()
@@ -243,6 +256,43 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
             return;
 
         hasDestination = false;
+        steerHeld = false;
+    }
+
+    private bool CanAcceptSteerServer()
+    {
+        return IsServer &&
+               playerCharacter != null &&
+               playerCharacter.CharacterId == CwslCharacterId.MomentumRammer &&
+               (playerHealth == null || playerHealth.IsAlive) &&
+               !IsStunned;
+    }
+
+    private void ApplyDestinationServer(Vector3 worldPoint, bool snapDirection)
+    {
+        destination = worldPoint;
+        destination.y = transform.position.y;
+        hasDestination = true;
+
+        if (snapDirection)
+            SnapMoveDirectionTowardDestination();
+
+        if (!momentumActive)
+            BeginMomentumMode();
+    }
+
+    private void SnapMoveDirectionTowardDestination()
+    {
+        var toDestination = destination - transform.position;
+        toDestination.y = 0f;
+        if (toDestination.sqrMagnitude < 0.12f)
+            return;
+
+        var desiredDirection = toDestination.normalized;
+        moveDirection = Vector3.Slerp(
+            moveDirection,
+            desiredDirection,
+            CwslGameConstants.RammerSteerDirectionSnap).normalized;
     }
 
     public void TickMovementServer()
@@ -296,36 +346,39 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
             moveDirection.Normalize();
         }
 
-        if (syncedSpeed.Value < CwslGameConstants.BaseMoveSpeed * 0.5f)
-            syncedSpeed.Value = CwslGameConstants.BaseMoveSpeed * 0.5f;
     }
 
     private void TickMomentumServer()
     {
         var speed = syncedSpeed.Value;
-        var flatPos = transform.position;
-        flatPos.y = 0f;
 
         if (hasDestination)
         {
             var toDestination = destination - transform.position;
             toDestination.y = 0f;
-            if (toDestination.sqrMagnitude <= 0.3f * 0.3f)
+            var arrivalDistance = CwslGameConstants.RammerArrivalDistance;
+            if (!steerHeld && toDestination.sqrMagnitude <= arrivalDistance * arrivalDistance)
             {
                 hasDestination = false;
             }
-            else
+            else if (toDestination.sqrMagnitude > 0.04f)
             {
                 var desiredDirection = toDestination.normalized;
                 var speedRatio = Mathf.Clamp01(speed / CwslGameConstants.RammerMaxSpeed);
-                var turnRate = Mathf.Lerp(420f, 52f, speedRatio * speedRatio);
+                var turnBlend = Mathf.Pow(
+                    speedRatio,
+                    CwslGameConstants.RammerSteerTurnSpeedExponent);
+                var turnRate = Mathf.Lerp(
+                    CwslGameConstants.RammerSteerTurnRateHigh,
+                    CwslGameConstants.RammerSteerTurnRateLow,
+                    turnBlend);
                 if (isWingSpreadActive.Value)
-                    turnRate *= 0.72f;
+                    turnRate *= 0.58f;
 
                 moveDirection = RotateFlat(moveDirection, desiredDirection, turnRate * Time.deltaTime);
                 var accel = CwslGameConstants.RammerAccelPerSecond;
                 if (isWingSpreadActive.Value)
-                    accel *= 0.82f;
+                    accel *= 0.72f;
                 speed = Mathf.Min(CwslGameConstants.RammerMaxSpeed, speed + accel * Time.deltaTime);
             }
         }
@@ -375,14 +428,22 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
         if (speed < CwslGameConstants.RammerWallStunMinSpeed)
             return false;
 
-        var extent = CwslGameConstants.ArenaHalfExtent - 0.55f;
-        if (Mathf.Abs(to.x) > extent || Mathf.Abs(to.z) > extent)
-        {
-            TriggerWallStunServer(speed);
-            return true;
-        }
+        var bodyRadius = ResolveCollisionRadius();
+        var extent = CwslGameConstants.ArenaMapHalfExtent - bodyRadius;
 
-        return false;
+        var fromInside = Mathf.Abs(from.x) <= extent && Mathf.Abs(from.z) <= extent;
+        var toOutside = Mathf.Abs(to.x) > extent || Mathf.Abs(to.z) > extent;
+        if (!fromInside || !toOutside)
+            return false;
+
+        var clamped = to;
+        clamped.x = Mathf.Clamp(clamped.x, -extent, extent);
+        clamped.z = Mathf.Clamp(clamped.z, -extent, extent);
+        clamped.y = from.y;
+        transform.position = clamped;
+
+        TriggerWallStunServer(speed);
+        return true;
     }
 
     private void TriggerWallStunServer(float impactSpeed)
@@ -403,6 +464,7 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
         StopWingSpreadServer();
         syncedSpeed.Value = 0f;
         hasDestination = false;
+        steerHeld = false;
         momentumActive = false;
         EnableNavMeshAgent();
         if (agent != null && agent.enabled && agent.isOnNavMesh)
@@ -415,7 +477,8 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
     private float turnRateForSpeed(float speed)
     {
         var speedRatio = Mathf.Clamp01(speed / CwslGameConstants.RammerMaxSpeed);
-        return Mathf.Lerp(720f, 120f, speedRatio * speedRatio);
+        var turnBlend = Mathf.Pow(speedRatio, CwslGameConstants.RammerSteerTurnSpeedExponent);
+        return Mathf.Lerp(720f, 165f, turnBlend);
     }
 
     private static Vector3 RotateFlat(Vector3 current, Vector3 target, float maxDegrees)
@@ -624,5 +687,27 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
             agent.isStopped = false;
             agent.Warp(transform.position);
         }
+    }
+
+    private bool CanAffordSkillGold(int amount)
+    {
+        if (!CwslGameConstants.SkillsConsumeGold)
+            return true;
+
+        if (pillBuff != null && pillBuff.CanAffordSkillGold(playerGold, amount))
+            return true;
+
+        return playerGold != null && playerGold.Gold >= amount;
+    }
+
+    private bool TrySpendSkillGold(int amount, bool playSpendEffect = true)
+    {
+        if (!CwslGameConstants.SkillsConsumeGold)
+            return true;
+
+        if (pillBuff != null && pillBuff.TrySpendSkillGold(playerGold, amount, playSpendEffect))
+            return true;
+
+        return playerGold != null && playerGold.TrySpendGoldServer(amount, playSpendEffect);
     }
 }

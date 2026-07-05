@@ -3,44 +3,7 @@ using UnityEngine;
 /// <summary>아레나 기믹 구역 판정 (서버·클라 공용).</summary>
 public static class CwslArenaZones
 {
-    private static readonly Vector3[] TrapPadCenters =
-    {
-        new(-12f, 0f, 12f),
-        new(14f, 0f, -10f),
-        new(-8f, 0f, -20f),
-        new(18f, 0f, 8f),
-        new(-28f, 0f, 0f),
-        new(0f, 0f, 28f)
-    };
-
-    private static readonly CwslMonsterType[] TrapPadMonsterTypes =
-    {
-        CwslMonsterType.Suicide,
-        CwslMonsterType.Ranged,
-        CwslMonsterType.Suicide,
-        CwslMonsterType.Ranged,
-        CwslMonsterType.Suicide,
-        CwslMonsterType.Ranged
-    };
-
-    private static readonly Vector3[] DonationPadCenters =
-    {
-        new(-6f, 0f, 22f),
-        new(16f, 0f, -16f)
-    };
-
-    private static readonly Vector3[] BadGrassCenters =
-    {
-        new(-20f, 0f, 6f),
-        new(8f, 0f, 14f),
-        new(-14f, 0f, -12f),
-        new(22f, 0f, -6f),
-        new(-4f, 0f, -26f),
-        new(26f, 0f, 14f),
-        new(-30f, 0f, -18f),
-        new(10f, 0f, 26f)
-    };
-
+    private static CwslArenaDynamicZoneSystem DynamicZones => CwslArenaDynamicZoneSystem.Instance;
     public static bool IsInFightZone(Vector3 position)
     {
         return IsInSquare(
@@ -110,24 +73,35 @@ public static class CwslArenaZones
 
     public static bool IsOnTrapPad(Vector3 position, int padIndex, out Vector3 padCenter)
     {
-        padCenter = GetTrapPadCenter(padIndex);
-        return FlatDistance(position, padCenter) <= CwslGameConstants.TrapPadRadius;
+        padCenter = Vector3.zero;
+        if (DynamicZones == null)
+            return false;
+
+        if (DynamicZones.TryGetZone(padIndex, out var zone) &&
+            (zone.Kind == CwslDynamicZoneKind.TrapSuicide || zone.Kind == CwslDynamicZoneKind.TrapRanged))
+        {
+            padCenter = zone.Center;
+            var flat = position - zone.Center;
+            flat.y = 0f;
+            return flat.sqrMagnitude <= zone.Radius * zone.Radius;
+        }
+
+        return false;
     }
 
     public static Vector3 GetTrapPadCenter(int index)
     {
-        if (index < 0 || index >= TrapPadCenters.Length)
-            return Vector3.zero;
+        if (DynamicZones != null && DynamicZones.TryGetZone(index, out var zone))
+            return zone.Center;
 
-        return TrapPadCenters[index];
+        return Vector3.zero;
     }
 
     public static CwslMonsterType GetTrapPadMonsterType(int index)
     {
-        if (index < 0 || index >= TrapPadMonsterTypes.Length)
-            return CwslMonsterType.Ranged;
-
-        return TrapPadMonsterTypes[index];
+        return DynamicZones != null
+            ? DynamicZones.GetTrapMonsterType(index)
+            : CwslMonsterType.Ranged;
     }
 
     public static string GetTrapPadLabel(int index)
@@ -152,57 +126,116 @@ public static class CwslArenaZones
 
     public static int GetTrapPadIndexAt(Vector3 position)
     {
-        for (var i = 0; i < CwslGameConstants.TrapPadCount; i++)
-        {
-            if (IsOnTrapPad(position, i, out _))
-                return i;
-        }
-
-        return -1;
+        return DynamicZones != null
+            ? DynamicZones.FindTrapZoneAt(position, out _)
+            : -1;
     }
 
     public static bool IsOnDonationPad(Vector3 position, int padIndex, out Vector3 padCenter)
     {
-        padCenter = GetDonationPadCenter(padIndex);
-        return FlatDistance(position, padCenter) <= CwslGameConstants.DonationPadRadius;
+        padCenter = Vector3.zero;
+        if (DynamicZones == null)
+            return false;
+
+        if (!DynamicZones.TryGetZone(padIndex, out var zone) || zone.Kind != CwslDynamicZoneKind.DonationPad)
+            return false;
+
+        padCenter = zone.Center;
+        var flat = position - zone.Center;
+        flat.y = 0f;
+        return flat.sqrMagnitude <= zone.Radius * zone.Radius;
     }
 
     public static Vector3 GetDonationPadCenter(int index)
     {
-        if (index < 0 || index >= DonationPadCenters.Length)
-            return Vector3.zero;
+        if (DynamicZones != null && DynamicZones.TryGetZone(index, out var zone))
+            return zone.Center;
 
-        return DonationPadCenters[index];
+        return Vector3.zero;
     }
 
     public static int GetDonationPadIndexAt(Vector3 position)
     {
-        for (var i = 0; i < CwslGameConstants.DonationPadCount; i++)
-        {
-            if (IsOnDonationPad(position, i, out _))
-                return i;
-        }
-
-        return -1;
+        return DynamicZones != null
+            ? DynamicZones.FindDonationPadAt(position, out _)
+            : -1;
     }
 
     public static bool IsInBadGrass(Vector3 position)
     {
-        for (var i = 0; i < CwslGameConstants.BadGrassPatchCount; i++)
-        {
-            if (FlatDistance(position, BadGrassCenters[i]) <= CwslGameConstants.BadGrassPatchRadius)
-                return true;
-        }
-
-        return false;
+        return DynamicZones != null &&
+               DynamicZones.IsInZoneKind(position, CwslDynamicZoneKind.BadGrass);
     }
 
     public static Vector3 GetBadGrassCenter(int index)
     {
-        if (index < 0 || index >= BadGrassCenters.Length)
-            return Vector3.zero;
+        if (DynamicZones != null && DynamicZones.TryGetZone(index, out var zone))
+            return zone.Center;
 
-        return BadGrassCenters[index];
+        return Vector3.zero;
+    }
+
+    public static bool IsInHealingSpring(Vector3 position)
+    {
+        return DynamicZones != null &&
+               DynamicZones.IsInZoneKind(position, CwslDynamicZoneKind.HealingSpring);
+    }
+
+    public static Vector3 GetHealingSpringCenter(int index)
+    {
+        if (DynamicZones != null && DynamicZones.TryGetZone(index, out var zone))
+            return zone.Center;
+
+        return Vector3.zero;
+    }
+
+    public static bool IsInTailwindGrass(Vector3 position)
+    {
+        return DynamicZones != null &&
+               DynamicZones.IsInZoneKind(position, CwslDynamicZoneKind.TailwindGrass);
+    }
+
+    public static Vector3 GetTailwindGrassCenter(int index)
+    {
+        if (DynamicZones != null && DynamicZones.TryGetZone(index, out var zone))
+            return zone.Center;
+
+        return Vector3.zero;
+    }
+
+    public static bool IsInRallyZone(Vector3 position, int zoneIndex)
+    {
+        if (DynamicZones == null || !DynamicZones.TryGetZone(zoneIndex, out var zone))
+            return false;
+
+        if (zone.Kind != CwslDynamicZoneKind.RallyZone)
+            return false;
+
+        var flat = position - zone.Center;
+        flat.y = 0f;
+        return flat.sqrMagnitude <= zone.Radius * zone.Radius;
+    }
+
+    public static Vector3 GetRallyZoneCenter(int index)
+    {
+        if (DynamicZones != null && DynamicZones.TryGetZone(index, out var zone))
+            return zone.Center;
+
+        return Vector3.zero;
+    }
+
+    public static bool IsInGoldSpring(Vector3 position)
+    {
+        return DynamicZones != null &&
+               DynamicZones.IsInZoneKind(position, CwslDynamicZoneKind.GoldSpring);
+    }
+
+    public static Vector3 GetGoldSpringCenter(int index)
+    {
+        if (DynamicZones != null && DynamicZones.TryGetZone(index, out var zone))
+            return zone.Center;
+
+        return Vector3.zero;
     }
 
     public static bool IsInOffsideBossTerritory(Vector3 position)

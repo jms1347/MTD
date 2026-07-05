@@ -1,3 +1,4 @@
+using System.Collections;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -23,11 +24,14 @@ public class CwslMonsterSpawner : NetworkBehaviour
         if (spawnTimer > 0f)
             return;
 
-        spawnTimer = spawnInterval;
         if (aliveCount >= maxAliveMonsters)
+        {
+            spawnTimer = spawnInterval;
             return;
+        }
 
-        SpawnRandomMonster();
+        spawnTimer = spawnInterval;
+        QueueSpawnWithWarning(CwslArenaUtility.GetRandomSpawnPosition(), CwslMonsterType.Melee);
     }
 
     public void SpawnMonstersNearServer(Vector3 center, int count, float spreadRadius)
@@ -38,6 +42,33 @@ public class CwslMonsterSpawner : NetworkBehaviour
     public void SpawnSuicidesNearServer(Vector3 center, int count, float spreadRadius)
     {
         SpawnMonstersNearServer(center, count, spreadRadius, CwslMonsterType.Suicide);
+    }
+
+    public void SpawnMonstersInRingServer(
+        Vector3 center,
+        int count,
+        float minRadius,
+        float maxRadius,
+        CwslMonsterType forcedType)
+    {
+        if (!IsServer || count <= 0)
+            return;
+
+        minRadius = Mathf.Max(0f, minRadius);
+        maxRadius = Mathf.Max(minRadius, maxRadius);
+
+        for (var i = 0; i < count; i++)
+        {
+            if (aliveCount >= maxAliveMonsters)
+                break;
+
+            var angle = Random.Range(0f, Mathf.PI * 2f);
+            var radius = Random.Range(minRadius, maxRadius);
+            var offset = new Vector3(Mathf.Cos(angle) * radius, 0f, Mathf.Sin(angle) * radius);
+            var position = new Vector3(center.x + offset.x, CwslGameConstants.SpawnHeight, center.z + offset.z);
+            position = CwslArenaUtility.ClampToArena(position);
+            QueueSpawnWithWarning(position, forcedType);
+        }
     }
 
     public void SpawnMonstersNearServer(Vector3 center, int count, float spreadRadius, CwslMonsterType forcedType)
@@ -53,33 +84,59 @@ public class CwslMonsterSpawner : NetworkBehaviour
             var offset = Random.insideUnitCircle * spreadRadius;
             var position = new Vector3(center.x + offset.x, CwslGameConstants.SpawnHeight, center.z + offset.y);
             position = CwslArenaUtility.ClampToArena(position);
-            SpawnMonsterAtServer(position, forcedType);
+            QueueSpawnWithWarning(position, forcedType);
         }
     }
 
-    private void SpawnRandomMonster()
+    private void QueueSpawnWithWarning(Vector3 position, CwslMonsterType forcedType)
     {
-        SpawnMonsterAtServer(CwslArenaUtility.GetRandomSpawnPosition(), CwslMonsterType.Melee);
+        if (!IsServer)
+            return;
+
+        StartCoroutine(SpawnWithWarningRoutine(position, forcedType));
     }
 
-    private void SpawnMonsterAtServer(Vector3 position, CwslMonsterType forcedType = CwslMonsterType.Melee)
+    private IEnumerator SpawnWithWarningRoutine(Vector3 position, CwslMonsterType forcedType)
+    {
+        var resolvedType = ResolveSpawnType(forcedType);
+        var isExecutive = forcedType == CwslMonsterType.Melee &&
+                          resolvedType == CwslMonsterType.Melee &&
+                          Random.value < CwslGameConstants.ExecutiveSpawnChance;
+        ShowSpawnWarningClientRpc(position, (int)resolvedType, CwslGameConstants.MonsterSpawnWarningSeconds);
+
+        yield return new WaitForSeconds(CwslGameConstants.MonsterSpawnWarningSeconds);
+
+        if (!IsServer || !SpawningEnabled)
+            yield break;
+
+        if (CwslKarmaSystem.Instance != null && CwslKarmaSystem.Instance.IsBossThresholdReached)
+            yield break;
+
+        if (aliveCount >= maxAliveMonsters)
+            yield break;
+
+        SpawnMonsterAtServer(position, resolvedType, isExecutive);
+    }
+
+    private static CwslMonsterType ResolveSpawnType(CwslMonsterType forcedType)
+    {
+        if (forcedType != CwslMonsterType.Melee)
+            return forcedType;
+
+        var roll = Random.Range(0, 3);
+        return roll switch
+        {
+            0 => CwslMonsterType.Ranged,
+            1 => CwslMonsterType.Suicide,
+            _ => CwslMonsterType.Melee
+        };
+    }
+
+    private void SpawnMonsterAtServer(Vector3 position, CwslMonsterType type, bool isExecutive)
     {
         var session = CwslGameSession.Instance;
         if (session == null)
             return;
-
-        var isExecutive = forcedType == CwslMonsterType.Melee && Random.value < CwslGameConstants.ExecutiveSpawnChance;
-        var type = forcedType;
-        if (forcedType == CwslMonsterType.Melee)
-        {
-            var roll = Random.Range(0, 3);
-            type = roll switch
-            {
-                0 => CwslMonsterType.Ranged,
-                1 => CwslMonsterType.Suicide,
-                _ => CwslMonsterType.Melee
-            };
-        }
 
         var prefab = session.GetMonsterPrefab(type);
         if (prefab == null)
@@ -113,5 +170,11 @@ public class CwslMonsterSpawner : NetworkBehaviour
         aliveCount = Mathf.Max(0, aliveCount - 1);
         if (monster != null)
             monster.OnKilled -= HandleMonsterKilled;
+    }
+
+    [ClientRpc]
+    private void ShowSpawnWarningClientRpc(Vector3 position, int monsterType, float durationSeconds)
+    {
+        CwslMonsterSpawnWarningVisual.Show(position, (CwslMonsterType)monsterType, durationSeconds);
     }
 }

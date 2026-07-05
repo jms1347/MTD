@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
@@ -71,7 +72,21 @@ public class CwslArenaHazardPadSystem : NetworkBehaviour
             return;
 
         var kind = (CwslHazardPadKind)Random.Range(0, 3);
-        SpawnPadServer(kind, center, CwslGameConstants.HazardPadRadius);
+        StartCoroutine(SpawnPadWithWarningRoutine(kind, center, CwslGameConstants.HazardPadRadius));
+    }
+
+    private IEnumerator SpawnPadWithWarningRoutine(CwslHazardPadKind kind, Vector3 center, float radius)
+    {
+        ShowHazardPadWarningClientRpc(center, radius, (int)kind, CwslGameConstants.HazardPadWarningSeconds);
+        yield return new WaitForSeconds(CwslGameConstants.HazardPadWarningSeconds);
+
+        if (!IsServer)
+            yield break;
+
+        if (activePads.Count >= CwslGameConstants.HazardPadMaxAlive)
+            yield break;
+
+        SpawnPadServer(kind, center, radius);
     }
 
     private void SpawnPadServer(
@@ -248,6 +263,12 @@ public class CwslArenaHazardPadSystem : NetworkBehaviour
         var flat = a - b;
         flat.y = 0f;
         return flat.magnitude;
+    }
+
+    [ClientRpc]
+    private void ShowHazardPadWarningClientRpc(Vector3 center, float radius, int kind, float durationSeconds)
+    {
+        CwslArenaTrapVisuals.ShowHazardPadWarning(center, radius, (CwslHazardPadKind)kind, durationSeconds);
     }
 
     [ClientRpc]

@@ -11,7 +11,7 @@ public class CwslSuicideMonster : CwslMonsterBase, ICwslPooledNetworkObject
     public override void Initialize(CwslMonsterType type)
     {
         base.Initialize(type);
-        moveSpeed = 4f;
+        moveSpeed = 2f;
         detonated = false;
     }
 

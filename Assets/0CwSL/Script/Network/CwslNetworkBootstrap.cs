@@ -19,6 +19,7 @@ public class CwslNetworkBootstrap : MonoBehaviour
             return;
 
         started = true;
+        CwslLobbyGameSettings.EnsureLoaded();
         EnsureNetworkManager();
         StartCoroutine(BeginNetcodeSession());
     }

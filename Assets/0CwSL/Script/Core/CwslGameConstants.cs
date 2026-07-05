@@ -15,6 +15,13 @@ public static class CwslGameConstants
     // 골드 드롭 (실제 1 = UI 100만 원)
     public const int GoldDropNormal = 1;
     public const int GoldDropExecutive = 10;
+    public const int MonsterGoldDropMin = 0;
+    public const int MonsterGoldDropMax = 3;
+    public const float PillDropChance = 0.14f;
+    public const float PillBuffDurationSeconds = 10f;
+    public const float PillYellowHealDurationSeconds = 10f;
+    public const float PillBlueSpeedMultiplier = 1.4f;
+    public const float PillGreenHealRatio = 0.2f;
     public const float ExecutiveSpawnChance = 0.05f;
     public const float GoldDropSpreadRadius = 2.8f;
     public const float GoldCoinSpreadDuration = 0.48f;
@@ -26,11 +33,18 @@ public static class CwslGameConstants
     public const float GiftGoldStartInterval = 0.5f;
     public const float GiftGoldMinIntervalSeconds = 0.05f;
     public const float GiftGoldAccelDuration = 3f;
+    public const float ReviveProximityRadius = 2.6f;
 
     public const float BaseMoveSpeed = 6.5f;
     public const float RammerMaxSpeed = 17f;
-    public const float RammerAccelPerSecond = 4.2f;
-    public const float RammerDecelPerSecond = 9f;
+    public const float RammerAccelPerSecond = 4.1f;
+    public const float RammerDecelPerSecond = 8.2f;
+    public const float RammerSteerTurnRateHigh = 390f;
+    public const float RammerSteerTurnRateLow = 62f;
+    public const float RammerSteerTurnSpeedExponent = 0.82f;
+    public const float RammerSteerDirectionSnap = 0.15f;
+    public const float RammerSteerRpcIntervalSeconds = 0.07f;
+    public const float RammerArrivalDistance = 0.3f;
     public const float RammerStopSpeed = 0.85f;
     public const float RammerDamageSpeedThreshold = 9.5f;
     public const float RammerCollisionDamage = 1f;
@@ -44,7 +58,7 @@ public static class CwslGameConstants
     public const float RammerWingSpreadDamage = 1f;
     public const float RammerWingSpreadHitCooldown = 0.38f;
     public const float RammerWingSpreadMinScaleForDamage = 1.12f;
-    public const float RammerWallStunDuration = 3f;
+    public const float RammerWallStunDuration = 2f;
     public const float RammerWallStunMinSpeed = 5f;
     public const float RammerAllyStunCooldown = 1.2f;
     public const float GatherReferenceRadius = 4.8f;
@@ -89,11 +103,29 @@ public static class CwslGameConstants
 
     public const string LayerGold = "CwslGold";
 
-    /// <summary>UI 38억 = 실제 업보 3,800 (1업보 = 100만 원 표기).</summary>
+    /// <summary>UI 3.8억 = 업보 3,800 (1업보 = 100만 원 표기). 보스 등장 기준.</summary>
     public const long BossKarmaThreshold = 3_800L;
+    public const long KarmaPickupAmount = 10L;
     public const long CheatKarmaIncrement = 100L; // TODO(릴리즈): U키 치트용 — 정식 버전 전 제거
 
     public const float BossMaxHealth = 380f;
+    public const float BossVisualScale = 10f;
+    public const float BossAttackIntervalPhase1 = 6.5f;
+    public const float BossAttackIntervalPhase2 = 5.5f;
+    public const float BossAttackIntervalPhase3 = 4.5f;
+    public const float BossAttackIntervalPhase4 = 3.8f;
+    public const float BossSlamRadius = 14f;
+    public const float BossSlamDamage = 18f;
+    public const float BossRingBurstRadius = 24f;
+    public const float BossRingBurstDamage = 14f;
+    public const int BossProjectileFanCount = 5;
+    public const float BossProjectileSpreadDegrees = 50f;
+    public const float BossProjectileSpeed = 16f;
+    public const float BossProjectileLifetime = 7f;
+    public const int BossSummonCountMin = 4;
+    public const int BossSummonCountMax = 7;
+    public const float BossSummonSpread = 10f;
+    public const float BossSummonMinRadius = 18f;
     public const float BossPhase2Hp = 285f;
     public const float BossPhase3Hp = 190f;
     public const float BossPhase4Hp = 95f;
@@ -106,6 +138,9 @@ public static class CwslGameConstants
     public const float BossFinalPhaseDuration = 38f;
 
     public const float ArenaHalfExtent = 36f;
+    /// <summary>아레나 바닥(Plane 80x80) 실제 가장자리 — 질주자 벽 스턴 판정.</summary>
+    public const float ArenaMapHalfExtent = 40f;
+    public static readonly UnityEngine.Color ArenaFloorColor = new(0.72f, 0.53f, 0.30f, 1f);
     public const float SpawnHeight = 0.5f;
 
     // --- 아레나 기믹 ---
@@ -153,6 +188,9 @@ public static class CwslGameConstants
     public const float BlackHoleZoneCenterZ = 20f;
     public const float BlackHoleZoneHalfSize = 9f;
     public const float BlackHolePullSpeed = 2.6f;
+    public const float BlackHoleEscapeClickPush = 0.52f;
+    public const float BlackHoleEscapeAwayDotThreshold = 0.25f;
+    public const float BlackHoleEscapeClickCooldown = 0.04f;
 
     public const float KarmaHalfZoneCenterX = -22f;
     public const float KarmaHalfZoneCenterZ = -22f;
@@ -188,6 +226,26 @@ public static class CwslGameConstants
     public const float BadGrassPatchRadius = 2.9f;
     public const float BadGrassSlowMultiplier = 0.3f;
 
+    // --- 아군 버프 존 ---
+    public const int HealingSpringCount = 3;
+    public const float HealingSpringRadius = 3f;
+    public const float HealingSpringHpPerSecond = 5f;
+
+    public const int TailwindGrassCount = 4;
+    public const float TailwindGrassRadius = 2.9f;
+    public const float TailwindGrassSpeedMultiplier = 1.35f;
+
+    public const int RallyZoneCount = 2;
+    public const float RallyZoneRadius = 5.5f;
+    public const int RallyZoneMinAllies = 2;
+    public const float RallyZoneDamageMultiplier = 1.25f;
+    public const float RallyZoneVisionBonus = 3f;
+
+    public const int GoldSpringCount = 2;
+    public const float GoldSpringRadius = 2.6f;
+    public const float GoldSpringIntervalSeconds = 2.5f;
+    public const int GoldSpringAmount = 2;
+
     public const float OffsideLaserIntervalSeconds = 48f;
     public const float OffsideLaserWarningSeconds = 3f;
     public const float OffsideBlindDurationSeconds = 5f;
@@ -220,13 +278,28 @@ public static class CwslGameConstants
     public const float HazardPadDurationSeconds = 22f;
     public const float HazardPadRadius = 3.2f;
     public const float HazardPadMinSeparation = 5.5f;
+    public const float HazardPadWarningSeconds = 3f;
+
+    public const float DynamicGimmickInitialDelaySeconds = 10f;
+    public const float DynamicGimmickSpawnIntervalMin = 22f;
+    public const float DynamicGimmickSpawnIntervalMax = 34f;
+    public const float DynamicGimmickWarningSeconds = 3f;
+    public const float DynamicGimmickDurationMin = 42f;
+    public const float DynamicGimmickDurationMax = 58f;
+    public const int DynamicGimmickMaxAliveTotal = 6;
+    public const float DynamicGimmickMinSeparation = 9f;
+    public const int DynamicGimmickSpawnAttempts = 16;
+
+    public const bool SkillsConsumeGold = false;
     public const float HazardAcidDamagePerSecond = 8f;
     public const float HazardLavaGoldLeakIntervalSeconds = 0.85f;
     public const int HazardLavaGoldLeakAmount = 1;
     public const float HazardWaterSlowMultiplier = 0.45f;
 
-    public const float SpawnIntervalSeconds = 2.25f;
-    public const int MaxAliveMonsters = 40;
+    public const float SpawnIntervalSeconds = 1.35f;
+    public const int MaxAliveMonsters = 65;
+    public const float MonsterSpawnWarningSeconds = 2f;
+    public const float MonsterSpawnWarningRadius = 1.8f;
     public const float SuicideExplosionScale = 0.32f;
 
     public const string LayerPlayer = "CwslPlayer";

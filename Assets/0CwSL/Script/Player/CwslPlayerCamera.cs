@@ -4,7 +4,7 @@ public class CwslPlayerCamera : MonoBehaviour
 {
     private const float Pitch = 52f;
     private const float Yaw = 45f;
-    private const float Distance = 26f;
+    private const float Distance = 37.5f;
     private const float FieldOfView = 42f;
     private const float FollowSmoothTime = 0.38f;
 

@@ -206,6 +206,9 @@ public class CwslPlayerSkills : NetworkBehaviour
 
     private bool TrySpendSkillCost(int baseCost = -1)
     {
+        if (!CwslGameConstants.SkillsConsumeGold)
+            return true;
+
         if (CwslArenaGimmickSystem.AreSkillsFreeInFightPhase(transform.position))
             return true;
 
@@ -215,6 +218,11 @@ public class CwslPlayerSkills : NetworkBehaviour
 
         var cost = (baseCost >= 0 ? baseCost : CwslGameConstants.SkillGoldCost)
                    + CwslArenaGimmickSystem.GetExtraSkillGoldCost(transform.position);
+
+        var pillBuff = GetComponent<CwslPlayerPillBuff>();
+        if (pillBuff != null && pillBuff.TrySpendSkillGold(gold, cost))
+            return true;
+
         if (gold.TrySpendGoldServer(cost))
             return true;
 
@@ -232,11 +240,18 @@ public class CwslPlayerSkills : NetworkBehaviour
 
     private bool IsGoldInsufficientForSkill(int baseCost = -1)
     {
+        if (!CwslGameConstants.SkillsConsumeGold)
+            return false;
+
         var gold = GetComponent<CwslPlayerGold>();
         if (gold == null)
             return false;
 
         if (CwslArenaGimmickSystem.AreSkillsFreeInFightPhase(transform.position))
+            return false;
+
+        var pillBuff = GetComponent<CwslPlayerPillBuff>();
+        if (pillBuff != null && pillBuff.HasFreeSkillBuff)
             return false;
 
         var cost = (baseCost >= 0 ? baseCost : CwslGameConstants.SkillGoldCost)

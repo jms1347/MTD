@@ -13,6 +13,9 @@ public class CwslPlayerSpawnVisuals : NetworkBehaviour
     };
 
     private CwslPlayerCharacter playerCharacter;
+    private GameObject missileTankRangeRoot;
+
+    private static readonly Color MissileTankRangeEdgeColor = new(0.45f, 0.88f, 1f, 0.55f);
 
     public override void OnNetworkSpawn()
     {
@@ -27,6 +30,8 @@ public class CwslPlayerSpawnVisuals : NetworkBehaviour
     {
         if (playerCharacter != null)
             playerCharacter.OnCharacterChanged -= HandleCharacterChanged;
+
+        DestroyMissileTankRangeVisual();
     }
 
     private void HandleCharacterChanged(CwslCharacterId characterId)
@@ -56,7 +61,37 @@ public class CwslPlayerSpawnVisuals : NetworkBehaviour
 
         GetComponent<CwslPlayerBodyCollider>()?.ApplyForCharacter(characterId);
         EnsureRammerGallopAudio(characterId);
+        EnsureMissileTankRangeVisual(characterId);
         EnsureTeamMemberVisible();
+    }
+
+    private void EnsureMissileTankRangeVisual(CwslCharacterId characterId)
+    {
+        DestroyMissileTankRangeVisual();
+
+        if (!IsOwner || characterId != CwslCharacterId.MissileTank)
+            return;
+
+        var diameter = CwslGameConstants.MissileTankRange * 2f;
+        missileTankRangeRoot = new GameObject("MissileTankRange");
+        missileTankRangeRoot.transform.SetParent(transform, false);
+        missileTankRangeRoot.transform.localPosition = new Vector3(0f, 0.05f, 0f);
+
+        var edge = CwslGroundRingVisual.CreateEdgeRing(
+            Vector3.zero,
+            diameter,
+            MissileTankRangeEdgeColor,
+            lineWidth: 0.24f);
+        edge.transform.SetParent(missileTankRangeRoot.transform, false);
+        edge.transform.localPosition = Vector3.zero;
+    }
+
+    private void DestroyMissileTankRangeVisual()
+    {
+        if (missileTankRangeRoot != null)
+            Destroy(missileTankRangeRoot);
+
+        missileTankRangeRoot = null;
     }
 
     private void EnsureTeamMemberVisible()

@@ -10,7 +10,7 @@ public class CwslLocalDarkVision : MonoBehaviour
 {
     private static readonly Color FogColor = new(0.01f, 0.012f, 0.018f, 1f);
     private static readonly Color CameraBgColor = new(0.01f, 0.012f, 0.018f, 1f);
-    private static readonly Color FloorColor = new(0.16f, 0.18f, 0.17f, 1f);
+    private static readonly Color FloorColor = CwslGameConstants.ArenaFloorColor;
     private static readonly Color BackdropColor = new(0.02f, 0.025f, 0.03f, 1f);
 
     private static readonly Color AmbientNormal = new(0.18f, 0.19f, 0.22f, 1f);
@@ -33,6 +33,7 @@ public class CwslLocalDarkVision : MonoBehaviour
     private bool floorPrepared;
     private float currentRadius = 14f;
     private bool isBlindVision;
+    private bool isAbsoluteBlind;
 
     private bool hadFog;
     private FogMode previousFogMode;
@@ -53,9 +54,9 @@ public class CwslLocalDarkVision : MonoBehaviour
 
     public float EffectiveVisionRadius => currentRadius;
 
-    public void Activate(float catalogVisionRadius, float lighthouseBonus = 0f)
+    public void Activate(float catalogVisionRadius, float lighthouseBonus = 0f, bool absoluteBlind = false)
     {
-        ApplyRadius(catalogVisionRadius, lighthouseBonus);
+        ApplyRadius(catalogVisionRadius, lighthouseBonus, absoluteBlind);
         if (!applied)
         {
             CacheEnvironment();
@@ -70,9 +71,9 @@ public class CwslLocalDarkVision : MonoBehaviour
         ApplyCameraBackground();
     }
 
-    public void RefreshRadius(float catalogVisionRadius, float lighthouseBonus = 0f)
+    public void RefreshRadius(float catalogVisionRadius, float lighthouseBonus = 0f, bool absoluteBlind = false)
     {
-        ApplyRadius(catalogVisionRadius, lighthouseBonus);
+        ApplyRadius(catalogVisionRadius, lighthouseBonus, absoluteBlind);
         if (!applied)
         {
             Activate(catalogVisionRadius, lighthouseBonus);
@@ -82,16 +83,19 @@ public class CwslLocalDarkVision : MonoBehaviour
         ApplyNightEnvironment();
         ApplyFarFogOnly();
         if (screenVision != null)
-            screenVision.SetVisionRadius(isBlindVision ? 0f : currentRadius);
+            screenVision.SetVisionRadius(isAbsoluteBlind ? 0f : isBlindVision ? 0f : currentRadius, isAbsoluteBlind);
         ConfigureCameraAlignedLight(playerLight);
     }
 
-    private void ApplyRadius(float catalogVisionRadius, float lighthouseBonus = 0f)
+    private void ApplyRadius(float catalogVisionRadius, float lighthouseBonus = 0f, bool absoluteBlind = false)
     {
+        isAbsoluteBlind = absoluteBlind;
         isBlindVision = catalogVisionRadius <= 0.01f;
-        currentRadius = isBlindVision
-            ? BlindVisionRadius
-            : Mathf.Max(8f, catalogVisionRadius + lighthouseBonus);
+        currentRadius = isAbsoluteBlind
+            ? 0f
+            : isBlindVision
+                ? BlindVisionRadius
+                : Mathf.Max(8f, catalogVisionRadius + lighthouseBonus);
     }
 
     private void LateUpdate()
@@ -237,7 +241,7 @@ public class CwslLocalDarkVision : MonoBehaviour
         if (screenVision == null)
             screenVision = gameObject.AddComponent<CwslScreenSpaceVision>();
 
-        screenVision.Activate(transform, isBlindVision ? 0f : currentRadius);
+        screenVision.Activate(transform, isAbsoluteBlind ? 0f : isBlindVision ? 0f : currentRadius, isAbsoluteBlind);
     }
 
     private void EnsurePlayerLight()
@@ -278,7 +282,7 @@ public class CwslLocalDarkVision : MonoBehaviour
             return;
 
         var camera = Camera.main;
-        var intensity = isBlindVision ? SpotIntensityBlind : SpotIntensityNormal;
+        var intensity = isAbsoluteBlind ? 0f : isBlindVision ? SpotIntensityBlind : SpotIntensityNormal;
 
         light.enabled = true;
         light.type = LightType.Spot;

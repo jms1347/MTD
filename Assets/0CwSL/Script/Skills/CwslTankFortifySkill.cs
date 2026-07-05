@@ -22,6 +22,7 @@ public class CwslTankFortifySkill : CwslPlayerSkillBase
     private CwslPlayerMovement movement;
     private CwslPlayerVisualScale visualScale;
     private CwslPlayerShieldFortifyVisual shieldFortifyVisual;
+    private CwslPlayerPillBuff pillBuff;
 
     public bool IsFortifying => isFortifying.Value;
     public bool IsShieldActive => isShieldActive.Value;
@@ -38,6 +39,7 @@ public class CwslTankFortifySkill : CwslPlayerSkillBase
         movement = GetComponent<CwslPlayerMovement>();
         visualScale = GetComponent<CwslPlayerVisualScale>();
         shieldFortifyVisual = GetComponent<CwslPlayerShieldFortifyVisual>();
+        pillBuff = GetComponent<CwslPlayerPillBuff>();
         if (GetComponent<CwslPlayerShieldBubble>() == null)
             gameObject.AddComponent<CwslPlayerShieldBubble>();
 
@@ -85,6 +87,18 @@ public class CwslTankFortifySkill : CwslPlayerSkillBase
         if (!IsServer || !isShieldActive.Value || playerGold == null)
             return false;
 
+        if (!CwslGameConstants.SkillsConsumeGold)
+        {
+            RefreshShieldState();
+            return true;
+        }
+
+        if (pillBuff != null && pillBuff.TrySpendSkillGold(playerGold, CwslGameConstants.TankHitGoldCost))
+        {
+            RefreshShieldState();
+            return true;
+        }
+
         if (!playerGold.TrySpendGoldServer(CwslGameConstants.TankHitGoldCost))
         {
             RefreshShieldState();
@@ -110,7 +124,8 @@ public class CwslTankFortifySkill : CwslPlayerSkillBase
 
         var shouldActivate = isFortifying.Value &&
                              playerGold != null &&
-                             playerGold.Gold >= CwslGameConstants.TankHitGoldCost;
+                             ( !CwslGameConstants.SkillsConsumeGold ||
+                               playerGold.Gold >= CwslGameConstants.TankHitGoldCost);
         SetShieldActiveServer(shouldActivate);
     }
 

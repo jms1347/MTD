@@ -44,6 +44,7 @@ public class CwslNetworkPoolService : MonoBehaviour
         RegisterPool(assets.meleeMonsterPrefab, 12, 4);
         RegisterPool(assets.bossPrefab, 2, 1);
         RegisterPool(assets.goldPickupPrefab, 48, 12);
+        RegisterPool(assets.pillPickupPrefab, 16, 6);
     }
 
     public NetworkObject Get(GameObject prefab, Vector3 position, Quaternion rotation)

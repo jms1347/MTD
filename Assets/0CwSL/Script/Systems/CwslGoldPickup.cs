@@ -201,7 +201,10 @@ public class CwslGoldPickup : NetworkBehaviour, ICwslPooledNetworkObject
         }
 
         playerGold.AddGoldServer(1);
-        var karmaGain = CwslArenaZones.ApplyKarmaMultiplier(player.transform.position, 1);
+        CwslTeamGoldCollectedSystem.Instance?.RegisterCollectedServer(1);
+        var karmaGain = CwslArenaZones.ApplyKarmaMultiplier(
+            player.transform.position,
+            CwslGameConstants.KarmaPickupAmount);
         CwslKarmaSystem.Instance?.AddKarmaServer(karmaGain);
         PlayCollectClientRpc();
 

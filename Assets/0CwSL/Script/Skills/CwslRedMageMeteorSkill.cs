@@ -30,6 +30,9 @@ public class CwslRedMageMeteorSkill : CwslPlayerSkillBase
             return false;
 
         var gold = GetComponent<CwslPlayerGold>();
+        if (!CwslGameConstants.SkillsConsumeGold)
+            return gold != null;
+
         return gold != null && gold.Gold >= CwslGameConstants.MeteorGoldCost;
     }
 
@@ -61,25 +64,12 @@ public class CwslRedMageMeteorSkill : CwslPlayerSkillBase
             if (monster == null || !monster.IsAlive)
                 continue;
 
-            var flat = monster.transform.position - impactPoint;
+            var flat = monster.GetFlatHitPoint() - impactPoint;
             flat.y = 0f;
             if (flat.sqrMagnitude > radiusSqr)
                 continue;
 
             monster.DamageFromPlayer(OwnerClientId, MeteorDamage);
-        }
-
-        var boss = CwslBossHongmyeongbo.Active;
-        if (boss != null)
-        {
-            var bossHealth = boss.GetComponent<CwslMonsterHealth>();
-            if (bossHealth != null && bossHealth.IsAlive)
-            {
-                var flat = boss.transform.position - impactPoint;
-                flat.y = 0f;
-                if (flat.sqrMagnitude <= radiusSqr)
-                    bossHealth.DamageFromPlayer(OwnerClientId, MeteorDamage);
-            }
         }
     }
 }
