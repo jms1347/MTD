@@ -95,6 +95,8 @@ public static class CwslGameSceneSetup
         assets.lightningStrikeVfx = LoadPrefab(CwslVfxPaths.LightningStrike);
         assets.lightningOrbVfx = LoadPrefab(CwslVfxPaths.LightningOrb);
         assets.lightningMissileVfx = LoadPrefab(CwslVfxPaths.LightningMissile);
+        assets.lightningStunExplosionVfx = LoadPrefab(CwslVfxPaths.LightningStunExplosion);
+        assets.lightningStunStrikeVfx = LoadPrefab(CwslVfxPaths.LightningStunStrike);
         assets.lightningZoneAuraVfx = LoadPrefab(CwslVfxPaths.LightningZoneAura);
         assets.hazardAcidPadVfx = LoadPrefab(CwslVfxPaths.HazardAcidPad);
         assets.hazardLavaPadVfx = LoadPrefab(CwslVfxPaths.HazardLavaPad);
@@ -372,6 +374,7 @@ public static class CwslGameSceneSetup
         root.AddComponent<CwslMomentumRammerSkill>();
         root.AddComponent<CwslCrowdGatherSkill>();
         root.AddComponent<CwslPlayerStun>();
+        root.AddComponent<CwslPlayerLightningStunVisual>();
         root.AddComponent<CwslPlayerCannonAim>();
         root.AddComponent<CwslPlayerShieldFortifyVisual>();
         root.AddComponent<CwslPlayerShieldBubble>();
@@ -596,7 +599,7 @@ public static class CwslGameSceneSetup
         var networkRoot = new GameObject("NetworkManager");
         var networkManager = networkRoot.AddComponent<NetworkManager>();
         var transport = networkRoot.AddComponent<UnityTransport>();
-        transport.ConnectionData.Port = CwslGameConstants.GamePort;
+        transport.ConnectionData.Port = CwslGameConstants.GameNetcodePort;
         networkManager.NetworkConfig.PlayerPrefab = assets.playerPrefab;
         networkManager.NetworkConfig.NetworkTransport = transport;
         networkManager.NetworkConfig.ConnectionApproval = true;

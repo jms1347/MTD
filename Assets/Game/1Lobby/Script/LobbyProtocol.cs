@@ -56,4 +56,10 @@ public class LobbyMessage
     };
 
     public static LobbyMessage Accepted() => new() { type = JoinAccepted };
+
+    public static LobbyMessage AcceptedWithPlayers(LobbyPlayerData[] players) => new()
+    {
+        type = JoinAccepted,
+        players = players
+    };
 }

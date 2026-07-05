@@ -98,8 +98,8 @@ public class CwslLocalVisionSystem : MonoBehaviour
             if (health == null || health.transform == transform)
                 continue;
 
-            var visibility = EvaluateCombinedVisibility(origin, health.transform.position, radius, blind, isProjectile: false);
-            SetOccludeeVisibility(health.gameObject, visibility);
+            // 팀원(다른 플레이어)은 시야와 무관하게 항상 표시
+            SetOccludeeVisibility(health.gameObject, 1f);
         }
     }
 

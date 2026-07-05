@@ -56,6 +56,17 @@ public class CwslPlayerSpawnVisuals : NetworkBehaviour
 
         GetComponent<CwslPlayerBodyCollider>()?.ApplyForCharacter(characterId);
         EnsureRammerGallopAudio(characterId);
+        EnsureTeamMemberVisible();
+    }
+
+    private void EnsureTeamMemberVisible()
+    {
+        if (IsOwner)
+            return;
+
+        var occludee = GetComponent<CwslVisionOccludee>();
+        if (occludee != null)
+            Destroy(occludee);
     }
 
     private void EnsureRammerGallopAudio(CwslCharacterId characterId)

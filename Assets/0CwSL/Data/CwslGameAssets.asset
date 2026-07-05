@@ -69,6 +69,8 @@ MonoBehaviour:
   lightningStrikeVfx: {fileID: 167788, guid: 76d4aad90bac27a4588a3efc2f93d6f2, type: 3}
   lightningOrbVfx: {fileID: 1359518743339416, guid: fd6402536deadff48939913b6d3c7bf3, type: 3}
   lightningMissileVfx: {fileID: 156818, guid: 1468a051063648a4ba29b56af532b72d, type: 3}
+  lightningStunExplosionVfx: {fileID: 136540, guid: 215ff560badfe1d4b8391e64e82c5f4e, type: 3}
+  lightningStunStrikeVfx: {fileID: 134366, guid: e138ae207292b5d46b564280936b8668, type: 3}
   lightningZoneAuraVfx: {fileID: 134696, guid: b7e5be8cde65c7c42915ee6e2273d19b, type: 3}
   hazardAcidPadVfx: {fileID: 112986, guid: e370423ba226169489d92631df31f5af, type: 3}
   hazardLavaPadVfx: {fileID: 129292, guid: d8ac9950df006754ea1bf8311f5c97bc, type: 3}

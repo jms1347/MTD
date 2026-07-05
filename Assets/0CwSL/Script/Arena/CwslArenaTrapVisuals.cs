@@ -20,6 +20,10 @@ public static class CwslArenaTrapVisuals
 
         root = new GameObject("CwslArenaTrapVisuals").transform;
         Object.DontDestroyOnLoad(root.gameObject);
+
+        if (root.GetComponent<CwslArenaTrapVisualRunner>() == null)
+            root.gameObject.AddComponent<CwslArenaTrapVisualRunner>();
+
         BuildStaticTraps();
     }
 

@@ -33,7 +33,7 @@ public class CwslPlayerStun : NetworkBehaviour
             playerHealth.OnDied -= HandleDied;
     }
 
-    public void ApplyStunServer(float duration, Vector3 impactPosition)
+    public void ApplyStunServer(float duration, Vector3 impactPosition, CwslStunSource source = CwslStunSource.Rammer)
     {
         if (!IsServer || duration <= 0f)
             return;
@@ -44,7 +44,7 @@ public class CwslPlayerStun : NetworkBehaviour
         syncedStunEndTime.Value = Time.time + duration;
         StopMovementServer();
         rammerSkill?.StopMomentumForStunServer();
-        PlayStunFeedbackClientRpc(impactPosition);
+        PlayStunFeedbackClientRpc(impactPosition, (byte)source);
     }
 
     public void ClearStunServer()
@@ -76,8 +76,14 @@ public class CwslPlayerStun : NetworkBehaviour
     }
 
     [ClientRpc]
-    private void PlayStunFeedbackClientRpc(Vector3 impactPosition)
+    private void PlayStunFeedbackClientRpc(Vector3 impactPosition, byte stunSourceRaw)
     {
+        if ((CwslStunSource)stunSourceRaw == CwslStunSource.Lightning)
+        {
+            GetComponent<CwslPlayerLightningStunVisual>()?.PlayLightningStunVfx(impactPosition);
+            return;
+        }
+
         CwslRammerStunFeedback.PlaySound(impactPosition);
 
         var character = GetComponent<CwslPlayerCharacter>();

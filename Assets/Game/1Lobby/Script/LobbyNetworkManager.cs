@@ -55,6 +55,37 @@ public class LobbyNetworkManager : MonoBehaviour
     private ClientConnection serverConnection;
     private Thread acceptThread;
     private volatile bool isRunning;
+    private bool transitioningToGame;
+    private bool pendingNetcodeHost;
+    private bool pendingNetcodeClient;
+    private string pendingNetcodeHostAddress;
+
+    /// <summary>게임 씬 Netcode — 호스트로 시작해야 하는지 (로비 TCP 종료 후에도 유지).</summary>
+    public bool PendingNetcodeHost => pendingNetcodeHost;
+
+    /// <summary>게임 씬 Netcode — 클라이언트로 접속해야 하는지.</summary>
+    public bool PendingNetcodeClient => pendingNetcodeClient;
+
+    public string PendingNetcodeHostAddress => pendingNetcodeHostAddress;
+
+    public string PendingBootstrapError { get; private set; }
+
+    public void SetPendingBootstrapError(string message) => PendingBootstrapError = message;
+
+    public string ConsumePendingBootstrapError()
+    {
+        var message = PendingBootstrapError;
+        PendingBootstrapError = null;
+        return message;
+    }
+
+    public void ClearNetcodeTransition()
+    {
+        transitioningToGame = false;
+        pendingNetcodeHost = false;
+        pendingNetcodeClient = false;
+        pendingNetcodeHostAddress = null;
+    }
 
     private void Awake()
     {
@@ -208,6 +239,7 @@ public class LobbyNetworkManager : MonoBehaviour
 
         ShutdownNetwork();
         players.Clear();
+        ClearNetcodeTransition();
         OnPlayerListChanged?.Invoke();
         OnLeftRoom?.Invoke();
         SetStatus("대기실");
@@ -356,7 +388,7 @@ public class LobbyNetworkManager : MonoBehaviour
                     isReady = false
                 });
 
-                connection.Send(LobbyMessage.Accepted());
+                connection.Send(LobbyMessage.AcceptedWithPlayers(players.ToArray()));
                 BroadcastPlayerList();
                 OnPlayerListChanged?.Invoke();
                 SetStatus($"접속: {message.playerName}");
@@ -383,6 +415,8 @@ public class LobbyNetworkManager : MonoBehaviour
         {
             case LobbyMessage.JoinAccepted:
                 SetStatus("방에 입장했습니다.");
+                if (message.players != null && message.players.Length > 0)
+                    ApplyPlayerList(message.players);
                 break;
             case LobbyMessage.PlayerList:
                 ApplyPlayerList(message.players);
@@ -432,6 +466,10 @@ public class LobbyNetworkManager : MonoBehaviour
         EnqueueMain(() =>
         {
             if (!IsClient)
+                return;
+
+            // 게임 시작 직후 TCP 로비가 끊겨도 Netcode 역할은 pending 플래그로 유지
+            if (transitioningToGame)
                 return;
 
             ShutdownNetwork();
@@ -533,9 +571,31 @@ public class LobbyNetworkManager : MonoBehaviour
 
     private void BeginGameSceneLoad()
     {
+        pendingNetcodeHost = IsHost;
+        pendingNetcodeClient = IsClient && !IsHost;
+        pendingNetcodeHostAddress = HostAddress;
+        transitioningToGame = true;
+
+        if (IsHost)
+            StopLobbyTcpListener();
+
         OnGameStarting?.Invoke();
         SetStatus("게임 시작...");
         SceneManager.LoadScene(GameSceneName);
+    }
+
+    private void StopLobbyTcpListener()
+    {
+        isRunning = false;
+
+        try { listener?.Stop(); } catch { }
+
+        listener = null;
+
+        foreach (var connection in connections.Values)
+            connection.Dispose();
+
+        connections.Clear();
     }
 
     private void ShutdownNetwork()

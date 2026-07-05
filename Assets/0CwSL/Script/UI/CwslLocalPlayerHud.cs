@@ -83,7 +83,6 @@ public class CwslLocalPlayerHud : NetworkBehaviour
         EnsureGoldPanel(canvasTransform);
         EnsureKarmaLabel(canvasTransform);
         EnsureMinimap(canvasTransform);
-        CwslArenaGimmickVisuals.EnsureLocal();
         if (GetComponent<CwslArenaGimmickVisualRunner>() == null)
             gameObject.AddComponent<CwslArenaGimmickVisualRunner>();
         if (GetComponent<CwslArenaTrapVisualRunner>() == null)
@@ -152,7 +151,7 @@ public class CwslLocalPlayerHud : NetworkBehaviour
             return;
 
         var entry = CwslCharacterCatalog.Get(characterId);
-        hintLabel.text = $"{entry.ControlHint} | C 캐릭터 변경";
+        hintLabel.text = entry.ControlHint;
     }
 
     private void EnsureGoldPanel(Transform canvasTransform)

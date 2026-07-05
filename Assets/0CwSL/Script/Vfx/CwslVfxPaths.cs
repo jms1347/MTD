@@ -208,6 +208,12 @@ public static class CwslVfxPaths
     public const string LightningMissile =
         "Assets/Epic Toon FX/Prefabs/Combat/Missiles/Lightning/LightningMissilePink.prefab";
 
+    public const string LightningStunExplosion =
+        "Assets/Epic Toon FX/Prefabs/Combat/Explosions/LightningExplosion/LightningExplosionPink.prefab";
+
+    public const string LightningStunStrike =
+        "Assets/Epic Toon FX/Prefabs/Environment/Lightning/Soft/LightningStrikePink.prefab";
+
     public const string LightningZoneAura =
         "Assets/Epic Toon FX/Prefabs/Combat/Nova/Lightning/NovaLightningYellow.prefab";
 

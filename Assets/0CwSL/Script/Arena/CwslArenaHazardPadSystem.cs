@@ -40,10 +40,9 @@ public class CwslArenaHazardPadSystem : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
+        CwslArenaTrapVisuals.EnsureLocal();
         if (IsServer)
             nextSpawnTime = Time.time + CwslGameConstants.HazardPadInitialDelaySeconds;
-        else
-            CwslArenaTrapVisuals.EnsureLocal();
     }
 
     private void Update()

@@ -37,6 +37,9 @@ public static class CwslArenaGimmickVisuals
         root = new GameObject("CwslArenaGimmickVisuals").transform;
         Object.DontDestroyOnLoad(root.gameObject);
 
+        if (root.GetComponent<CwslArenaGimmickVisualRunner>() == null)
+            root.gameObject.AddComponent<CwslArenaGimmickVisualRunner>();
+
         BuildZoneMarkers();
         BuildLighthouses();
         BuildTrapPads();

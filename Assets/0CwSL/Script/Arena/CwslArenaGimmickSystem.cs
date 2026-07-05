@@ -94,12 +94,13 @@ public class CwslArenaGimmickSystem : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
+        CwslArenaGimmickVisuals.EnsureLocal();
+        syncedBallPosition.OnValueChanged += HandleBallPositionChanged;
+        ballActive.OnValueChanged += HandleBallActiveChanged;
+
         bossWatchState = GetComponent<CwslBossWatchState>();
         if (!IsServer)
-        {
-            CwslArenaGimmickVisuals.EnsureLocal();
             return;
-        }
 
         nextPeriodicBallTime = Time.time + CwslGameConstants.TeamBallPeriodicInterval;
         nextWatchTime = Time.time + CwslGameConstants.BossWatchCooldown * 0.5f;
@@ -110,8 +111,23 @@ public class CwslArenaGimmickSystem : NetworkBehaviour
 
     public override void OnNetworkDespawn()
     {
+        syncedBallPosition.OnValueChanged -= HandleBallPositionChanged;
+        ballActive.OnValueChanged -= HandleBallActiveChanged;
+
         if (CwslKarmaSystem.Instance != null)
             CwslKarmaSystem.Instance.OnKarmaChanged -= HandleKarmaChanged;
+    }
+
+    private void HandleBallPositionChanged(Vector3 previous, Vector3 current)
+    {
+        if (ballActive.Value)
+            CwslArenaGimmickVisuals.SyncBallPosition(current);
+    }
+
+    private void HandleBallActiveChanged(bool previous, bool active)
+    {
+        if (!active)
+            CwslArenaGimmickVisuals.EndTeamBall();
     }
 
     private void Update()
@@ -609,9 +625,7 @@ public class CwslArenaGimmickSystem : NetworkBehaviour
                 continue;
 
             var health = playerObject.GetComponent<CwslPlayerHealth>();
-            health?.TryReceiveExplosionHitServer(
-                CwslGameConstants.PlayerMaxHealth * 2f,
-                playerObject.transform.position + Vector3.up * 0.9f);
+            health?.TryReceiveEnvironmentHitServer(damage, playerObject.transform.position);
         }
     }
 

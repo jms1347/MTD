@@ -106,6 +106,8 @@ public class CwslMinimap : MonoBehaviour
 
     private void RefreshDots()
     {
+        EnsureLocalPlayerReference();
+
         if (localPlayerIcon != null && localPlayerTransform != null)
         {
             localPlayerIcon.gameObject.SetActive(true);
@@ -131,15 +133,27 @@ public class CwslMinimap : MonoBehaviour
     private void UpdatePlayerDots()
     {
         var index = 0;
-        var filterByVision = ShouldFilterMinimapByWorldVision();
-        var players = FindObjectsByType<CwslPlayerHealth>(FindObjectsSortMode.None);
-        foreach (var health in players)
+        var networkManager = NetworkManager.Singleton;
+        if (networkManager == null || !networkManager.IsListening)
         {
+            HideRemaining(playerIcons, 0);
+            return;
+        }
+
+        foreach (var clientId in networkManager.ConnectedClientsIds)
+        {
+            if (!networkManager.ConnectedClients.TryGetValue(clientId, out var client))
+                continue;
+
+            var playerObject = client.PlayerObject;
+            if (playerObject == null || !playerObject.IsSpawned)
+                continue;
+
+            if (playerObject.IsOwner)
+                continue;
+
+            var health = playerObject.GetComponent<CwslPlayerHealth>();
             if (health == null || !health.IsAlive)
-                continue;
-            if (localPlayerTransform != null && health.transform == localPlayerTransform)
-                continue;
-            if (filterByVision && !CwslPlayerVision.IsInLocalVision(health.transform.position))
                 continue;
 
             var icon = GetOrCreateIcon(playerIcons, index, OtherPlayerColor, 10f, "OtherPlayer");
@@ -147,15 +161,31 @@ public class CwslMinimap : MonoBehaviour
                 ? CwslBossWatchState.Instance.WatchedClientId
                 : ulong.MaxValue;
             var iconImage = icon.GetComponent<Image>();
-            if (iconImage != null && health.NetworkObject != null && health.NetworkObject.OwnerClientId == watchedId
+            if (iconImage != null && playerObject.OwnerClientId == watchedId
                 && CwslBossWatchState.IsWatching(watchedId))
                 iconImage.color = new Color(1f, 0.25f, 0.25f);
+            else if (iconImage != null)
+                iconImage.color = OtherPlayerColor;
 
-            icon.anchoredPosition = WorldToMinimap(health.transform.position);
+            icon.anchoredPosition = WorldToMinimap(playerObject.transform.position);
             index++;
         }
 
         HideRemaining(playerIcons, index);
+    }
+
+    private void EnsureLocalPlayerReference()
+    {
+        if (localPlayerTransform != null)
+            return;
+
+        var networkManager = NetworkManager.Singleton;
+        if (networkManager == null || networkManager.LocalClient == null)
+            return;
+
+        localPlayerTransform = networkManager.LocalClient.PlayerObject != null
+            ? networkManager.LocalClient.PlayerObject.transform
+            : null;
     }
 
     private void UpdateMonsterDots()

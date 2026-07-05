@@ -30,6 +30,7 @@ GameObject:
   - component: {fileID: 9123456789012345678}
   - component: {fileID: 8347261593847561029}
   - component: {fileID: 9081726354455667788}
+  - component: {fileID: 7711223344556677889}
   - component: {fileID: 4445350762902779960}
   - component: {fileID: 2144746113197687642}
   - component: {fileID: 3232006767510867830}
@@ -126,7 +127,7 @@ MonoBehaviour:
   DeferredDespawnTick: 0
   Ownership: 1
   AlwaysReplicateAsRoot: 0
-  SynchronizeTransform: 1
+  SynchronizeTransform: 0
   ActiveSceneSynchronization: 0
   SceneMigrationSynchronization: 0
   SpawnWithObservers: 1
@@ -401,6 +402,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CwslPlayerStun
   ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &7711223344556677889
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6360497807503343767}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f7e6d5c4b3a2918071625344a5b6c7d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CwslPlayerLightningStunVisual
 --- !u!114 &4445350762902779960
 MonoBehaviour:
   m_ObjectHideFlags: 0

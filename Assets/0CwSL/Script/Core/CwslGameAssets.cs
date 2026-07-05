@@ -60,6 +60,8 @@ public class CwslGameAssets : ScriptableObject
     public GameObject lightningStrikeVfx;
     public GameObject lightningOrbVfx;
     public GameObject lightningMissileVfx;
+    public GameObject lightningStunExplosionVfx;
+    public GameObject lightningStunStrikeVfx;
     public GameObject lightningZoneAuraVfx;
     public GameObject hazardAcidPadVfx;
     public GameObject hazardLavaPadVfx;

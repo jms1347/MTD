@@ -35,6 +35,10 @@ public class LobbyUIController : MonoBehaviour
         BuildUI();
         BindNetwork();
         ShowConnectPanel();
+
+        var bootstrapError = network?.ConsumePendingBootstrapError();
+        if (!string.IsNullOrWhiteSpace(bootstrapError))
+            ShowError(bootstrapError);
     }
 
     private void OnDestroy()
@@ -190,6 +194,7 @@ public class LobbyUIController : MonoBehaviour
         network.LocalPlayerName = nameInput.text;
         network.HostRoom(port, nameInput.text);
         ShowRoomPanel();
+        SetStatus($"방 생성 — TCP {port}, 게임 UDP {CwslGameConstants.GameNetcodePort} 개방 필요");
     }
 
     private void OnJoinClicked()
@@ -199,7 +204,6 @@ public class LobbyUIController : MonoBehaviour
 
         network.LocalPlayerName = nameInput.text;
         network.JoinRoom(joinIpInput.text, port, nameInput.text);
-        ShowRoomPanel();
     }
 
     private void OnReadyClicked()
@@ -226,6 +230,9 @@ public class LobbyUIController : MonoBehaviour
     {
         if (network == null || playerListText == null)
             return;
+
+        if (network.IsInRoom && connectPanel != null && connectPanel.activeSelf)
+            ShowRoomPanel();
 
         var builder = new StringBuilder();
         foreach (var player in network.Players)

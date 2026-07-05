@@ -1,7 +1,10 @@
 public static class CwslGameConstants
 {
     public const string GameSceneName = "CwslGameScene";
-    public const ushort GamePort = 7777;
+    public const string LobbySceneName = "LobbyScene";
+    public const int LobbyPort = 7777;
+    public const ushort GameNetcodePort = 7778;
+    public const ushort GamePort = GameNetcodePort;
     public const int MaxPlayers = 5;
 
     public const float MonsterMaxHealth = 1f;

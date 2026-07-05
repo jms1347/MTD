@@ -847,6 +847,61 @@ public static class CwslVfxSpawner
         return spawned;
     }
 
+    public static GameObject SpawnLightningStunExplosion(Vector3 position)
+    {
+        var spawned = Spawn(
+            CwslGameSession.Instance?.Assets?.lightningStunExplosionVfx,
+            position + Vector3.up * 0.25f,
+            Quaternion.identity,
+            2f,
+            0.95f);
+        if (spawned == null)
+            CwslSimpleVfx.SpawnBurst(position, new Color(1f, 0.45f, 0.95f), 1f, 0.35f);
+        else
+        {
+            DisablePhysics(spawned);
+            RestartParticleSystems(spawned);
+        }
+
+        return spawned;
+    }
+
+    public static GameObject SpawnLightningStunStrike(Vector3 position)
+    {
+        var spawned = Spawn(
+            CwslGameSession.Instance?.Assets?.lightningStunStrikeVfx,
+            position,
+            Quaternion.identity,
+            1.4f,
+            0.85f);
+        if (spawned == null)
+            return null;
+
+        DisablePhysics(spawned);
+        RestartParticleSystems(spawned);
+        return spawned;
+    }
+
+    public static GameObject AttachLightningStunAura(Transform anchor)
+    {
+        if (anchor == null)
+            return null;
+
+        var spawned = Spawn(
+            CwslGameSession.Instance?.Assets?.lightningOrbVfx,
+            anchor.position,
+            Quaternion.identity,
+            0f,
+            0.38f);
+        if (spawned == null)
+            return null;
+
+        spawned.transform.SetParent(anchor, false);
+        spawned.transform.localPosition = Vector3.zero;
+        PrepareEffect(spawned);
+        return spawned;
+    }
+
     public static GameObject AttachHazardPad(CwslHazardPadKind kind, Transform parent, float diameter)
     {
         var prefab = kind switch

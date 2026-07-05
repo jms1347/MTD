@@ -41,11 +41,9 @@ public class CwslArenaTrapSystem : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
+        CwslArenaTrapVisuals.EnsureLocal();
         if (!IsServer)
-        {
-            CwslArenaTrapVisuals.EnsureLocal();
             return;
-        }
 
         nextFakeGoldSpawnTime = Time.time + 8f;
         nextOffsideLaserTime = Time.time + CwslGameConstants.OffsideLaserIntervalSeconds;
@@ -374,7 +372,7 @@ public class CwslArenaTrapSystem : NetworkBehaviour
             yield break;
 
         playerObject.GetComponent<CwslPlayerStun>()
-            ?.ApplyStunServer(CwslGameConstants.LightningStunDurationSeconds, strikePoint);
+            ?.ApplyStunServer(CwslGameConstants.LightningStunDurationSeconds, strikePoint, CwslStunSource.Lightning);
     }
 
     private static int CountAliveFakeGold()
