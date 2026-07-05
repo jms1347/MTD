@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.AI;
 
 /// <summary>
-/// 질주자: 이동 중 관성 가속, 고속 충돌 피해, Q 긴급 제동.
+/// 질주자: 관성 이동·충돌, Q 홀드 날개 펼치기(날 확대·골드 소모·광역 피해, 아군 포함).
 /// </summary>
 public class CwslMomentumRammerSkill : CwslPlayerSkillBase
 {
@@ -13,27 +13,41 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server);
 
+    private readonly NetworkVariable<bool> isWingSpreadActive = new(
+        false,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server);
+
+    private readonly NetworkVariable<float> syncedBladeScale = new(
+        1f,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server);
+
     private readonly Dictionary<ulong, float> nextHitTimeByTarget = new();
     private readonly Dictionary<ulong, float> nextAllyStunTimeByTarget = new();
+    private readonly Dictionary<ulong, float> nextWingHitTimeByTarget = new();
 
     private NavMeshAgent agent;
     private CwslPlayerCharacter playerCharacter;
     private CwslPlayerHealth playerHealth;
     private CwslPlayerStun playerStun;
+    private CwslPlayerGold playerGold;
     private CwslPlayerBodyCollider bodyCollider;
 
     private Vector3 moveDirection = Vector3.forward;
     private Vector3 destination;
     private bool hasDestination;
     private bool momentumActive;
-    private float brakeTurnBoostUntil;
-    private float nextBrakeTime;
+    private float wingSpreadStartTime;
+    private float nextGoldSpendTime;
 
     public float CurrentSpeed => syncedSpeed.Value;
     public bool IsMomentumActive => momentumActive;
     public bool IsStunned => playerStun != null && playerStun.IsStunned;
+    public bool IsWingSpreadActive => isWingSpreadActive.Value;
+    public float BladeScale => syncedBladeScale.Value;
 
-    public override CwslSkillActivationType ActivationType => CwslSkillActivationType.Instant;
+    public override CwslSkillActivationType ActivationType => CwslSkillActivationType.Charged;
 
     public override bool IsActiveForCharacter(CwslCharacterId characterId) =>
         characterId == CwslCharacterId.MomentumRammer;
@@ -44,6 +58,7 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
         playerCharacter = GetComponent<CwslPlayerCharacter>();
         playerHealth = GetComponent<CwslPlayerHealth>();
         playerStun = GetComponent<CwslPlayerStun>();
+        playerGold = GetComponent<CwslPlayerGold>();
         bodyCollider = GetComponent<CwslPlayerBodyCollider>();
         moveDirection = transform.forward.sqrMagnitude > 0.0001f ? transform.forward : Vector3.forward;
         moveDirection.y = 0f;
@@ -73,6 +88,7 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
         if (!IsServer || characterId == CwslCharacterId.MomentumRammer)
             return;
 
+        StopWingSpreadServer();
         ResetMomentumServer();
     }
 
@@ -81,6 +97,7 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
         if (!IsServer)
             return;
 
+        StopWingSpreadServer();
         ResetMomentumServer(enableAgent: false);
     }
 
@@ -117,27 +134,84 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
                playerCharacter != null &&
                playerCharacter.CharacterId == CwslCharacterId.MomentumRammer &&
                (playerHealth == null || playerHealth.IsAlive) &&
-               Time.time >= nextBrakeTime;
+               !IsStunned &&
+               !isWingSpreadActive.Value &&
+               (playerGold == null || playerGold.Gold >= CwslGameConstants.SkillGoldCost);
     }
 
     public override void OnSkillPressedServer(ulong senderClientId)
     {
-        if (!IsServer || playerCharacter == null || playerCharacter.CharacterId != CwslCharacterId.MomentumRammer)
+        if (!IsServer ||
+            playerCharacter == null ||
+            playerCharacter.CharacterId != CwslCharacterId.MomentumRammer ||
+            IsStunned ||
+            isWingSpreadActive.Value)
             return;
 
-        if (Time.time < nextBrakeTime)
+        if (playerGold == null || !playerGold.TrySpendGoldServer(CwslGameConstants.SkillGoldCost))
             return;
 
-        nextBrakeTime = Time.time + CwslGameConstants.RammerBrakeCooldown;
-        brakeTurnBoostUntil = Time.time + CwslGameConstants.RammerBrakeTurnBoostDuration;
-        playerStun?.ClearStunServer();
-        ResetMomentumServer();
-        if (agent != null && agent.enabled && agent.isOnNavMesh)
+        isWingSpreadActive.Value = true;
+        wingSpreadStartTime = Time.time;
+        nextGoldSpendTime = Time.time + CwslGameConstants.RammerWingSpreadGoldIntervalSeconds;
+        syncedBladeScale.Value = 1f;
+    }
+
+    public override void OnSkillReleasedServer(ulong senderClientId)
+    {
+        if (!IsServer)
+            return;
+
+        StopWingSpreadServer();
+    }
+
+    public override void TickChargedServer()
+    {
+        if (!IsServer || !isWingSpreadActive.Value)
+            return;
+
+        if (playerHealth != null && !playerHealth.IsAlive)
         {
-            agent.isStopped = true;
-            agent.ResetPath();
+            StopWingSpreadServer();
+            return;
         }
-        PlayBrakeClientRpc();
+
+        if (IsStunned)
+        {
+            StopWingSpreadServer();
+            return;
+        }
+
+        var elapsed = Time.time - wingSpreadStartTime;
+        syncedBladeScale.Value = Mathf.Lerp(
+            1f,
+            CwslGameConstants.RammerWingSpreadMaxScale,
+            Mathf.Clamp01(elapsed / CwslGameConstants.RammerWingSpreadGrowSeconds));
+
+        if (Time.time >= nextGoldSpendTime)
+        {
+            nextGoldSpendTime = Time.time + CwslGameConstants.RammerWingSpreadGoldIntervalSeconds;
+            if (playerGold == null || !playerGold.TrySpendGoldServer(CwslGameConstants.SkillGoldCost))
+            {
+                StopWingSpreadServer();
+                return;
+            }
+        }
+
+        if (syncedBladeScale.Value >= CwslGameConstants.RammerWingSpreadMinScaleForDamage)
+            TickWingSpreadDamageServer();
+    }
+
+    private void StopWingSpreadServer()
+    {
+        if (!IsServer || !isWingSpreadActive.Value)
+        {
+            syncedBladeScale.Value = 1f;
+            return;
+        }
+
+        isWingSpreadActive.Value = false;
+        syncedBladeScale.Value = 1f;
     }
 
     public void SetDestinationServer(Vector3 worldPoint)
@@ -180,6 +254,7 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
 
         if (IsStunned)
         {
+            StopWingSpreadServer();
             syncedSpeed.Value = 0f;
             return;
         }
@@ -238,13 +313,14 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
                 var desiredDirection = toDestination.normalized;
                 var speedRatio = Mathf.Clamp01(speed / CwslGameConstants.RammerMaxSpeed);
                 var turnRate = Mathf.Lerp(420f, 52f, speedRatio * speedRatio);
-                if (Time.time < brakeTurnBoostUntil)
-                    turnRate *= 2.4f;
+                if (isWingSpreadActive.Value)
+                    turnRate *= 0.72f;
 
                 moveDirection = RotateFlat(moveDirection, desiredDirection, turnRate * Time.deltaTime);
-                speed = Mathf.Min(
-                    CwslGameConstants.RammerMaxSpeed,
-                    speed + CwslGameConstants.RammerAccelPerSecond * Time.deltaTime);
+                var accel = CwslGameConstants.RammerAccelPerSecond;
+                if (isWingSpreadActive.Value)
+                    accel *= 0.82f;
+                speed = Mathf.Min(CwslGameConstants.RammerMaxSpeed, speed + accel * Time.deltaTime);
             }
         }
         else
@@ -280,7 +356,10 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
         if (moveDirection.sqrMagnitude > 0.0001f)
         {
             var lookRotation = Quaternion.LookRotation(moveDirection, Vector3.up);
-            transform.rotation = Quaternion.RotateTowards(transform.rotation, lookRotation, turnRateForSpeed(speed) * Time.deltaTime);
+            transform.rotation = Quaternion.RotateTowards(
+                transform.rotation,
+                lookRotation,
+                turnRateForSpeed(speed) * Time.deltaTime);
         }
     }
 
@@ -304,6 +383,7 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
         if (IsStunned || impactSpeed < CwslGameConstants.RammerWallStunMinSpeed)
             return;
 
+        StopWingSpreadServer();
         StopMomentumForStunServer();
         playerStun?.ApplyStunServer(CwslGameConstants.RammerWallStunDuration, transform.position);
     }
@@ -313,6 +393,7 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
         if (!IsServer)
             return;
 
+        StopWingSpreadServer();
         syncedSpeed.Value = 0f;
         hasDestination = false;
         momentumActive = false;
@@ -327,10 +408,7 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
     private float turnRateForSpeed(float speed)
     {
         var speedRatio = Mathf.Clamp01(speed / CwslGameConstants.RammerMaxSpeed);
-        var turnRate = Mathf.Lerp(720f, 120f, speedRatio * speedRatio);
-        if (Time.time < brakeTurnBoostUntil)
-            turnRate *= 2.2f;
-        return turnRate;
+        return Mathf.Lerp(720f, 120f, speedRatio * speedRatio);
     }
 
     private static Vector3 RotateFlat(Vector3 current, Vector3 target, float maxDegrees)
@@ -345,6 +423,53 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
         current.Normalize();
         target.Normalize();
         return Vector3.RotateTowards(current, target, maxDegrees * Mathf.Deg2Rad, 0f).normalized;
+    }
+
+    private void TickWingSpreadDamageServer()
+    {
+        var center = transform.position;
+        var radius = ResolveWingSpreadRadius();
+        var radiusSqr = radius * radius;
+
+        var monsters = FindObjectsByType<CwslMonsterHealth>(FindObjectsSortMode.None);
+        foreach (var monster in monsters)
+        {
+            if (monster == null || !monster.IsAlive)
+                continue;
+
+            if (!IsInsideFlatRadius(center, monster.transform.position, radiusSqr))
+                continue;
+
+            TryWingDamageTargetServer(monster.NetworkObjectId, () =>
+                monster.DamageFromPlayer(OwnerClientId, CwslGameConstants.RammerWingSpreadDamage));
+        }
+
+        if (NetworkManager.Singleton == null)
+            return;
+
+        foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
+        {
+            var playerObject = client.PlayerObject;
+            if (playerObject == null || playerObject.NetworkObjectId == NetworkObjectId)
+                continue;
+
+            var allyHealth = playerObject.GetComponent<CwslPlayerHealth>();
+            if (allyHealth == null || !allyHealth.IsAlive)
+                continue;
+
+            if (!IsInsideFlatRadius(center, playerObject.transform.position, radiusSqr))
+                continue;
+
+            TryWingDamageTargetServer(playerObject.NetworkObjectId, () =>
+                allyHealth.TryReceiveMeleeHitServer(
+                    CwslGameConstants.RammerWingSpreadDamage,
+                    playerObject.transform.position + Vector3.up * 0.5f));
+        }
+    }
+
+    private float ResolveWingSpreadRadius()
+    {
+        return CwslGameConstants.RammerWingSpreadBaseRadius * syncedBladeScale.Value;
     }
 
     private void CheckCollisionsServer()
@@ -406,6 +531,13 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
         }
     }
 
+    private static bool IsInsideFlatRadius(Vector3 center, Vector3 target, float radiusSqr)
+    {
+        var flat = target - center;
+        flat.y = 0f;
+        return flat.sqrMagnitude <= radiusSqr;
+    }
+
     private static bool IsFlatBodyHit(Vector3 selfCenter, float selfRadius, Vector3 targetCenter, float targetRadius)
     {
         var flat = targetCenter - selfCenter;
@@ -459,6 +591,15 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
         }
     }
 
+    private void TryWingDamageTargetServer(ulong targetId, System.Action applyDamage)
+    {
+        if (!nextWingHitTimeByTarget.TryGetValue(targetId, out var nextTime) || Time.time >= nextTime)
+        {
+            applyDamage();
+            nextWingHitTimeByTarget[targetId] = Time.time + CwslGameConstants.RammerWingSpreadHitCooldown;
+        }
+    }
+
     private void EnableNavMeshAgent()
     {
         if (agent == null)
@@ -470,12 +611,5 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
             agent.isStopped = false;
             agent.Warp(transform.position);
         }
-    }
-
-    [ClientRpc]
-    private void PlayBrakeClientRpc()
-    {
-        var visual = transform.Find("Visual");
-        visual?.GetComponent<CwslPlayerRammerBrakeVisual>()?.PlayBrake();
     }
 }

@@ -22,6 +22,10 @@ public class CwslGameAssets : ScriptableObject
     public GameObject meteorBurnVfx;
     public GameObject rammerStunExplosionVfx;
     public GameObject rammerStunStarsVfx;
+    public GameObject gatherChargeCircleVfx;
+    public GameObject gatherMaxReadyVfx;
+    public GameObject gatherPullVortexVfx;
+    public GameObject gatherPullBurstVfx;
     public AudioClip goldPickupSound;
     public AudioClip horseGallopSound;
     public AudioClip rammerStunSound;

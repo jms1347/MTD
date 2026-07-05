@@ -87,6 +87,11 @@ public class CwslPlayerBodyCollider : NetworkBehaviour
                 height = 1.62f;
                 centerY = 0.81f;
                 break;
+            case CwslCharacterId.CrowdGatherer:
+                radius = 0.30f;
+                height = 1.68f;
+                centerY = 0.84f;
+                break;
             default:
                 radius = 0.32f;
                 height = 1.74f;

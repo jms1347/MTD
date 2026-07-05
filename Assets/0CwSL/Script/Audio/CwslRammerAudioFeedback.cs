@@ -18,21 +18,42 @@ public static class CwslRammerAudioFeedback
 
     public static AudioClip ResolveHorseGallopClip()
     {
-        EnsureInitialized();
+        EnsureHorseGallopClip();
         return horseGallopClip;
     }
 
     public static AudioClip ResolveStunClip()
     {
-        EnsureInitialized();
+        EnsureStunClip();
         return stunClip;
     }
 
-    private static void EnsureInitialized()
+    private static void EnsureHorseGallopClip()
     {
-        if (horseGallopClip != null && stunClip != null)
+        if (horseGallopClip != null)
             return;
 
+        horseGallopClip = ResolveFromAssets(a => a.horseGallopSound);
+#if UNITY_EDITOR
+        if (horseGallopClip == null)
+            horseGallopClip = AssetDatabase.LoadAssetAtPath<AudioClip>(CwslVfxPaths.HorseGallopSound);
+#endif
+    }
+
+    private static void EnsureStunClip()
+    {
+        if (stunClip != null)
+            return;
+
+        stunClip = ResolveFromAssets(a => a.rammerStunSound);
+#if UNITY_EDITOR
+        if (stunClip == null)
+            stunClip = AssetDatabase.LoadAssetAtPath<AudioClip>(CwslVfxPaths.RammerStunSound);
+#endif
+    }
+
+    private static AudioClip ResolveFromAssets(System.Func<CwslGameAssets, AudioClip> selector)
+    {
         var assets = CwslGameSession.Instance?.Assets;
         if (assets == null)
         {
@@ -40,14 +61,13 @@ public static class CwslRammerAudioFeedback
             assets = session?.Assets;
         }
 
-        if (assets != null)
-            Initialize(assets.horseGallopSound, assets.rammerStunSound);
+        if (assets == null)
+        {
+            var allAssets = Resources.FindObjectsOfTypeAll<CwslGameAssets>();
+            if (allAssets.Length > 0)
+                assets = allAssets[0];
+        }
 
-#if UNITY_EDITOR
-        if (horseGallopClip == null)
-            horseGallopClip = AssetDatabase.LoadAssetAtPath<AudioClip>(CwslVfxPaths.HorseGallopSound);
-        if (stunClip == null)
-            stunClip = AssetDatabase.LoadAssetAtPath<AudioClip>(CwslVfxPaths.RammerStunSound);
-#endif
+        return assets != null ? selector(assets) : null;
     }
 }

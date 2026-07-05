@@ -188,6 +188,73 @@ public static class CwslVfxSpawner
         return spawned;
     }
 
+    public static GameObject AttachGatherChargeCircle(Transform parent)
+    {
+        if (parent == null)
+            return null;
+
+        var spawned = Spawn(
+            CwslGameSession.Instance?.Assets?.gatherChargeCircleVfx,
+            parent.position,
+            Quaternion.identity,
+            0f,
+            1f);
+        if (spawned == null)
+            return null;
+
+        spawned.transform.SetParent(parent, true);
+        spawned.transform.localPosition = Vector3.zero;
+        spawned.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+        DisablePhysics(spawned);
+        RestartParticleSystems(spawned);
+        return spawned;
+    }
+
+    public static GameObject SpawnGatherMaxReady(Vector3 center)
+    {
+        var spawned = Spawn(
+            CwslGameSession.Instance?.Assets?.gatherMaxReadyVfx,
+            center + Vector3.up * 0.25f,
+            Quaternion.identity,
+            1.6f,
+            1.15f);
+        if (spawned == null)
+            CwslSimpleVfx.SpawnBurst(center, new Color(1f, 0.9f, 0.25f), 1.2f, 0.35f);
+        else
+            RestartParticleSystems(spawned);
+        return spawned;
+    }
+
+    public static void SpawnGatherPull(Vector3 center, float radius)
+    {
+        var vortex = Spawn(
+            CwslGameSession.Instance?.Assets?.gatherPullVortexVfx,
+            center + Vector3.up * 0.15f,
+            Quaternion.identity,
+            1.8f,
+            Mathf.Clamp(radius / 4f, 0.8f, 2.4f));
+        if (vortex != null)
+        {
+            DisablePhysics(vortex);
+            RestartParticleSystems(vortex);
+        }
+
+        var burst = Spawn(
+            CwslGameSession.Instance?.Assets?.gatherPullBurstVfx,
+            center + Vector3.up * 0.05f,
+            Quaternion.identity,
+            1.4f,
+            Mathf.Clamp(radius / 3.5f, 0.9f, 2.8f));
+        if (burst != null)
+        {
+            DisablePhysics(burst);
+            RestartParticleSystems(burst);
+        }
+
+        if (vortex == null && burst == null)
+            CwslSimpleVfx.SpawnBurst(center, new Color(0.65f, 0.25f, 0.95f), radius * 0.35f, 0.4f);
+    }
+
     private static void RestartParticleSystems(GameObject root)
     {
         foreach (var ps in root.GetComponentsInChildren<ParticleSystem>(true))

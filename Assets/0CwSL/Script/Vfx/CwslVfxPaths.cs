@@ -65,4 +65,16 @@ public static class CwslVfxPaths
 
     public const string RammerStunStars =
         "Assets/Epic Toon FX/Prefabs/Combat/Brawling/Stun/StunnedCirclingStars.prefab";
+
+    public const string GatherChargeCircle =
+        "Assets/Epic Toon FX/Prefabs/Combat/Magic/Circle Simple/MagicCircleSimpleBlue.prefab";
+
+    public const string GatherMaxReady =
+        "Assets/Epic Toon FX/Prefabs/Combat/Magic/Charge/MagicChargeYellow.prefab";
+
+    public const string GatherPullVortex =
+        "Assets/Epic Toon FX/Prefabs/Interactive/Portals/VortexPortal/VortexPortalPurple.prefab";
+
+    public const string GatherPullBurst =
+        "Assets/Epic Toon FX/Prefabs/Interactive/Zone/SpinZone/SpinZoneOrange.prefab";
 }

@@ -8,7 +8,8 @@ public class CwslPlayerInput : NetworkBehaviour
         CwslCharacterId.Tank,
         CwslCharacterId.MissileTank,
         CwslCharacterId.RedMage,
-        CwslCharacterId.MomentumRammer
+        CwslCharacterId.MomentumRammer,
+        CwslCharacterId.CrowdGatherer
     };
 
     private Camera playerCamera;
@@ -19,6 +20,7 @@ public class CwslPlayerInput : NetworkBehaviour
     private CwslPlayerCombat combat;
     private CwslPlayerHealth playerHealth;
     private CwslPlayerCharacter playerCharacter;
+    private CwslCrowdGatherSkill crowdGatherSkill;
 
     private bool skillHeld;
     private bool groundTargeting;
@@ -33,6 +35,7 @@ public class CwslPlayerInput : NetworkBehaviour
         combat = GetComponent<CwslPlayerCombat>();
         playerHealth = GetComponent<CwslPlayerHealth>();
         playerCharacter = GetComponent<CwslPlayerCharacter>();
+        crowdGatherSkill = GetComponent<CwslCrowdGatherSkill>();
 
         if (IsOwner)
             playerCamera = Camera.main;
@@ -260,14 +263,53 @@ public class CwslPlayerInput : NetworkBehaviour
 
         if (characterId == CwslCharacterId.MomentumRammer)
         {
-            if (skillHeld)
+            CancelGroundTargeting();
+            var rammerKeyHeld = Input.GetKey(KeyCode.Q) || Input.GetKey(KeyCode.Space);
+            if (rammerKeyHeld && !skillHeld)
+            {
+                skillHeld = true;
+                PressSkillServerRpc();
+            }
+            else if (!rammerKeyHeld && skillHeld)
             {
                 skillHeld = false;
                 ReleaseSkillServerRpc();
             }
 
-            if (Input.GetKeyDown(KeyCode.Q) || Input.GetKeyDown(KeyCode.Space))
-                PressSkillServerRpc();
+            return;
+        }
+
+        if (characterId == CwslCharacterId.CrowdGatherer)
+        {
+            CancelGroundTargeting();
+            var gatherKeyHeld = Input.GetKey(KeyCode.Q) || Input.GetKey(KeyCode.Space);
+            if (gatherKeyHeld)
+            {
+                if (CwslMouseGround.TryGetGroundPoint(playerCamera, out var point, out _))
+                {
+                    if (!skillHeld)
+                    {
+                        skillHeld = true;
+                        BeginGatherSkillServerRpc(point);
+                    }
+                    else
+                    {
+                        UpdateGatherSkillServerRpc(point);
+                    }
+
+                    var previewRadius = crowdGatherSkill != null && crowdGatherSkill.IsCharging
+                        ? crowdGatherSkill.ChargeRadius
+                        : CwslGameConstants.GatherMinRadius;
+                    var atMax = crowdGatherSkill != null && crowdGatherSkill.IsAtMaxCharge;
+                    CwslGatherTargetMarker.Show(point, previewRadius, atMax);
+                }
+            }
+            else if (skillHeld)
+            {
+                skillHeld = false;
+                ReleaseSkillServerRpc();
+                CwslGatherTargetMarker.Hide();
+            }
 
             return;
         }
@@ -289,13 +331,13 @@ public class CwslPlayerInput : NetworkBehaviour
             return;
         }
 
-        var held = Input.GetKey(KeyCode.Q) || Input.GetKey(KeyCode.Space);
-        if (held && !skillHeld)
+        var skillKeyHeld = Input.GetKey(KeyCode.Q) || Input.GetKey(KeyCode.Space);
+        if (skillKeyHeld && !skillHeld)
         {
             skillHeld = true;
             PressSkillServerRpc();
         }
-        else if (!held && skillHeld)
+        else if (!skillKeyHeld && skillHeld)
         {
             skillHeld = false;
             ReleaseSkillServerRpc();
@@ -383,6 +425,18 @@ public class CwslPlayerInput : NetworkBehaviour
     private void ReleaseSkillServerRpc()
     {
         skills?.ReleaseSkillServer(OwnerClientId);
+    }
+
+    [ServerRpc]
+    private void BeginGatherSkillServerRpc(Vector3 worldPoint)
+    {
+        skills?.BeginGatherSkillServer(OwnerClientId, worldPoint);
+    }
+
+    [ServerRpc]
+    private void UpdateGatherSkillServerRpc(Vector3 worldPoint)
+    {
+        skills?.UpdateGatherSkillServer(OwnerClientId, worldPoint);
     }
 
     [ServerRpc]

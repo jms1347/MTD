@@ -474,6 +474,65 @@ public static class CwslMonsterVisualBuilder
         visualRoot.AddComponent<CwslPlayerRammerBrakeVisual>();
     }
 
+    public static void BuildCrowdGathererPlayer(Transform root, Color accentColor)
+    {
+        var visualRoot = new GameObject("Visual");
+        visualRoot.transform.SetParent(root, false);
+
+        var robeColor = Color.Lerp(accentColor, new Color(0.45f, 0.18f, 0.82f), 0.42f);
+        var trimColor = Color.Lerp(robeColor, Color.black, 0.35f);
+        var threadColor = Color.Lerp(accentColor, new Color(0.85f, 0.55f, 1f), 0.55f);
+        var skinColor = new Color(0.92f, 0.74f, 0.6f);
+
+        var basePlate = CreatePrimitive(PrimitiveType.Cylinder, visualRoot.transform, new Vector3(0f, 0.06f, 0f),
+            new Vector3(0.95f, 0.05f, 0.95f), trimColor);
+        var body = CreatePrimitive(PrimitiveType.Capsule, visualRoot.transform, new Vector3(0f, 0.92f, 0f),
+            new Vector3(0.72f, 0.82f, 0.72f), robeColor);
+        var sash = CreatePrimitive(PrimitiveType.Cube, visualRoot.transform, new Vector3(0f, 0.92f, 0.14f),
+            new Vector3(0.58f, 0.16f, 0.18f), threadColor);
+
+        var head = CreatePrimitive(PrimitiveType.Sphere, visualRoot.transform, new Vector3(0f, 1.52f, 0f),
+            new Vector3(0.42f, 0.42f, 0.42f), skinColor);
+        var hood = CreatePrimitive(PrimitiveType.Cube, visualRoot.transform, new Vector3(0f, 1.62f, -0.06f),
+            new Vector3(0.5f, 0.24f, 0.42f), trimColor);
+
+        var spoolRoot = new GameObject("ThreadSpool");
+        spoolRoot.transform.SetParent(visualRoot.transform, false);
+        spoolRoot.transform.localPosition = new Vector3(0f, 1.05f, -0.28f);
+        var spool = CreatePrimitive(PrimitiveType.Cylinder, spoolRoot.transform, Vector3.zero,
+            new Vector3(0.42f, 0.16f, 0.42f), threadColor);
+        spool.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+        var spoolCore = CreatePrimitive(PrimitiveType.Cylinder, spoolRoot.transform, Vector3.zero,
+            new Vector3(0.18f, 0.22f, 0.18f), trimColor);
+        spoolCore.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+
+        var armL = CreatePrimitive(PrimitiveType.Capsule, visualRoot.transform, new Vector3(-0.42f, 0.98f, 0.08f),
+            new Vector3(0.16f, 0.34f, 0.16f), robeColor);
+        armL.transform.localRotation = Quaternion.Euler(0f, 0f, 78f);
+        var armR = CreatePrimitive(PrimitiveType.Capsule, visualRoot.transform, new Vector3(0.42f, 0.98f, 0.08f),
+            new Vector3(0.16f, 0.34f, 0.16f), robeColor);
+        armR.transform.localRotation = Quaternion.Euler(0f, 0f, -78f);
+
+        var threadLine = CreatePrimitive(PrimitiveType.Cube, visualRoot.transform, new Vector3(0.18f, 0.72f, 0.32f),
+            new Vector3(0.04f, 0.04f, 0.72f), threadColor);
+        threadLine.transform.localRotation = Quaternion.Euler(0f, 24f, 0f);
+
+        RemoveCollider(basePlate);
+        RemoveCollider(body);
+        RemoveCollider(sash);
+        RemoveCollider(head);
+        RemoveCollider(hood);
+        RemoveCollider(spool);
+        RemoveCollider(spoolCore);
+        RemoveCollider(armL);
+        RemoveCollider(armR);
+        RemoveCollider(threadLine);
+
+        CwslThreatLight.Ensure(spoolRoot.transform, threadColor, 2.8f, 1.8f, Vector3.zero);
+        AddWalkLegs(visualRoot.transform, Color.Lerp(robeColor, Color.black, 0.35f));
+        visualRoot.AddComponent<CwslPlayerLegWalkVisual>();
+    }
+
     private static void AddHorseLeg(Transform horseRoot, string legName, Vector3 localPosition, Color legColor, Color hoofColor)
     {
         var legPivot = new GameObject(legName);

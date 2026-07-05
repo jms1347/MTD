@@ -2,7 +2,7 @@ using UnityEngine;
 
 public static class CwslRammerStunFeedback
 {
-    private const float Volume = 1.1f;
+    private const float Volume = 1.35f;
 
     public static void PlaySound(Vector3 worldPosition)
     {
@@ -16,11 +16,7 @@ public static class CwslRammerStunFeedback
         var source = soundObject.AddComponent<AudioSource>();
         source.clip = clip;
         source.volume = Volume;
-        source.spatialBlend = 1f;
-        source.minDistance = 2f;
-        source.maxDistance = 24f;
-        source.rolloffMode = AudioRolloffMode.Linear;
-        source.dopplerLevel = 0f;
+        source.spatialBlend = 0f;
         source.priority = 16;
         source.Play();
 

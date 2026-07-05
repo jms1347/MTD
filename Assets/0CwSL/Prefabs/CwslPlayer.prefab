@@ -373,6 +373,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CwslMomentumRammerSkill
   ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &8347261593847561029
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6360497807503343767}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3eb60157a46749aaaf1cf37020ff97ef, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CwslCrowdGatherSkill
+  ShowTopMostFoldoutHeaderGroup: 1
 --- !u!114 &9081726354455667788
 MonoBehaviour:
   m_ObjectHideFlags: 0

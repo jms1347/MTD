@@ -48,9 +48,15 @@ public static class CwslCharacterCatalog
         new(
             CwslCharacterId.MomentumRammer,
             "질주자",
-            "이동 중 점점 가속 · 고속 충돌 시 피해 / 멈추면 일반 이동 · Q 긴급 제동(골드 1)",
-            "우클릭 이동(관성) | 좌클릭 적선택 | A+클릭 어택 | Q 긴급 제동 | G 골드 선물/부활",
-            16f)
+            "이동 중 점점 가속 · 고속 충돌 시 피해 · Q 홀드 날개 펼치기(날 확대·골드 지속 소모·아군 포함 광역 피해)",
+            "우클릭 이동(관성) | 좌클릭 적선택 | A+클릭 어택 | Q/Space 홀드(날개) | G 골드 선물/부활",
+            16f),
+        new(
+            CwslCharacterId.CrowdGatherer,
+            "끌모",
+            "Q 홀드 — 지면 원 확장(메테오×2) · 뗄 때 범위 안 적·아군 전부 중심으로 당김 (데미지 없음)",
+            "우클릭 이동 | 좌클릭 적선택 | A+클릭 어택 | Q/Space 홀드(당김) | G 골드 선물/부활",
+            15f)
     };
 
     public static IReadOnlyList<Entry> All => Entries;

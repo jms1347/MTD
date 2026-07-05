@@ -8,6 +8,7 @@ public class CwslPlayerMovement : NetworkBehaviour
     private NavMeshAgent agent;
     private Vector3 lastSampledPosition;
     private CwslMomentumRammerSkill rammerSkill;
+    private CwslCrowdGatherSkill crowdGatherSkill;
     private CwslPlayerCharacter playerCharacter;
     private CwslPlayerHealth playerHealth;
     private CwslPlayerStun playerStun;
@@ -30,6 +31,7 @@ public class CwslPlayerMovement : NetworkBehaviour
     {
         agent = GetComponent<NavMeshAgent>();
         rammerSkill = GetComponent<CwslMomentumRammerSkill>();
+        crowdGatherSkill = GetComponent<CwslCrowdGatherSkill>();
         playerCharacter = GetComponent<CwslPlayerCharacter>();
         playerHealth = GetComponent<CwslPlayerHealth>();
         playerStun = GetComponent<CwslPlayerStun>();
@@ -58,6 +60,14 @@ public class CwslPlayerMovement : NetworkBehaviour
             CurrentMoveSpeed = 0f;
             if (IsServer)
                 HoldStunnedMovementServer();
+            return;
+        }
+
+        if (crowdGatherSkill != null && crowdGatherSkill.IsCharging)
+        {
+            CurrentMoveSpeed = 0f;
+            if (IsServer)
+                HoldGatherChargeMovementServer();
             return;
         }
 
@@ -105,6 +115,9 @@ public class CwslPlayerMovement : NetworkBehaviour
             return;
 
         if (playerStun != null && playerStun.IsStunned)
+            return;
+
+        if (crowdGatherSkill != null && crowdGatherSkill.IsCharging)
             return;
 
         if (rammerSkill != null && rammerSkill.IsActiveForCharacter(GetCharacterId()))
@@ -180,6 +193,16 @@ public class CwslPlayerMovement : NetworkBehaviour
         if (rammerSkill != null && rammerSkill.IsActiveForCharacter(GetCharacterId()))
             return;
 
+        HoldAgentStoppedServer();
+    }
+
+    private void HoldGatherChargeMovementServer()
+    {
+        HoldAgentStoppedServer();
+    }
+
+    private void HoldAgentStoppedServer()
+    {
         if (agent != null && agent.enabled && agent.isOnNavMesh)
         {
             agent.isStopped = true;

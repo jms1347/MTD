@@ -59,6 +59,10 @@ public static class CwslGameSceneSetup
         assets.meteorBurnVfx = LoadPrefab(CwslVfxPaths.MeteorBurn);
         assets.rammerStunExplosionVfx = LoadPrefab(CwslVfxPaths.RammerStunExplosion);
         assets.rammerStunStarsVfx = LoadPrefab(CwslVfxPaths.RammerStunStars);
+        assets.gatherChargeCircleVfx = LoadPrefab(CwslVfxPaths.GatherChargeCircle);
+        assets.gatherMaxReadyVfx = LoadPrefab(CwslVfxPaths.GatherMaxReady);
+        assets.gatherPullVortexVfx = LoadPrefab(CwslVfxPaths.GatherPullVortex);
+        assets.gatherPullBurstVfx = LoadPrefab(CwslVfxPaths.GatherPullBurst);
         assets.suicideExplosionVfx = LoadPrefab(CwslVfxPaths.SuicideExplosion);
         assets.meleeHitVfx = LoadPrefab(CwslVfxPaths.MeleeHit);
         assets.enemyDeathVfx = LoadPrefab(CwslVfxPaths.EnemyDeath);
@@ -318,6 +322,7 @@ public static class CwslGameSceneSetup
         root.AddComponent<CwslMissileTankSkill>();
         root.AddComponent<CwslRedMageMeteorSkill>();
         root.AddComponent<CwslMomentumRammerSkill>();
+        root.AddComponent<CwslCrowdGatherSkill>();
         root.AddComponent<CwslPlayerStun>();
         root.AddComponent<CwslPlayerCannonAim>();
         root.AddComponent<CwslPlayerShieldFortifyVisual>();

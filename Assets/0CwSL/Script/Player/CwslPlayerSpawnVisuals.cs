@@ -49,6 +49,8 @@ public class CwslPlayerSpawnVisuals : NetworkBehaviour
             CwslMonsterVisualBuilder.BuildRedMagePlayer(transform, new Color(0.9f, 0.15f, 0.1f));
         else if (characterId == CwslCharacterId.MomentumRammer)
             CwslMonsterVisualBuilder.BuildMomentumRammerPlayer(transform, color);
+        else if (characterId == CwslCharacterId.CrowdGatherer)
+            CwslMonsterVisualBuilder.BuildCrowdGathererPlayer(transform, color);
         else
             CwslMonsterVisualBuilder.BuildPlayer(transform, color);
 

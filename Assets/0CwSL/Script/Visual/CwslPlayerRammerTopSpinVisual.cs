@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.AI;
 
 /// <summary>
-/// 질주자 말 몸통 중간 날(blade) 팽이 회전 — 속도 단계별 Y축 회전.
+/// 질주자 말 몸통 날(blade) 회전 — Q 날개 펼치기 시 확대·고속 회전.
 /// </summary>
 public class CwslPlayerRammerTopSpinVisual : MonoBehaviour
 {
@@ -26,10 +26,8 @@ public class CwslPlayerRammerTopSpinVisual : MonoBehaviour
 
     private void Start()
     {
-        if (spinCubePivot != null)
-            return;
-
-        spinCubePivot = transform.Find("HorseRoot/HorseBodyBladeSpin");
+        if (spinCubePivot == null)
+            spinCubePivot = transform.Find("HorseRoot/HorseBodyBladeSpin");
     }
 
     private void Update()
@@ -39,20 +37,22 @@ public class CwslPlayerRammerTopSpinVisual : MonoBehaviour
 
         if (playerHealth != null && !playerHealth.IsAlive)
         {
-            spinCubePivot.localRotation = Quaternion.identity;
-            spinAngle = 0f;
+            ResetBlade();
             return;
         }
 
         if (rammerSkill.IsStunned)
         {
-            spinCubePivot.localRotation = Quaternion.identity;
-            spinAngle = 0f;
+            ResetBlade();
             return;
         }
 
+        var wingActive = rammerSkill.IsWingSpreadActive;
         var speed = ReadSpeed();
-        if (speed < CwslGameConstants.RammerDamageSpeedThreshold)
+        var targetScale = wingActive ? Vector3.one * rammerSkill.BladeScale : Vector3.one;
+        spinCubePivot.localScale = Vector3.Lerp(spinCubePivot.localScale, targetScale, Time.deltaTime * 10f);
+
+        if (!wingActive && speed < CwslGameConstants.RammerDamageSpeedThreshold)
         {
             spinCubePivot.localRotation = Quaternion.Lerp(
                 spinCubePivot.localRotation,
@@ -61,8 +61,18 @@ public class CwslPlayerRammerTopSpinVisual : MonoBehaviour
             return;
         }
 
-        spinAngle += ResolveSpinSpeed(speed) * Time.deltaTime;
+        var spinSpeed = wingActive
+            ? ResolveWingSpinSpeed(speed, rammerSkill.BladeScale)
+            : ResolveSpinSpeed(speed);
+        spinAngle += spinSpeed * Time.deltaTime;
         spinCubePivot.localRotation = Quaternion.Euler(0f, spinAngle, 0f);
+    }
+
+    private void ResetBlade()
+    {
+        spinCubePivot.localRotation = Quaternion.identity;
+        spinCubePivot.localScale = Vector3.one;
+        spinAngle = 0f;
     }
 
     private float ReadSpeed()
@@ -90,5 +100,12 @@ public class CwslPlayerRammerTopSpinVisual : MonoBehaviour
             speed);
         speedRatio = Mathf.Clamp01(speedRatio);
         return Mathf.Lerp(220f, 1180f, speedRatio * speedRatio);
+    }
+
+    private static float ResolveWingSpinSpeed(float speed, float bladeScale)
+    {
+        var speedRatio = Mathf.Clamp01(speed / CwslGameConstants.RammerMaxSpeed);
+        var scaleRatio = Mathf.InverseLerp(1f, CwslGameConstants.RammerWingSpreadMaxScale, bladeScale);
+        return Mathf.Lerp(520f, 1680f, scaleRatio) + speedRatio * 320f;
     }
 }

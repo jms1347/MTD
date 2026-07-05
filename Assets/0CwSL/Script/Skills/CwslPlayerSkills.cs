@@ -12,6 +12,7 @@ public class CwslPlayerSkills : NetworkBehaviour
 
     private readonly List<CwslPlayerSkillBase> skills = new();
     private CwslPlayerSkillBase chargedSkill;
+    private CwslCrowdGatherSkill crowdGatherSkill;
     private CwslPlayerCharacter playerCharacter;
     private float nextMeteorTime;
 
@@ -20,6 +21,7 @@ public class CwslPlayerSkills : NetworkBehaviour
         playerCharacter = GetComponent<CwslPlayerCharacter>();
         skills.Clear();
         skills.AddRange(GetComponents<CwslPlayerSkillBase>());
+        crowdGatherSkill = GetComponent<CwslCrowdGatherSkill>();
         foreach (var skill in skills)
         {
             if (skill.ActivationType == CwslSkillActivationType.Charged)
@@ -29,13 +31,40 @@ public class CwslPlayerSkills : NetworkBehaviour
 
     private void Update()
     {
-        if (!IsServer || chargedSkill == null)
+        if (!IsServer)
             return;
 
-        if (!IsSkillActiveForCharacter(chargedSkill))
+        foreach (var skill in skills)
+        {
+            if (skill.ActivationType != CwslSkillActivationType.Charged)
+                continue;
+            if (!IsSkillActiveForCharacter(skill))
+                continue;
+
+            skill.TickChargedServer();
+        }
+    }
+
+    public void BeginGatherSkillServer(ulong senderClientId, Vector3 worldPoint)
+    {
+        if (!IsServer || crowdGatherSkill == null)
             return;
 
-        chargedSkill.TickChargedServer();
+        if (!IsSkillActiveForCharacter(crowdGatherSkill))
+            return;
+
+        crowdGatherSkill.BeginChargeServer(worldPoint);
+    }
+
+    public void UpdateGatherSkillServer(ulong senderClientId, Vector3 worldPoint)
+    {
+        if (!IsServer || crowdGatherSkill == null)
+            return;
+
+        if (!IsSkillActiveForCharacter(crowdGatherSkill))
+            return;
+
+        crowdGatherSkill.UpdateChargeCenterServer(worldPoint);
     }
 
     public void PressSkillServer(ulong senderClientId)
