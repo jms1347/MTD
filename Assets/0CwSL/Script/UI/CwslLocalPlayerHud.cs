@@ -107,6 +107,7 @@ public class CwslLocalPlayerHud : NetworkBehaviour
         EnsureGameOverHud(canvasTransform);
         CwslDefenseHud.Ensure(canvasTransform);
         EnsureMinimap(canvasTransform);
+        EnsureStaminaHud(canvasTransform);
         if (GetComponent<CwslArenaGimmickVisualRunner>() == null && !CwslGameConstants.UseDefenseMode)
             gameObject.AddComponent<CwslArenaGimmickVisualRunner>();
         if (GetComponent<CwslArenaTrapVisualRunner>() == null && !CwslGameConstants.UseDefenseMode)
@@ -169,13 +170,28 @@ public class CwslLocalPlayerHud : NetworkBehaviour
         CwslSkillGoldFeedback.BindToast(toastLabel);
     }
 
+    private void EnsureStaminaHud(Transform canvasTransform)
+    {
+        var stamina = GetComponent<CwslPlayerStamina>();
+        if (stamina == null)
+            stamina = gameObject.AddComponent<CwslPlayerStamina>();
+
+        CwslPlayerStaminaHud.Ensure(canvasTransform, stamina);
+    }
+
     private void RefreshHint(CwslCharacterId characterId)
     {
         if (hintLabel == null)
             return;
 
         var entry = CwslCharacterCatalog.Get(characterId);
-        hintLabel.text = entry.ControlHint;
+        var skillDefs = CwslCharacterSkillCatalog.GetSkills(characterId);
+        hintLabel.text =
+            $"{entry.ControlHint}\n" +
+            $"스킬: {skillDefs[0].KeyHint} {skillDefs[0].DisplayName} | " +
+            $"{skillDefs[1].KeyHint} {skillDefs[1].DisplayName} | " +
+            $"{skillDefs[2].KeyHint} {skillDefs[2].DisplayName} | " +
+            $"{skillDefs[3].KeyHint} {skillDefs[3].DisplayName}";
     }
 
     private void EnsureGoldPanel(Transform canvasTransform)

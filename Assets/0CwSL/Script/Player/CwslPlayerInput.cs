@@ -69,7 +69,18 @@ public class CwslPlayerInput : NetworkBehaviour
         HandleSelectInput();
         HandleAttackInput();
         HandleSkillInput();
+        HandleExtraSkillSlots();
         HandleGiftInput();
+    }
+
+    private void HandleExtraSkillSlots()
+    {
+        if (Input.GetKeyDown(KeyCode.E))
+            UseSkillSlotServerRpc(1);
+        if (Input.GetKeyDown(KeyCode.R))
+            UseSkillSlotServerRpc(2);
+        if (Input.GetKeyDown(KeyCode.F))
+            UseSkillSlotServerRpc(3);
     }
 
     // TODO(릴리즈): 테스트용 — V(캐릭터), R(부활), U(카르마). 로비 설정으로 비활성 가능.
@@ -478,6 +489,12 @@ public class CwslPlayerInput : NetworkBehaviour
     private void CastGroundSkillServerRpc(Vector3 worldPoint)
     {
         skills?.CastGroundSkillServer(OwnerClientId, worldPoint);
+    }
+
+    [ServerRpc]
+    private void UseSkillSlotServerRpc(int slotIndex)
+    {
+        skills?.UseSkillSlotServer(OwnerClientId, slotIndex);
     }
 
     [ServerRpc]

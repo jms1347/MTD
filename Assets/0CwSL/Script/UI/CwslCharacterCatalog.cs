@@ -30,33 +30,33 @@ public static class CwslCharacterCatalog
         new(
             CwslCharacterId.Tank,
             "방패 탱커",
-            "Q/Space 홀드 — 쉴드(피격당 골드 1·100만 원). 방패 없이 맞으면 HP 감소 / 시야 좁음",
-            "우클릭 이동 | 좌클릭 적선택 | A+클릭 어택땅/어택유닛 | Q/Space 방패(홀드) | 무덤 위 접근 시 자동 부활 | G 골드 선물",
-            14f),
+            "임시 밸런스: HP/공격/방어/시야 동일 · Q/E/R/F 스킬 4개 · 스테미너 소모",
+            "우클릭 이동 | 좌클릭 적선택 | A+클릭 어택 | Q/E/R/F 스킬 | G 골드 선물",
+            CwslGameConstants.PlayerVisionRadius),
         new(
             CwslCharacterId.MissileTank,
             "총잡이",
-            "평타 무료(데미지 1) · 1초 쿨 자동 사격 | Q 양손 동시 3골드(300만 원, 쿨무시) / 시야=사거리",
-            "우클릭 이동 | 좌클릭 적선택 | A+클릭 어택 | Q 양손 동시 | 무덤 위 접근 시 자동 부활 | G 골드 선물",
-            CwslGameConstants.MissileTankRange),
+            "임시 밸런스: HP/공격/방어/시야 동일 · Q/E/R/F 스킬 4개 · 스테미너 소모",
+            "우클릭 이동 | 좌클릭 적선택 | A+클릭 어택 | Q/E/R/F 스킬 | G 골드 선물",
+            CwslGameConstants.PlayerVisionRadius),
         new(
             CwslCharacterId.RedMage,
             "빨간 마법사",
-            "Q 후 지면 클릭 — 메테오 5골드(500만 원) · 착탄 지점 2.8초 시야 개방 / 본인만 시야",
-            "우클릭 이동 | 좌클릭 적선택 | A+클릭 어택 | Q 메테오(지면) | 무덤 위 접근 시 자동 부활 | G 골드 선물",
-            0f),
+            "임시 밸런스: HP/공격/방어/시야 동일 · Q/E/R/F 스킬 4개 · 스테미너 소모",
+            "우클릭 이동 | 좌클릭 적선택 | A+클릭 어택 | Q 메테오(지면) · E/R/F 준비중 | G 골드 선물",
+            CwslGameConstants.PlayerVisionRadius),
         new(
             CwslCharacterId.MomentumRammer,
             "질주자",
-            "관성 이동 · 고속 충돌 피해 · Q 날개 3골드+0.5초마다 1골드 · 벽/아군 충돌 스턴",
-            "우클릭 홀드 조향(전령식) | 좌클릭 적선택 | A+클릭 어택 | Q/Space 홀드(날개) | 무덤 위 접근 시 자동 부활 | G 골드 선물",
-            16f),
+            "임시 밸런스: HP/공격/방어/시야 동일 · Q/E/R/F 스킬 4개 · 스테미너 소모",
+            "우클릭 홀드 조향 | 좌클릭 적선택 | A+클릭 어택 | Q/E/R/F 스킬 | G 골드 선물",
+            CwslGameConstants.PlayerVisionRadius),
         new(
             CwslCharacterId.CrowdGatherer,
             "끌모",
-            "Q 홀드 — 5골드 선불 · 원 확장 중 적·총알 슬로우(대상당 0.5초마다 1골드) · 뗄 때 전부 당김",
-            "우클릭 이동 | 좌클릭 적선택 | A+클릭 어택 | Q/Space 홀드(당김) | 무덤 위 접근 시 자동 부활 | G 골드 선물",
-            15f)
+            "임시 밸런스: HP/공격/방어/시야 동일 · Q/E/R/F 스킬 4개 · 스테미너 소모",
+            "우클릭 이동 | 좌클릭 적선택 | A+클릭 어택 | Q/E/R/F 스킬 | G 골드 선물",
+            CwslGameConstants.PlayerVisionRadius)
     };
 
     public static IReadOnlyList<Entry> All => Entries;
@@ -72,5 +72,5 @@ public static class CwslCharacterCatalog
         return Entries[0];
     }
 
-    public static float GetVisionRadius(CwslCharacterId id) => Get(id).VisionRadius;
+    public static float GetVisionRadius(CwslCharacterId id) => CwslGameConstants.PlayerVisionRadius;
 }

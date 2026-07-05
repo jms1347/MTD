@@ -13,6 +13,12 @@ public static class CwslSkillGoldFeedback
         toastLabel = label;
     }
 
+    public static void ShowInsufficientStamina(string message = "스테미너가 부족해 스킬을 시전할 수 없습니다.")
+    {
+        PlayFailSound();
+        ShowToast(message);
+    }
+
     public static void ShowInsufficientGold(string message = "골드가 부족해 스킬을 시전할 수 없습니다.")
     {
         PlayFailSound();

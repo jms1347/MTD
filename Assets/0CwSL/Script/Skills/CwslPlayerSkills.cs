@@ -14,11 +14,15 @@ public class CwslPlayerSkills : NetworkBehaviour
     private CwslPlayerSkillBase chargedSkill;
     private CwslCrowdGatherSkill crowdGatherSkill;
     private CwslPlayerCharacter playerCharacter;
+    private CwslPlayerStamina playerStamina;
     private float nextMeteorTime;
 
     public override void OnNetworkSpawn()
     {
         playerCharacter = GetComponent<CwslPlayerCharacter>();
+        playerStamina = GetComponent<CwslPlayerStamina>();
+        if (playerStamina == null)
+            playerStamina = gameObject.AddComponent<CwslPlayerStamina>();
         skills.Clear();
         skills.AddRange(GetComponents<CwslPlayerSkillBase>());
         crowdGatherSkill = GetComponent<CwslCrowdGatherSkill>();
@@ -53,6 +57,9 @@ public class CwslPlayerSkills : NetworkBehaviour
         if (!IsSkillActiveForCharacter(crowdGatherSkill))
             return;
 
+        if (!TrySpendStaminaForSlot(0))
+            return;
+
         crowdGatherSkill.BeginChargeServer(worldPoint);
     }
 
@@ -70,6 +77,9 @@ public class CwslPlayerSkills : NetworkBehaviour
     public void PressSkillServer(ulong senderClientId)
     {
         if (!IsServer || BlocksSkillUseServer(senderClientId))
+            return;
+
+        if (!TrySpendStaminaForSlot(0))
             return;
 
         foreach (var skill in skills)
@@ -97,6 +107,43 @@ public class CwslPlayerSkills : NetworkBehaviour
             if (skill.ActivationType == CwslSkillActivationType.Charged)
                 skill.OnSkillReleasedServer(senderClientId);
         }
+    }
+
+    public void UseSkillSlotServer(ulong senderClientId, int slotIndex)
+    {
+        if (!IsServer || BlocksSkillUseServer(senderClientId))
+            return;
+
+        if (slotIndex <= 0 || slotIndex >= CwslCharacterSkillCatalog.SkillCount)
+            return;
+
+        var characterId = playerCharacter != null
+            ? playerCharacter.CharacterId
+            : CwslCharacterId.Tank;
+        var definition = CwslCharacterSkillCatalog.Get(characterId, slotIndex);
+        if (!TrySpendStaminaForSlot(slotIndex))
+            return;
+
+        NotifyPlaceholderSkillClientRpc(definition.DisplayName);
+    }
+
+    public bool TrySpendStaminaForSlot(int slotIndex)
+    {
+        if (!CwslGameConstants.SkillsUseStamina)
+            return true;
+
+        var characterId = playerCharacter != null
+            ? playerCharacter.CharacterId
+            : CwslCharacterId.Tank;
+        var cost = CwslCharacterSkillCatalog.GetStaminaCost(characterId, slotIndex);
+        if (playerStamina == null)
+            playerStamina = GetComponent<CwslPlayerStamina>();
+
+        if (playerStamina != null && playerStamina.TrySpendServer(cost))
+            return true;
+
+        NotifyStaminaInsufficientServer();
+        return false;
     }
 
     public void CastGroundSkillServer(ulong senderClientId, Vector3 worldPoint)
@@ -129,6 +176,9 @@ public class CwslPlayerSkills : NetworkBehaviour
             if (!TrySpendSkillCost())
                 return;
 
+            if (!TrySpendStaminaForSlot(0))
+                return;
+
             skill.OnSkillGroundTargetServer(senderClientId, worldPoint);
         }
     }
@@ -136,6 +186,9 @@ public class CwslPlayerSkills : NetworkBehaviour
     private void TryCastMeteor(ulong senderClientId, Vector3 worldPoint)
     {
         if (Time.time < nextMeteorTime)
+            return;
+
+        if (!TrySpendStaminaForSlot(0))
             return;
 
         if (IsGoldInsufficientForSkill(CwslGameConstants.MeteorGoldCost))
@@ -189,6 +242,14 @@ public class CwslPlayerSkills : NetworkBehaviour
             return;
 
         skill.OnSkillPressedServer(senderClientId);
+    }
+
+    public void NotifyStaminaInsufficientServer()
+    {
+        if (!IsServer)
+            return;
+
+        NotifyStaminaInsufficientClientRpc();
     }
 
     private bool IsSkillActiveForCharacter(CwslPlayerSkillBase skill)
@@ -257,6 +318,24 @@ public class CwslPlayerSkills : NetworkBehaviour
         var cost = (baseCost >= 0 ? baseCost : CwslGameConstants.SkillGoldCost)
                    + CwslArenaGimmickSystem.GetExtraSkillGoldCost(transform.position);
         return gold.Gold < cost;
+    }
+
+    [ClientRpc]
+    private void NotifyStaminaInsufficientClientRpc()
+    {
+        if (!IsOwner)
+            return;
+
+        CwslSkillGoldFeedback.ShowInsufficientStamina();
+    }
+
+    [ClientRpc]
+    private void NotifyPlaceholderSkillClientRpc(string skillName)
+    {
+        if (!IsOwner)
+            return;
+
+        CwslSkillGoldFeedback.ShowMessage($"{skillName} — 준비 중");
     }
 
     [ClientRpc]

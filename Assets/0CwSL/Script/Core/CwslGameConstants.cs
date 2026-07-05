@@ -9,6 +9,13 @@ public static class CwslGameConstants
 
     public const float MonsterMaxHealth = 1f;
     public const float PlayerMaxHealth = 100f;
+    public const float PlayerAttackDamage = 1f;
+    public const float PlayerDefense = 0f;
+    public const float PlayerVisionRadius = 16f;
+    public const float PlayerMaxStamina = 100f;
+    public const float PlayerStaminaRegenPerSecond = 14f;
+    public const int SkillsPerCharacter = 4;
+    public const float DefaultSkillStaminaCost = 22f;
     public const int StartingGold = 50;
     public const int SkillGoldCost = 1;
 
@@ -75,7 +82,7 @@ public static class CwslGameConstants
     public const float AttackRange = 2.8f;
     public const float MissileTankRange = 24f;
     public const float AttackCooldown = 0.45f;
-    public const float AttackDamage = 1f;
+    public const float AttackDamage = PlayerAttackDamage;
     public const int TankHitGoldCost = 1;
     public const int MissileDualWieldGoldCost = 3;
     public const int MeteorGoldCost = 5;
@@ -308,6 +315,7 @@ public static class CwslGameConstants
     public const int DynamicGimmickSpawnAttempts = 16;
 
     public const bool SkillsConsumeGold = false;
+    public const bool SkillsUseStamina = true;
     public const float HazardAcidDamagePerSecond = 8f;
     public const float HazardLavaGoldLeakIntervalSeconds = 0.85f;
     public const int HazardLavaGoldLeakAmount = 1;

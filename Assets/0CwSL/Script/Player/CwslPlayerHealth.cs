@@ -124,6 +124,7 @@ public class CwslPlayerHealth : NetworkBehaviour
 
         health.Value = CwslGameConstants.PlayerMaxHealth;
         playerGold?.SetGoldServer(Mathf.Max(playerGold.Gold, CwslGameConstants.StartingGold));
+        GetComponent<CwslPlayerStamina>()?.RestoreFullServer();
     }
 
     private bool CanBlockNow()
@@ -190,8 +191,12 @@ public class CwslPlayerHealth : NetworkBehaviour
             return true;
         }
 
-        ShowDamagePopupClientRpc(ResolvePopupAnchor(popupKind, feedbackPosition), amount, (int)popupKind);
-        health.Value = Mathf.Max(0f, health.Value - amount);
+        var finalAmount = Mathf.Max(0f, amount - CwslGameConstants.PlayerDefense);
+        if (finalAmount <= 0f)
+            return true;
+
+        ShowDamagePopupClientRpc(ResolvePopupAnchor(popupKind, feedbackPosition), finalAmount, (int)popupKind);
+        health.Value = Mathf.Max(0f, health.Value - finalAmount);
         if (health.Value <= 0f)
             DieServer();
         return true;
@@ -214,6 +219,7 @@ public class CwslPlayerHealth : NetworkBehaviour
         isDead.Value = false;
         health.Value = CwslGameConstants.PlayerMaxHealth;
         playerGold?.SetGoldServer(restoredGold);
+        GetComponent<CwslPlayerStamina>()?.RestoreFullServer();
         visualScale?.SetScaleServer(1f);
         movement?.SetAgentEnabled(true);
         OnRevived?.Invoke();

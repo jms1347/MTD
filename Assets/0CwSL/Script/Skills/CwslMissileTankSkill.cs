@@ -182,6 +182,10 @@ public class CwslMissileTankSkill : CwslPlayerSkillBase
 
     private bool TryFireDualWieldServer()
     {
+        var playerSkills = GetComponent<CwslPlayerSkills>();
+        if (playerSkills != null && !playerSkills.TrySpendStaminaForSlot(0))
+            return false;
+
         var dualCost = CwslGameConstants.MissileDualWieldGoldCost;
         if (!CanAffordSkillGold(dualCost))
         {
