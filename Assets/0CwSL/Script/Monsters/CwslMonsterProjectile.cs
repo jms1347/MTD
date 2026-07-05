@@ -4,7 +4,6 @@ using UnityEngine;
 public class CwslMonsterProjectile : NetworkBehaviour, ICwslPooledNetworkObject
 {
     private const float ProjectileDamage = 10f;
-    private const float HitRadius = 0.45f;
 
     private static int playerLayerMask = -1;
 
@@ -43,6 +42,7 @@ public class CwslMonsterProjectile : NetworkBehaviour, ICwslPooledNetworkObject
 
         if (Time.time - spawnTime > lifetime)
         {
+            configured = false;
             DespawnSelf();
             return;
         }
@@ -68,9 +68,10 @@ public class CwslMonsterProjectile : NetworkBehaviour, ICwslPooledNetworkObject
             playerLayerMask = LayerMask.GetMask(CwslGameConstants.LayerPlayer);
 
         var mask = playerLayerMask != 0 ? playerLayerMask : ~0;
+        var bodyQueryRadius = CwslGameConstants.PlayerBodyColliderRadiusDefault + CwslGameConstants.PlayerBodyHitSlop + 0.12f;
         var hits = Physics.OverlapSphere(
             transform.position,
-            Mathf.Max(HitRadius, CwslGameConstants.FortifyShieldBlockRadius),
+            bodyQueryRadius,
             mask,
             QueryTriggerInteraction.Collide);
 
@@ -82,6 +83,8 @@ public class CwslMonsterProjectile : NetworkBehaviour, ICwslPooledNetworkObject
             if (TryHitShieldBubble(hit))
                 return;
         }
+
+        TryHitShieldBubbleByProximity();
 
         foreach (var hit in hits)
         {
@@ -107,9 +110,29 @@ public class CwslMonsterProjectile : NetworkBehaviour, ICwslPooledNetworkObject
         if (!marker.Bubble.TryBlockProjectileServer(transform.position, ProjectileDamage))
             return false;
 
-        configured = false;
-        DespawnSelf();
+        DespawnWithHitFx(transform.position);
         return true;
+    }
+
+    private void TryHitShieldBubbleByProximity()
+    {
+        if (!configured)
+            return;
+
+        var markers = FindObjectsByType<CwslShieldBubbleMarker>(FindObjectsSortMode.None);
+        foreach (var marker in markers)
+        {
+            if (marker == null || marker.Bubble == null || !marker.Bubble.IsBubbleActive)
+                continue;
+
+            var bubbleCenter = marker.transform.position;
+            if ((transform.position - bubbleCenter).sqrMagnitude >
+                CwslGameConstants.FortifyShieldBlockRadius * CwslGameConstants.FortifyShieldBlockRadius)
+                continue;
+
+            if (TryHitShieldBubble(marker))
+                return;
+        }
     }
 
     private void TryHitPlayersByDistance()
@@ -122,19 +145,20 @@ public class CwslMonsterProjectile : NetworkBehaviour, ICwslPooledNetworkObject
 
             if (playerHealth.TryInterceptProjectileServer(transform.position, ProjectileDamage))
             {
-                configured = false;
-                DespawnSelf();
+                DespawnWithHitFx(transform.position);
                 return;
             }
 
             var flat = playerHealth.transform.position - transform.position;
             flat.y = 0f;
-            if (flat.sqrMagnitude > (HitRadius + 0.55f) * (HitRadius + 0.55f))
+            var bodyRadius = playerHealth.GetComponent<CwslPlayerBodyCollider>()?.Radius
+                ?? CwslGameConstants.PlayerBodyColliderRadiusDefault;
+            var hitReach = bodyRadius + CwslGameConstants.PlayerBodyHitSlop;
+            if (flat.sqrMagnitude > hitReach * hitReach)
                 continue;
 
-            configured = false;
             playerHealth.TryReceiveProjectileHitServer(ProjectileDamage, transform.position);
-            DespawnSelf();
+            DespawnWithHitFx(transform.position);
             return;
         }
     }
@@ -153,8 +177,17 @@ public class CwslMonsterProjectile : NetworkBehaviour, ICwslPooledNetworkObject
         if (playerHealth == null || !playerHealth.IsAlive)
             return;
 
-        configured = false;
         playerHealth.TryReceiveProjectileHitServer(ProjectileDamage, transform.position);
+        DespawnWithHitFx(transform.position);
+    }
+
+    private void DespawnWithHitFx(Vector3 hitPosition)
+    {
+        if (!configured)
+            return;
+
+        configured = false;
+        PlayHitFxClientRpc(hitPosition, direction);
         DespawnSelf();
     }
 
@@ -162,5 +195,11 @@ public class CwslMonsterProjectile : NetworkBehaviour, ICwslPooledNetworkObject
     {
         if (NetworkObject != null && NetworkObject.IsSpawned)
             CwslNetworkPoolService.Instance?.Release(NetworkObject);
+    }
+
+    [ClientRpc]
+    private void PlayHitFxClientRpc(Vector3 hitPosition, Vector3 fireDirection)
+    {
+        CwslVfxSpawner.SpawnShadowProjectileHit(hitPosition, fireDirection);
     }
 }

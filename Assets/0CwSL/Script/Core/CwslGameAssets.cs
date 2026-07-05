@@ -4,6 +4,8 @@ using UnityEngine;
 public class CwslGameAssets : ScriptableObject
 {
     public GameObject darkMissileVfx;
+    public GameObject shadowProjectileHitVfx;
+    public GameObject shadowMuzzleVfx;
     public GameObject suicideExplosionVfx;
     public GameObject meleeHitVfx;
     public GameObject enemyDeathVfx;
@@ -18,7 +20,11 @@ public class CwslGameAssets : ScriptableObject
     public GameObject meteorFallVfx;
     public GameObject meteorImpactVfx;
     public GameObject meteorBurnVfx;
+    public GameObject rammerStunExplosionVfx;
+    public GameObject rammerStunStarsVfx;
     public AudioClip goldPickupSound;
+    public AudioClip horseGallopSound;
+    public AudioClip rammerStunSound;
 
     public GameObject playerPrefab;
     public GameObject rangedMonsterPrefab;

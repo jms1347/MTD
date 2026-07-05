@@ -168,6 +168,9 @@ public class CwslPlayerSkills : NetworkBehaviour
     [ClientRpc]
     public void PlayMeteorFxClientRpc(Vector3 impactPoint)
     {
+        if (IsOwner)
+            GetComponent<CwslPlayerVision>()?.RevealMeteorScry(impactPoint);
+
         var runner = new GameObject("CwslMeteorEffect");
         runner.transform.position = impactPoint;
         runner.AddComponent<CwslMeteorEffectRunner>().Play(

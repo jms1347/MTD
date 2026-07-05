@@ -124,6 +124,7 @@ public class CwslMinimap : MonoBehaviour
     private void UpdatePlayerDots()
     {
         var index = 0;
+        var filterByVision = ShouldFilterMinimapByWorldVision();
         var players = FindObjectsByType<CwslPlayerHealth>(FindObjectsSortMode.None);
         foreach (var health in players)
         {
@@ -131,7 +132,7 @@ public class CwslMinimap : MonoBehaviour
                 continue;
             if (localPlayerTransform != null && health.transform == localPlayerTransform)
                 continue;
-            if (!CwslPlayerVision.IsInLocalVision(health.transform.position))
+            if (filterByVision && !CwslPlayerVision.IsInLocalVision(health.transform.position))
                 continue;
 
             var icon = GetOrCreateIcon(playerIcons, index, OtherPlayerColor, 10f, "OtherPlayer");
@@ -145,6 +146,7 @@ public class CwslMinimap : MonoBehaviour
     private void UpdateMonsterDots()
     {
         var index = 0;
+        var filterByVision = ShouldFilterMinimapByWorldVision();
         var monsters = FindObjectsByType<CwslMonsterBase>(FindObjectsSortMode.None);
         foreach (var monster in monsters)
         {
@@ -154,7 +156,7 @@ public class CwslMinimap : MonoBehaviour
             var monsterHealth = monster.GetComponent<CwslMonsterHealth>();
             if (monsterHealth != null && !monsterHealth.IsAlive)
                 continue;
-            if (!CwslPlayerVision.IsInLocalVision(monster.transform.position))
+            if (filterByVision && !CwslPlayerVision.IsInLocalVision(monster.transform.position))
                 continue;
 
             var (color, size) = GetMonsterStyle(monster.MonsterType);
@@ -173,12 +175,13 @@ public class CwslMinimap : MonoBehaviour
     private void UpdateGoldDots()
     {
         var index = 0;
+        var filterByVision = ShouldFilterMinimapByWorldVision();
         var pickups = FindObjectsByType<CwslGoldPickup>(FindObjectsSortMode.None);
         foreach (var pickup in pickups)
         {
             if (pickup == null || index >= MaxGoldDots)
                 break;
-            if (!CwslPlayerVision.IsInLocalVision(pickup.transform.position))
+            if (filterByVision && !CwslPlayerVision.IsInLocalVision(pickup.transform.position))
                 continue;
 
             var icon = GetOrCreateIcon(goldIcons, index, GoldColor, 5f, "Gold");
@@ -187,6 +190,12 @@ public class CwslMinimap : MonoBehaviour
         }
 
         HideRemaining(goldIcons, index);
+    }
+
+    private static bool ShouldFilterMinimapByWorldVision()
+    {
+        // 시야 0 캐릭터는 월드는 어둡지만, 미니맵은 UI 정보로 전체 표시
+        return CwslPlayerVision.Local == null || !CwslPlayerVision.Local.IsBlindVision;
     }
 
     private static (Color color, float size) GetMonsterStyle(CwslMonsterType type)

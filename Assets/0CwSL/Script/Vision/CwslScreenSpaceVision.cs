@@ -76,6 +76,39 @@ public class CwslScreenSpaceVision : MonoBehaviour
         vignetteMaterial.SetFloat("_OuterRadius", outer);
         vignetteMaterial.SetFloat("_Aspect", aspect);
         vignetteMaterial.SetColor("_Color", DarkColor);
+        ApplyScryMask(camera, aspect);
+    }
+
+    private void ApplyScryMask(Camera camera, float aspect)
+    {
+        if (vignetteMaterial == null)
+            return;
+
+        var vision = CwslPlayerVision.Local;
+        if (vision == null || !vision.TryGetActiveScry(out var scryCenter, out var scryRadius))
+        {
+            vignetteMaterial.SetFloat("_ScryActive", 0f);
+            return;
+        }
+
+        var scryViewport = camera.WorldToViewportPoint(scryCenter);
+        if (scryViewport.z <= 0f)
+        {
+            vignetteMaterial.SetFloat("_ScryActive", 0f);
+            return;
+        }
+
+        var edgeWorld = scryCenter + GetCameraRightOnGround(camera) * scryRadius;
+        var edgeViewport = camera.WorldToViewportPoint(edgeWorld);
+        var scryCenterViewport = new Vector2(scryViewport.x, scryViewport.y);
+        var edgeDelta = new Vector2(edgeViewport.x, edgeViewport.y) - scryCenterViewport;
+        edgeDelta.x *= aspect;
+        var scryRadiusViewport = Mathf.Clamp(edgeDelta.magnitude, 0.03f, 0.95f);
+
+        vignetteMaterial.SetFloat("_ScryActive", 1f);
+        vignetteMaterial.SetVector("_ScryCenter", new Vector4(scryCenterViewport.x, scryCenterViewport.y, 0f, 0f));
+        vignetteMaterial.SetFloat("_ScryInnerRadius", scryRadiusViewport * 0.52f);
+        vignetteMaterial.SetFloat("_ScryOuterRadius", scryRadiusViewport * 1.12f);
     }
 
     private static Vector3 GetCameraRightOnGround(Camera camera)
@@ -109,7 +142,7 @@ public class CwslScreenSpaceVision : MonoBehaviour
         canvasObject.transform.SetParent(transform, false);
         canvas = canvasObject.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        canvas.sortingOrder = 50;
+        canvas.sortingOrder = CwslGameConstants.VisionOverlaySortOrder;
 
         var scaler = canvasObject.AddComponent<CanvasScaler>();
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;

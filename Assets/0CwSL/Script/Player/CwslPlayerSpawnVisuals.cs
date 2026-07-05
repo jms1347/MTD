@@ -51,5 +51,35 @@ public class CwslPlayerSpawnVisuals : NetworkBehaviour
             CwslMonsterVisualBuilder.BuildMomentumRammerPlayer(transform, color);
         else
             CwslMonsterVisualBuilder.BuildPlayer(transform, color);
+
+        GetComponent<CwslPlayerBodyCollider>()?.ApplyForCharacter(characterId);
+        EnsureRammerGallopAudio(characterId);
+    }
+
+    private void EnsureRammerGallopAudio(CwslCharacterId characterId)
+    {
+        var gallopRoot = transform.Find("GallopAudio");
+        if (characterId != CwslCharacterId.MomentumRammer)
+        {
+            if (gallopRoot != null)
+                Destroy(gallopRoot.gameObject);
+            return;
+        }
+
+        if (gallopRoot == null)
+        {
+            var go = new GameObject("GallopAudio");
+            go.transform.SetParent(transform, false);
+            go.transform.localPosition = new Vector3(0f, 0.15f, 0f);
+            gallopRoot = go.transform;
+        }
+
+        var gallopAudio = gallopRoot.GetComponent<CwslPlayerHorseGallopAudio>();
+        if (gallopAudio == null)
+            gallopAudio = gallopRoot.gameObject.AddComponent<CwslPlayerHorseGallopAudio>();
+
+        var clip = CwslRammerAudioFeedback.ResolveHorseGallopClip();
+        if (clip != null)
+            gallopAudio.AssignClip(clip);
     }
 }

@@ -8,6 +8,10 @@ Shader "CwSL/VisionVignette"
         _InnerRadius ("Inner Radius", Float) = 0.12
         _OuterRadius ("Outer Radius", Float) = 0.28
         _Aspect ("Aspect", Float) = 1.777
+        _ScryActive ("Scry Active", Float) = 0
+        _ScryCenter ("Scry Center (Viewport)", Vector) = (0.5, 0.5, 0, 0)
+        _ScryInnerRadius ("Scry Inner Radius", Float) = 0.08
+        _ScryOuterRadius ("Scry Outer Radius", Float) = 0.18
     }
 
     SubShader
@@ -41,6 +45,10 @@ Shader "CwSL/VisionVignette"
             float _InnerRadius;
             float _OuterRadius;
             float _Aspect;
+            float _ScryActive;
+            float4 _ScryCenter;
+            float _ScryInnerRadius;
+            float _ScryOuterRadius;
 
             struct appdata
             {
@@ -75,7 +83,17 @@ Shader "CwSL/VisionVignette"
                 float dist = length(delta);
 
                 // smoothstep: 안쪽 투명, 바깥 어둠
-                float darkness = smoothstep(_InnerRadius, _OuterRadius, dist);
+                float mainDarkness = smoothstep(_InnerRadius, _OuterRadius, dist);
+
+                float2 scryDelta = i.uv - _ScryCenter.xy;
+                scryDelta.x *= _Aspect;
+                float scryDist = length(scryDelta);
+                float scryDarkness = smoothstep(_ScryInnerRadius, _ScryOuterRadius, scryDist);
+
+                float darkness = mainDarkness;
+                if (_ScryActive > 0.5)
+                    darkness = min(mainDarkness, scryDarkness);
+
                 fixed4 col = _Color;
                 col.a = darkness * _Color.a * i.color.a * tex.a;
                 return col;

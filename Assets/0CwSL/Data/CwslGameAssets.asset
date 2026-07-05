@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: CwslGameAssets
   m_EditorClassIdentifier: Assembly-CSharp::CwslGameAssets
   darkMissileVfx: {fileID: 150356, guid: a9286d9ebf8c6b947917ec3f20e96819, type: 3}
+  shadowProjectileHitVfx: {fileID: 133642, guid: 721ed883392764d42a3957861e7752c0, type: 3}
+  shadowMuzzleVfx: {fileID: 150312, guid: da454a5cc69c9464aa8eae6b8492536e, type: 3}
   suicideExplosionVfx: {fileID: 130346, guid: 07bf9ced87963e24299c2c2a22bfeeb6, type: 3}
   meleeHitVfx: {fileID: 1493123572548342, guid: 0b76d277096f4dc4fad0065918f5c9d3, type: 3}
   enemyDeathVfx: {fileID: 160684, guid: de85f8f81ea29ea479250adb36debd92, type: 3}
@@ -27,7 +29,11 @@ MonoBehaviour:
   meteorFallVfx: {fileID: 113030, guid: 25a78a965241d084996f23857207e95f, type: 3}
   meteorImpactVfx: {fileID: 130346, guid: 07bf9ced87963e24299c2c2a22bfeeb6, type: 3}
   meteorBurnVfx: {fileID: 1027697777517218, guid: 628d050c815a3a3448ce1dcdf0578f21, type: 3}
+  rammerStunExplosionVfx: {fileID: 123268, guid: 775fb3e8f5df827428272416a14d9adf, type: 3}
+  rammerStunStarsVfx: {fileID: 109542, guid: 2ed06ab528b7c474eb9246421cd7c791, type: 3}
   goldPickupSound: {fileID: 8300000, guid: bd7723e163262f04fb85ffc0537c0a58, type: 3}
+  horseGallopSound: {fileID: 8300000, guid: 1c9126a3c46df7646a547596f0bdf059, type: 3}
+  rammerStunSound: {fileID: 8300000, guid: d097d189607736745b2dc78fd5b9089d, type: 3}
   playerPrefab: {fileID: 6360497807503343767, guid: 5885e0e861be95e41b8318c7d2df905d, type: 3}
   rangedMonsterPrefab: {fileID: 5648177666945189405, guid: 7c47dd5b69da58e46b0228723bfc6e50, type: 3}
   suicideMonsterPrefab: {fileID: 693524371213619005, guid: 89969a663620d644fbe8335b472026cd, type: 3}

@@ -23,7 +23,10 @@ public class CwslGameSession : NetworkBehaviour
         Instance = this;
 
         if (assets != null)
+        {
             CwslGoldFeedback.Initialize(assets.goldBurstVfx, assets.goldPickupSound);
+            CwslRammerAudioFeedback.Initialize(assets.horseGallopSound, assets.rammerStunSound);
+        }
 
         CwslDamagePopupPool.EnsureReady();
     }

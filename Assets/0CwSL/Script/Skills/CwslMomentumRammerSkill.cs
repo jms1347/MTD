@@ -14,10 +14,13 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
         NetworkVariableWritePermission.Server);
 
     private readonly Dictionary<ulong, float> nextHitTimeByTarget = new();
+    private readonly Dictionary<ulong, float> nextAllyStunTimeByTarget = new();
 
     private NavMeshAgent agent;
     private CwslPlayerCharacter playerCharacter;
     private CwslPlayerHealth playerHealth;
+    private CwslPlayerStun playerStun;
+    private CwslPlayerBodyCollider bodyCollider;
 
     private Vector3 moveDirection = Vector3.forward;
     private Vector3 destination;
@@ -28,6 +31,7 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
 
     public float CurrentSpeed => syncedSpeed.Value;
     public bool IsMomentumActive => momentumActive;
+    public bool IsStunned => playerStun != null && playerStun.IsStunned;
 
     public override CwslSkillActivationType ActivationType => CwslSkillActivationType.Instant;
 
@@ -39,6 +43,8 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
         agent = GetComponent<NavMeshAgent>();
         playerCharacter = GetComponent<CwslPlayerCharacter>();
         playerHealth = GetComponent<CwslPlayerHealth>();
+        playerStun = GetComponent<CwslPlayerStun>();
+        bodyCollider = GetComponent<CwslPlayerBodyCollider>();
         moveDirection = transform.forward.sqrMagnitude > 0.0001f ? transform.forward : Vector3.forward;
         moveDirection.y = 0f;
         moveDirection.Normalize();
@@ -83,6 +89,7 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
         syncedSpeed.Value = 0f;
         momentumActive = false;
         hasDestination = false;
+        playerStun?.ClearStunServer();
 
         if (enableAgent)
             EnableNavMeshAgent();
@@ -123,6 +130,7 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
 
         nextBrakeTime = Time.time + CwslGameConstants.RammerBrakeCooldown;
         brakeTurnBoostUntil = Time.time + CwslGameConstants.RammerBrakeTurnBoostDuration;
+        playerStun?.ClearStunServer();
         ResetMomentumServer();
         if (agent != null && agent.enabled && agent.isOnNavMesh)
         {
@@ -137,7 +145,8 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
         if (!IsServer ||
             playerCharacter == null ||
             playerCharacter.CharacterId != CwslCharacterId.MomentumRammer ||
-            (playerHealth != null && !playerHealth.IsAlive))
+            (playerHealth != null && !playerHealth.IsAlive) ||
+            IsStunned)
             return;
 
         destination = worldPoint;
@@ -166,6 +175,12 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
         if (playerHealth != null && !playerHealth.IsAlive)
         {
             StopOnDeathServer();
+            return;
+        }
+
+        if (IsStunned)
+        {
+            syncedSpeed.Value = 0f;
             return;
         }
 
@@ -250,16 +265,62 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
             return;
 
         var delta = moveDirection * (speed * Time.deltaTime);
-        var nextPosition = transform.position + delta;
-        nextPosition.y = transform.position.y;
+        var beforePosition = transform.position;
+        var nextPosition = beforePosition + delta;
+        nextPosition.y = beforePosition.y;
 
-        if (NavMesh.SamplePosition(nextPosition, out var hit, 1.2f, NavMesh.AllAreas))
-            transform.position = hit.position;
+        if (TryDetectWallBlock(beforePosition, nextPosition, speed))
+            return;
+
+        if (NavMesh.SamplePosition(nextPosition, out var hit, 1.5f, NavMesh.AllAreas))
+            nextPosition = new Vector3(nextPosition.x, hit.position.y, nextPosition.z);
+
+        transform.position = nextPosition;
 
         if (moveDirection.sqrMagnitude > 0.0001f)
         {
             var lookRotation = Quaternion.LookRotation(moveDirection, Vector3.up);
             transform.rotation = Quaternion.RotateTowards(transform.rotation, lookRotation, turnRateForSpeed(speed) * Time.deltaTime);
+        }
+    }
+
+    private bool TryDetectWallBlock(Vector3 from, Vector3 to, float speed)
+    {
+        if (speed < CwslGameConstants.RammerWallStunMinSpeed)
+            return false;
+
+        var extent = CwslGameConstants.ArenaHalfExtent - 0.55f;
+        if (Mathf.Abs(to.x) > extent || Mathf.Abs(to.z) > extent)
+        {
+            TriggerWallStunServer(speed);
+            return true;
+        }
+
+        return false;
+    }
+
+    private void TriggerWallStunServer(float impactSpeed)
+    {
+        if (IsStunned || impactSpeed < CwslGameConstants.RammerWallStunMinSpeed)
+            return;
+
+        StopMomentumForStunServer();
+        playerStun?.ApplyStunServer(CwslGameConstants.RammerWallStunDuration, transform.position);
+    }
+
+    public void StopMomentumForStunServer()
+    {
+        if (!IsServer)
+            return;
+
+        syncedSpeed.Value = 0f;
+        hasDestination = false;
+        momentumActive = false;
+        EnableNavMeshAgent();
+        if (agent != null && agent.enabled && agent.isOnNavMesh)
+        {
+            agent.isStopped = true;
+            agent.ResetPath();
         }
     }
 
@@ -288,34 +349,105 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
 
     private void CheckCollisionsServer()
     {
-        if (syncedSpeed.Value < CwslGameConstants.RammerDamageSpeedThreshold)
+        if (!momentumActive)
             return;
 
-        var hits = Physics.OverlapSphere(transform.position + Vector3.up, 0.62f);
-        foreach (var hit in hits)
+        var speed = syncedSpeed.Value;
+        var selfCenter = transform.position;
+        var selfRadius = ResolveCollisionRadius();
+
+        if (speed >= CwslGameConstants.RammerDamageSpeedThreshold)
+            CheckMonsterCollisionsServer(selfCenter, selfRadius);
+
+        if (speed >= CwslGameConstants.RammerWallStunMinSpeed)
+            CheckAllyCollisionsServer(speed, selfCenter, selfRadius);
+    }
+
+    private void CheckMonsterCollisionsServer(Vector3 selfCenter, float selfRadius)
+    {
+        var monsters = FindObjectsByType<CwslMonsterHealth>(FindObjectsSortMode.None);
+        foreach (var monster in monsters)
         {
-            if (hit.transform == transform || hit.transform.IsChildOf(transform))
+            if (monster == null || !monster.IsAlive)
                 continue;
 
-            var monsterHealth = hit.GetComponentInParent<CwslMonsterHealth>();
-            if (monsterHealth != null && monsterHealth.IsAlive)
-            {
-                TryDamageTargetServer(monsterHealth.NetworkObjectId, () =>
-                    monsterHealth.DamageFromPlayer(OwnerClientId, CwslGameConstants.RammerCollisionDamage));
+            if (!IsFlatBodyHit(selfCenter, selfRadius, monster.transform.position, GetMonsterFlatRadius(monster)))
                 continue;
-            }
 
-            var playerHealth = hit.GetComponentInParent<CwslPlayerHealth>();
-            if (playerHealth != null &&
-                playerHealth.NetworkObjectId != NetworkObjectId &&
-                playerHealth.IsAlive)
-            {
-                TryDamageTargetServer(playerHealth.NetworkObjectId, () =>
-                    playerHealth.TryReceiveMeleeHitServer(
-                        CwslGameConstants.RammerCollisionDamage,
-                        playerHealth.transform.position + Vector3.up));
-            }
+            TryDamageTargetServer(monster.NetworkObjectId, () =>
+                monster.DamageFromPlayer(OwnerClientId, CwslGameConstants.RammerCollisionDamage));
         }
+    }
+
+    private void CheckAllyCollisionsServer(float speed, Vector3 selfCenter, float selfRadius)
+    {
+        if (NetworkManager.Singleton == null)
+            return;
+
+        foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
+        {
+            var playerObject = client.PlayerObject;
+            if (playerObject == null || playerObject.NetworkObjectId == NetworkObjectId)
+                continue;
+
+            var allyHealth = playerObject.GetComponent<CwslPlayerHealth>();
+            if (allyHealth == null || !allyHealth.IsAlive)
+                continue;
+
+            var allyBody = playerObject.GetComponent<CwslPlayerBodyCollider>();
+            var allyRadius = allyBody != null
+                ? allyBody.Radius
+                : CwslGameConstants.PlayerBodyColliderRadiusDefault;
+
+            if (!IsFlatBodyHit(selfCenter, selfRadius, playerObject.transform.position, allyRadius))
+                continue;
+
+            TryAllyCollisionStunServer(allyHealth, speed);
+        }
+    }
+
+    private static bool IsFlatBodyHit(Vector3 selfCenter, float selfRadius, Vector3 targetCenter, float targetRadius)
+    {
+        var flat = targetCenter - selfCenter;
+        flat.y = 0f;
+        var hitDistance = selfRadius + targetRadius + CwslGameConstants.PlayerBodyHitSlop;
+        return flat.sqrMagnitude <= hitDistance * hitDistance;
+    }
+
+    private static float GetMonsterFlatRadius(CwslMonsterHealth monster)
+    {
+        var capsule = monster.GetComponent<CapsuleCollider>();
+        return capsule != null
+            ? capsule.radius
+            : CwslGameConstants.MonsterHitMinRadius;
+    }
+
+    private void TryAllyCollisionStunServer(CwslPlayerHealth allyHealth, float speed)
+    {
+        if (speed < CwslGameConstants.RammerWallStunMinSpeed || allyHealth == null)
+            return;
+
+        var allyId = allyHealth.NetworkObjectId;
+        if (nextAllyStunTimeByTarget.TryGetValue(allyId, out var nextTime) && Time.time < nextTime)
+            return;
+
+        var impactPosition = Vector3.Lerp(transform.position, allyHealth.transform.position, 0.5f) + Vector3.up * 0.4f;
+
+        StopMomentumForStunServer();
+        playerStun?.ApplyStunServer(CwslGameConstants.RammerWallStunDuration, impactPosition);
+
+        var allyStun = allyHealth.GetComponent<CwslPlayerStun>();
+        allyStun?.ApplyStunServer(CwslGameConstants.RammerWallStunDuration, impactPosition);
+
+        nextAllyStunTimeByTarget[allyId] = Time.time + CwslGameConstants.RammerAllyStunCooldown;
+    }
+
+    private float ResolveCollisionRadius()
+    {
+        var radius = bodyCollider != null
+            ? bodyCollider.Radius
+            : CwslPlayerBodyCollider.ResolveDefaultRadius(CwslCharacterId.MomentumRammer);
+        return radius + 0.12f;
     }
 
     private void TryDamageTargetServer(ulong targetId, System.Action applyDamage)

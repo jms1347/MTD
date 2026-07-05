@@ -9,8 +9,10 @@ public class CwslPlayerVision : NetworkBehaviour
     private CwslLocalDarkVision darkVision;
     private float visionRadius = 14f;
     private bool localReady;
+    private CwslPlayerVisionScry activeScry;
 
     public float VisionRadius => visionRadius;
+    public bool HasActiveScry => activeScry.IsActive;
 
     /// <summary>시야 0 캐릭터도 발밑 짧은 반경은 보이게 하는 실제 판정/연출 반경.</summary>
     public float EffectiveVisionRadius =>
@@ -51,10 +53,43 @@ public class CwslPlayerVision : NetworkBehaviour
         if (Local == null)
             return true;
 
+        if (Local.TryGetScryVisibility(worldPosition, isProjectile: false) > 0.01f)
+            return true;
+
         var flat = worldPosition - Local.VisionOrigin;
         flat.y = 0f;
         var radius = Local.EffectiveVisionRadius;
         return flat.sqrMagnitude <= radius * radius;
+    }
+
+    public void RevealMeteorScry(Vector3 worldCenter)
+    {
+        if (!IsOwner || !IsBlindVision)
+            return;
+
+        activeScry = CwslPlayerVisionScry.Create(
+            worldCenter,
+            CwslGameConstants.RedMageMeteorScryRadius,
+            CwslGameConstants.RedMageMeteorScryDuration);
+    }
+
+    public float TryGetScryVisibility(Vector3 worldPosition, bool isProjectile)
+    {
+        return activeScry.IsActive ? activeScry.EvaluateVisibility(worldPosition, isProjectile) : 0f;
+    }
+
+    public bool TryGetActiveScry(out Vector3 center, out float radius)
+    {
+        if (!activeScry.IsActive)
+        {
+            center = default;
+            radius = 0f;
+            return false;
+        }
+
+        center = activeScry.Center;
+        radius = activeScry.Radius;
+        return true;
     }
 
     private void TryInitializeLocal()

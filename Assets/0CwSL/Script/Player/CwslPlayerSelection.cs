@@ -85,7 +85,7 @@ public class CwslPlayerSelection : NetworkBehaviour
         var yOffset = targetGrave != null && targetGrave.IsTombstoneActive ? 0.15f : 0.08f;
         localIndicator.transform.localPosition = new Vector3(0f, yOffset, 0f);
 
-        var scale = isMonster ? 2.1f : 1.6f;
+        var scale = isMonster ? 2.1f : ResolvePlayerSelectionRingScale(target);
         localIndicator.transform.localScale = new Vector3(scale, 0.03f, scale);
 
         var renderer = localIndicator.GetComponent<Renderer>();
@@ -110,5 +110,14 @@ public class CwslPlayerSelection : NetworkBehaviour
         if (localIndicator != null)
             Destroy(localIndicator);
         localIndicator = null;
+    }
+
+    private static float ResolvePlayerSelectionRingScale(NetworkObject target)
+    {
+        var bodyCollider = target.GetComponent<CwslPlayerBodyCollider>();
+        var radius = bodyCollider != null
+            ? bodyCollider.Radius
+            : CwslGameConstants.PlayerBodyColliderRadiusDefault;
+        return Mathf.Clamp(radius * 2.15f, 0.72f, 1.05f);
     }
 }

@@ -52,6 +52,15 @@ public class CwslRangedMonster : CwslMonsterBase
         FireProjectileServer(aimPoint);
     }
 
+    [ClientRpc]
+    private void PlayFireFxClientRpc(Vector3 muzzlePosition, Vector3 fireDirection)
+    {
+        var rotation = fireDirection.sqrMagnitude > 0.0001f
+            ? Quaternion.LookRotation(fireDirection.normalized, Vector3.up)
+            : transform.rotation;
+        CwslVfxSpawner.SpawnShadowMuzzleFlash(muzzlePosition, rotation);
+    }
+
     private void EnsureCannonAim()
     {
         cannonAim = GetComponent<CwslRangedCannonAim>();
@@ -95,5 +104,6 @@ public class CwslRangedMonster : CwslMonsterBase
 
         var projectile = networkObject.GetComponent<CwslMonsterProjectile>();
         projectile?.Configure(fireDirection, 14f, 8f);
+        PlayFireFxClientRpc(muzzle, fireDirection);
     }
 }

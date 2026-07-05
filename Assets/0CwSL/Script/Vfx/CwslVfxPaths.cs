@@ -3,6 +3,12 @@ public static class CwslVfxPaths
     public const string RangedProjectileVisual =
         "Assets/Epic Toon FX/Prefabs/Combat/Missiles/Shadow/ShadowMissile.prefab";
 
+    public const string ShadowProjectileHit =
+        "Assets/Epic Toon FX/Prefabs/Combat/Explosions/ShadowExplosion/ShadowExplosion.prefab";
+
+    public const string ShadowMuzzleFlash =
+        "Assets/Epic Toon FX/Prefabs/Combat/Muzzleflash/ShadowMuzzle/ShadowMuzzle.prefab";
+
     public const string PlayerMissileVisual =
         "Assets/Epic Toon FX/Prefabs/Combat/Missiles/Bullet/BulletSmallBlue.prefab";
 
@@ -33,6 +39,12 @@ public static class CwslVfxPaths
     public const string CoinDropSound =
         "Assets/Game/0Sound/coindrop.mp3";
 
+    public const string HorseGallopSound =
+        "Assets/Game/0Sound/horse-galloping.mp3";
+
+    public const string RammerStunSound =
+        "Assets/Game/0Sound/stun-dding.mp3";
+
     public const string FortifyAura =
         "Assets/Epic Toon FX/Prefabs/Combat/Shield/ShieldSoftBlue.prefab";
 
@@ -47,4 +59,10 @@ public static class CwslVfxPaths
 
     public const string MeteorBurn =
         "Assets/Epic Toon FX/Prefabs/Combat/Decals/Explosion Decal/ExplosionDecalFire.prefab";
+
+    public const string RammerStunExplosion =
+        "Assets/Epic Toon FX/Prefabs/Combat/Explosions/- Misc/StunExplosion.prefab";
+
+    public const string RammerStunStars =
+        "Assets/Epic Toon FX/Prefabs/Combat/Brawling/Stun/StunnedCirclingStars.prefab";
 }

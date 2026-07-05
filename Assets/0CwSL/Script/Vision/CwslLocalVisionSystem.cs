@@ -42,6 +42,21 @@ public class CwslLocalVisionSystem : MonoBehaviour
         RefreshProjectiles(origin, radius, blind);
     }
 
+    private float EvaluateCombinedVisibility(
+        Vector3 origin,
+        Vector3 worldPosition,
+        float radius,
+        bool blind,
+        bool isProjectile)
+    {
+        var visibility = EvaluateVisibility(origin, worldPosition, radius, blind, isProjectile);
+        if (playerVision == null || !playerVision.HasActiveScry)
+            return visibility;
+
+        var scryVisibility = playerVision.TryGetScryVisibility(worldPosition, isProjectile);
+        return Mathf.Max(visibility, scryVisibility);
+    }
+
     private void RefreshMonsters(Vector3 origin, float radius, bool blind)
     {
         var monsters = FindObjectsByType<CwslMonsterBase>(FindObjectsSortMode.None);
@@ -57,7 +72,7 @@ public class CwslLocalVisionSystem : MonoBehaviour
                 continue;
             }
 
-            var visibility = EvaluateVisibility(origin, monster.transform.position, radius, blind, isProjectile: false);
+            var visibility = EvaluateCombinedVisibility(origin, monster.transform.position, radius, blind, isProjectile: false);
             SetOccludeeVisibility(monster.gameObject, visibility);
         }
     }
@@ -70,7 +85,7 @@ public class CwslLocalVisionSystem : MonoBehaviour
             if (pickup == null)
                 continue;
 
-            var visibility = EvaluateVisibility(origin, pickup.transform.position, radius, blind, isProjectile: false);
+            var visibility = EvaluateCombinedVisibility(origin, pickup.transform.position, radius, blind, isProjectile: false);
             SetOccludeeVisibility(pickup.gameObject, visibility);
         }
     }
@@ -83,7 +98,7 @@ public class CwslLocalVisionSystem : MonoBehaviour
             if (health == null || health.transform == transform)
                 continue;
 
-            var visibility = EvaluateVisibility(origin, health.transform.position, radius, blind, isProjectile: false);
+            var visibility = EvaluateCombinedVisibility(origin, health.transform.position, radius, blind, isProjectile: false);
             SetOccludeeVisibility(health.gameObject, visibility);
         }
     }
@@ -97,7 +112,7 @@ public class CwslLocalVisionSystem : MonoBehaviour
             if (projectile == null)
                 continue;
 
-            var visibility = EvaluateVisibility(origin, projectile.transform.position, radius, blind, isProjectile: true);
+            var visibility = EvaluateCombinedVisibility(origin, projectile.transform.position, radius, blind, isProjectile: true);
             SetOccludeeVisibility(projectile.gameObject, visibility);
         }
     }

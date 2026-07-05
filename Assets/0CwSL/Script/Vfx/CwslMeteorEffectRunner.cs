@@ -3,6 +3,8 @@ using UnityEngine;
 
 public class CwslMeteorEffectRunner : MonoBehaviour
 {
+    private const float EffectScaleMultiplier = 0.8f;
+
     // ETFX 미사일은 보통 local +Z가 진행 방향. 낙하 시 코가 아래를 향하도록 함.
     private static readonly Quaternion FallRotation = Quaternion.LookRotation(Vector3.down, Vector3.forward);
     // 지상 폭발은 Y-up (옆으로 눕지 않게)
@@ -26,9 +28,9 @@ public class CwslMeteorEffectRunner : MonoBehaviour
         var start = impactPoint + Vector3.up * fallHeight;
 
         // 영역 직경에 맞춰 스케일 (데미지 반경만큼 크게)
-        var fallScale = areaRadius * 0.55f;
-        var impactScale = areaRadius * 0.95f;
-        var burnScale = areaRadius * 2.15f;
+        var fallScale = areaRadius * 0.55f * EffectScaleMultiplier;
+        var impactScale = areaRadius * 0.95f * EffectScaleMultiplier;
+        var burnScale = areaRadius * 2.15f * EffectScaleMultiplier;
 
         var fallVisual = SpawnVisual(assets?.meteorFallVfx, start, FallRotation, fallScale);
         if (fallVisual == null)
@@ -55,7 +57,7 @@ public class CwslMeteorEffectRunner : MonoBehaviour
         var impact = SpawnVisual(assets?.meteorImpactVfx, impactPoint, ImpactRotation, impactScale);
         if (impact == null)
         {
-            CwslSimpleVfx.SpawnBurst(impactPoint, new Color(1f, 0.35f, 0.08f), areaRadius * 0.9f, 0.7f);
+            CwslSimpleVfx.SpawnBurst(impactPoint, new Color(1f, 0.35f, 0.08f), areaRadius * 0.9f * EffectScaleMultiplier, 0.7f);
         }
         else
         {
@@ -125,7 +127,7 @@ public class CwslMeteorEffectRunner : MonoBehaviour
         var go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
         go.name = "BurnFallback";
         go.transform.position = position + Vector3.up * 0.03f;
-        go.transform.localScale = new Vector3(areaRadius * 2f, 0.03f, areaRadius * 2f);
+        go.transform.localScale = new Vector3(areaRadius * 2f * EffectScaleMultiplier, 0.03f, areaRadius * 2f * EffectScaleMultiplier);
         Object.Destroy(go.GetComponent<Collider>());
         CwslMaterialUtil.ApplyColor(go.GetComponent<Renderer>(), new Color(0.22f, 0.07f, 0.03f));
         return go;

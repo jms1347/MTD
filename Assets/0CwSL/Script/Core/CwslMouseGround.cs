@@ -4,6 +4,8 @@ using UnityEngine;
 
 public static class CwslMouseGround
 {
+    private static readonly Plane ArenaGroundPlane = new(Vector3.up, Vector3.zero);
+
     public static bool TryGetGroundPoint(Camera camera, out Vector3 point, out Collider hitCollider)
     {
         point = default;
@@ -12,11 +14,38 @@ public static class CwslMouseGround
             return false;
 
         var ray = camera.ScreenPointToRay(Input.mousePosition);
-        if (!Physics.Raycast(ray, out var hit, 500f, ~0, QueryTriggerInteraction.Ignore))
+
+        // 시야 0: 화면 어두운 구역(시야 밖) 클릭도 바닥 평면으로 이동/스킬 지정
+        if (ShouldUseBlindGroundPlanePick() && TryIntersectArenaGround(ray, out point))
+            return true;
+
+        if (Physics.Raycast(ray, out var hit, 500f, ~0, QueryTriggerInteraction.Ignore))
+        {
+            point = hit.point;
+            hitCollider = hit.collider;
+            return true;
+        }
+
+        return TryIntersectArenaGround(ray, out point);
+    }
+
+    private static bool ShouldUseBlindGroundPlanePick()
+    {
+        return CwslPlayerVision.Local != null && CwslPlayerVision.Local.IsBlindVision;
+    }
+
+    private static bool TryIntersectArenaGround(Ray ray, out Vector3 point)
+    {
+        point = default;
+        if (!ArenaGroundPlane.Raycast(ray, out var distance) || distance < 0f)
             return false;
 
-        point = hit.point;
-        hitCollider = hit.collider;
+        point = ray.GetPoint(distance);
+        point.y = 0f;
+
+        var extent = CwslGameConstants.ArenaHalfExtent;
+        point.x = Mathf.Clamp(point.x, -extent, extent);
+        point.z = Mathf.Clamp(point.z, -extent, extent);
         return true;
     }
 

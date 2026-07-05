@@ -371,8 +371,6 @@ public static class CwslMonsterVisualBuilder
     {
         var visualRoot = new GameObject("Visual");
         visualRoot.transform.SetParent(root, false);
-        visualRoot.AddComponent<CwslPlayerHorseRideVisual>();
-        visualRoot.AddComponent<CwslPlayerRammerBrakeVisual>();
 
         var horseColor = Color.Lerp(accentColor, new Color(0.38f, 0.24f, 0.12f), 0.48f);
         var maneColor = Color.Lerp(accentColor, Color.black, 0.22f);
@@ -385,6 +383,7 @@ public static class CwslMonsterVisualBuilder
 
         var shadowPlate = CreatePrimitive(PrimitiveType.Cylinder, horseRoot.transform, new Vector3(0f, 0.03f, 0f),
             new Vector3(1.28f, 0.03f, 1.55f), new Color(0.08f, 0.08f, 0.1f, 0.65f));
+
         var horseBody = CreatePrimitive(PrimitiveType.Capsule, horseRoot.transform, new Vector3(0f, 0.78f, 0f),
             new Vector3(0.95f, 0.52f, 0.42f), horseColor);
         horseBody.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
@@ -398,6 +397,23 @@ public static class CwslMonsterVisualBuilder
         var tail = CreatePrimitive(PrimitiveType.Cube, horseRoot.transform, new Vector3(0f, 0.82f, -0.52f),
             new Vector3(0.08f, 0.34f, 0.24f), maneColor);
 
+        var bladeColor = Color.Lerp(accentColor, new Color(1f, 0.92f, 0.35f), 0.55f);
+        var bladeEdgeColor = Color.Lerp(bladeColor, Color.white, 0.35f);
+        var horseBodyBladeSpin = new GameObject("HorseBodyBladeSpin");
+        horseBodyBladeSpin.transform.SetParent(horseRoot.transform, false);
+        horseBodyBladeSpin.transform.localPosition = new Vector3(0f, 0.56f, 0f);
+        var bladePlate = CreatePrimitive(PrimitiveType.Cube, horseBodyBladeSpin.transform, Vector3.zero,
+            new Vector3(1.02f, 0.14f, 1.02f), bladeColor);
+        bladePlate.transform.localRotation = Quaternion.Euler(0f, 45f, 0f);
+        var bladeTipN = CreatePrimitive(PrimitiveType.Cube, horseBodyBladeSpin.transform, new Vector3(0f, 0f, 0.36f),
+            new Vector3(0.14f, 0.1f, 0.42f), bladeEdgeColor);
+        var bladeTipS = CreatePrimitive(PrimitiveType.Cube, horseBodyBladeSpin.transform, new Vector3(0f, 0f, -0.36f),
+            new Vector3(0.14f, 0.1f, 0.42f), bladeEdgeColor);
+        var bladeTipE = CreatePrimitive(PrimitiveType.Cube, horseBodyBladeSpin.transform, new Vector3(0.36f, 0f, 0f),
+            new Vector3(0.42f, 0.1f, 0.14f), bladeEdgeColor);
+        var bladeTipW = CreatePrimitive(PrimitiveType.Cube, horseBodyBladeSpin.transform, new Vector3(-0.36f, 0f, 0f),
+            new Vector3(0.42f, 0.1f, 0.14f), bladeEdgeColor);
+
         AddHorseLeg(horseRoot.transform, "HorseLegFL", new Vector3(-0.26f, 0.42f, 0.34f), horseColor, hoofColor);
         AddHorseLeg(horseRoot.transform, "HorseLegFR", new Vector3(0.26f, 0.42f, 0.34f), horseColor, hoofColor);
         AddHorseLeg(horseRoot.transform, "HorseLegBL", new Vector3(-0.26f, 0.42f, -0.34f), horseColor, hoofColor);
@@ -407,14 +423,30 @@ public static class CwslMonsterVisualBuilder
         riderPivot.transform.SetParent(horseRoot.transform, false);
         riderPivot.transform.localPosition = new Vector3(0f, 1.08f, -0.04f);
 
-        var riderBody = CreatePrimitive(PrimitiveType.Capsule, riderPivot.transform, new Vector3(0f, 0.28f, 0f),
-            new Vector3(0.58f, 0.48f, 0.42f), riderColor);
-        var riderHead = CreatePrimitive(PrimitiveType.Sphere, riderPivot.transform, new Vector3(0f, 0.68f, 0.02f),
-            new Vector3(0.34f, 0.3f, 0.34f), riderColor);
-        var riderHelm = CreatePrimitive(PrimitiveType.Cube, riderPivot.transform, new Vector3(0f, 0.72f, 0.1f),
-            new Vector3(0.28f, 0.08f, 0.08f), riderTrim);
-        var riderCape = CreatePrimitive(PrimitiveType.Cube, riderPivot.transform, new Vector3(0f, 0.24f, -0.18f),
-            new Vector3(0.48f, 0.52f, 0.08f), Color.Lerp(riderColor, accentColor, 0.25f));
+        var skinColor = Color.Lerp(new Color(0.92f, 0.72f, 0.58f), riderColor, 0.35f);
+        var hairColor = Color.Lerp(riderTrim, new Color(0.15f, 0.1f, 0.08f), 0.4f);
+
+        var riderBody = CreatePrimitive(PrimitiveType.Capsule, riderPivot.transform, new Vector3(0f, 0.12f, 0f),
+            new Vector3(0.5f, 0.36f, 0.36f), riderColor);
+        var riderCape = CreatePrimitive(PrimitiveType.Cube, riderPivot.transform, new Vector3(0f, 0.1f, -0.16f),
+            new Vector3(0.44f, 0.42f, 0.08f), Color.Lerp(riderColor, accentColor, 0.25f));
+
+        var headPivot = new GameObject("HeadPivot");
+        headPivot.transform.SetParent(riderPivot.transform, false);
+        headPivot.transform.localPosition = new Vector3(0f, 0.48f, 0.02f);
+
+        var riderNeck = CreatePrimitive(PrimitiveType.Cylinder, headPivot.transform, new Vector3(0f, -0.06f, 0f),
+            new Vector3(0.14f, 0.1f, 0.14f), skinColor);
+        var riderHead = CreatePrimitive(PrimitiveType.Sphere, headPivot.transform, new Vector3(0f, 0.14f, 0.02f),
+            new Vector3(0.32f, 0.34f, 0.3f), skinColor);
+        var riderFace = CreatePrimitive(PrimitiveType.Cube, headPivot.transform, new Vector3(0f, 0.1f, 0.15f),
+            new Vector3(0.14f, 0.09f, 0.06f), Color.Lerp(skinColor, new Color(0.75f, 0.5f, 0.42f), 0.35f));
+        var riderHair = CreatePrimitive(PrimitiveType.Cube, headPivot.transform, new Vector3(0f, 0.24f, -0.05f),
+            new Vector3(0.34f, 0.14f, 0.3f), hairColor);
+        var riderEyeL = CreatePrimitive(PrimitiveType.Cube, headPivot.transform, new Vector3(-0.08f, 0.14f, 0.14f),
+            new Vector3(0.05f, 0.04f, 0.03f), new Color(0.12f, 0.1f, 0.1f));
+        var riderEyeR = CreatePrimitive(PrimitiveType.Cube, headPivot.transform, new Vector3(0.08f, 0.14f, 0.14f),
+            new Vector3(0.05f, 0.04f, 0.03f), new Color(0.12f, 0.1f, 0.1f));
 
         RemoveCollider(shadowPlate);
         RemoveCollider(horseBody);
@@ -422,10 +454,24 @@ public static class CwslMonsterVisualBuilder
         RemoveCollider(horseNeck);
         RemoveCollider(mane);
         RemoveCollider(tail);
+        RemoveCollider(bladePlate);
+        RemoveCollider(bladeTipN);
+        RemoveCollider(bladeTipS);
+        RemoveCollider(bladeTipE);
+        RemoveCollider(bladeTipW);
         RemoveCollider(riderBody);
+        RemoveCollider(riderNeck);
         RemoveCollider(riderHead);
-        RemoveCollider(riderHelm);
+        RemoveCollider(riderFace);
+        RemoveCollider(riderHair);
+        RemoveCollider(riderEyeL);
+        RemoveCollider(riderEyeR);
         RemoveCollider(riderCape);
+
+        visualRoot.AddComponent<CwslPlayerHorseRideVisual>();
+        visualRoot.AddComponent<CwslPlayerRammerTopSpinVisual>();
+        visualRoot.AddComponent<CwslPlayerRammerStunVisual>();
+        visualRoot.AddComponent<CwslPlayerRammerBrakeVisual>();
     }
 
     private static void AddHorseLeg(Transform horseRoot, string legName, Vector3 localPosition, Color legColor, Color hoofColor)

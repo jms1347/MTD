@@ -42,7 +42,7 @@ public static class CwslCharacterCatalog
         new(
             CwslCharacterId.RedMage,
             "빨간 마법사",
-            "Q 후 지면 클릭 — 메테오 낙하 광역 피해 (골드 1) / 시야 본인만",
+            "Q 후 지면 클릭 — 메테오 낙하 광역 피해 (골드 1) / 시야 본인만 · 착탄 지점 2.8초 개방",
             "우클릭 이동 | 좌클릭 적선택 | A+클릭 어택 | Q 메테오(지면) | G 골드 선물/부활",
             0f),
         new(

@@ -55,11 +55,16 @@ public class CwslLocalPlayerHud : NetworkBehaviour
             var canvasObject = new GameObject("CwslGameHudCanvas", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
             var canvas = canvasObject.GetComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = CwslGameConstants.HudCanvasSortOrder;
             var scaler = canvasObject.GetComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1920f, 1080f);
             canvasTransform = canvasObject.transform;
         }
+
+        var hudCanvas = canvasTransform.GetComponent<Canvas>();
+        if (hudCanvas != null)
+            hudCanvas.sortingOrder = CwslGameConstants.HudCanvasSortOrder;
 
         RemoveSidePanel(canvasTransform);
         RemoveLegacyLabels(canvasTransform);

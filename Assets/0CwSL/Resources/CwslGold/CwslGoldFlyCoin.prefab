@@ -137,3 +137,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 58115d66ec3c55448ac2eb44ef4dd662, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  maxDots: 12
+  spawnInterval: 0.025
+  dotSize: 14
+  dotLifetime: 0.28
+  trailColor: {r: 1, g: 0.82, b: 0.15, a: 0.5}

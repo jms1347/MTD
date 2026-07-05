@@ -152,6 +152,8 @@ public class CwslPlayerGrave : NetworkBehaviour
             reviveLabel.outlineWidth = 0.2f;
             reviveLabel.outlineColor = new Color32(20, 20, 20, 255);
         }
+
+        labelRoot.AddComponent<CwslBillboardToCamera>();
     }
 
     private void RefreshLabel()

@@ -30,10 +30,17 @@ public static class CwslGameConstants
     public const float RammerCollisionCooldown = 0.45f;
     public const float RammerBrakeCooldown = 2.5f;
     public const float RammerBrakeTurnBoostDuration = 1.4f;
+    public const float RammerWallStunDuration = 3f;
+    public const float RammerWallStunMinSpeed = 5f;
+    public const float RammerAllyStunCooldown = 1.2f;
     public const float AttackRange = 2.8f;
     public const float MissileTankRange = 24f;
     public const float AttackCooldown = 0.45f;
     public const float AttackDamage = 1f;
+    public const int HudCanvasSortOrder = 100;
+    public const int VisionOverlaySortOrder = 50;
+    public const float RedMageMeteorScryRadius = 5.8f;
+    public const float RedMageMeteorScryDuration = 2.8f;
     public const float PlayerArrowSpawnForwardOffset = 0.55f;
     public const float PlayerBulletSpawnMinOffset = 0.02f;
     public const float PlayerArrowMinHitDistance = 0.03f;
@@ -43,6 +50,8 @@ public static class CwslGameConstants
     public const float MonsterHitCenterY = 1.05f;
     public const float MonsterHitHeight = 2.1f;
     public const float MonsterHitMinRadius = 0.58f;
+    public const float PlayerBodyHitSlop = 0.1f;
+    public const float PlayerBodyColliderRadiusDefault = 0.32f;
     public const float FortifyBodyScale = 1.12f;
     public const float FortifyShieldScale = 3.4f;
     public const float FortifyShieldBlockRadius = 2.8f;

@@ -10,6 +10,7 @@ public class CwslPlayerMovement : NetworkBehaviour
     private CwslMomentumRammerSkill rammerSkill;
     private CwslPlayerCharacter playerCharacter;
     private CwslPlayerHealth playerHealth;
+    private CwslPlayerStun playerStun;
     private float speedMultiplier = 1f;
 
     public float CurrentMoveSpeed { get; private set; }
@@ -31,6 +32,7 @@ public class CwslPlayerMovement : NetworkBehaviour
         rammerSkill = GetComponent<CwslMomentumRammerSkill>();
         playerCharacter = GetComponent<CwslPlayerCharacter>();
         playerHealth = GetComponent<CwslPlayerHealth>();
+        playerStun = GetComponent<CwslPlayerStun>();
         agent.enabled = IsServer;
         agent.speed = CwslGameConstants.BaseMoveSpeed;
         agent.angularSpeed = 720f;
@@ -48,6 +50,14 @@ public class CwslPlayerMovement : NetworkBehaviour
         if (playerHealth != null && !playerHealth.IsAlive)
         {
             CurrentMoveSpeed = 0f;
+            return;
+        }
+
+        if (playerStun != null && playerStun.IsStunned)
+        {
+            CurrentMoveSpeed = 0f;
+            if (IsServer)
+                HoldStunnedMovementServer();
             return;
         }
 
@@ -92,6 +102,9 @@ public class CwslPlayerMovement : NetworkBehaviour
     public void RequestMoveTo(Vector3 worldPoint)
     {
         if (!IsServer || agent == null)
+            return;
+
+        if (playerStun != null && playerStun.IsStunned)
             return;
 
         if (rammerSkill != null && rammerSkill.IsActiveForCharacter(GetCharacterId()))
@@ -160,5 +173,17 @@ public class CwslPlayerMovement : NetworkBehaviour
     private CwslCharacterId GetCharacterId()
     {
         return playerCharacter != null ? playerCharacter.CharacterId : CwslCharacterId.Tank;
+    }
+
+    private void HoldStunnedMovementServer()
+    {
+        if (rammerSkill != null && rammerSkill.IsActiveForCharacter(GetCharacterId()))
+            return;
+
+        if (agent != null && agent.enabled && agent.isOnNavMesh)
+        {
+            agent.isStopped = true;
+            agent.ResetPath();
+        }
     }
 }

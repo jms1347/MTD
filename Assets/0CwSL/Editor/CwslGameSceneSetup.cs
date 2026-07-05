@@ -48,6 +48,8 @@ public static class CwslGameSceneSetup
         assets.goldPickupPrefab = goldPickupPrefab;
         assets.graveVisualPrefab = graveVisualPrefab;
         assets.darkMissileVfx = LoadPrefab(CwslVfxPaths.RangedProjectileVisual);
+        assets.shadowProjectileHitVfx = LoadPrefab(CwslVfxPaths.ShadowProjectileHit);
+        assets.shadowMuzzleVfx = LoadPrefab(CwslVfxPaths.ShadowMuzzleFlash);
         assets.playerMissileVfx = LoadPrefab(CwslVfxPaths.PlayerMissileVisual);
         assets.gunMuzzleVfx = LoadPrefab(CwslVfxPaths.GunMuzzleFlash);
         assets.fortifyAuraVfx = LoadPrefab(CwslVfxPaths.FortifyAura);
@@ -55,6 +57,8 @@ public static class CwslGameSceneSetup
         assets.meteorFallVfx = LoadPrefab(CwslVfxPaths.MeteorFall);
         assets.meteorImpactVfx = LoadPrefab(CwslVfxPaths.MeteorImpact);
         assets.meteorBurnVfx = LoadPrefab(CwslVfxPaths.MeteorBurn);
+        assets.rammerStunExplosionVfx = LoadPrefab(CwslVfxPaths.RammerStunExplosion);
+        assets.rammerStunStarsVfx = LoadPrefab(CwslVfxPaths.RammerStunStars);
         assets.suicideExplosionVfx = LoadPrefab(CwslVfxPaths.SuicideExplosion);
         assets.meleeHitVfx = LoadPrefab(CwslVfxPaths.MeleeHit);
         assets.enemyDeathVfx = LoadPrefab(CwslVfxPaths.EnemyDeath);
@@ -63,6 +67,8 @@ public static class CwslGameSceneSetup
         assets.goldBurstVfx = LoadPrefab(CwslVfxPaths.GoldBurst);
         assets.goldMagnetTrailVfx = LoadPrefab(CwslVfxPaths.GoldMagnetTrail);
         assets.goldPickupSound = AssetDatabase.LoadAssetAtPath<AudioClip>(CwslVfxPaths.CoinDropSound);
+        assets.horseGallopSound = AssetDatabase.LoadAssetAtPath<AudioClip>(CwslVfxPaths.HorseGallopSound);
+        assets.rammerStunSound = AssetDatabase.LoadAssetAtPath<AudioClip>(CwslVfxPaths.RammerStunSound);
         EditorUtility.SetDirty(assets);
 
         var networkPrefabs = EnsureNetworkPrefabsList();
@@ -285,21 +291,22 @@ public static class CwslGameSceneSetup
         root.layer = LayerMask.NameToLayer(CwslGameConstants.LayerPlayer);
 
         var agent = root.AddComponent<UnityEngine.AI.NavMeshAgent>();
-        agent.height = 2f;
-        agent.radius = 0.45f;
-        agent.baseOffset = 1f;
+        agent.height = 1.74f;
+        agent.radius = CwslGameConstants.PlayerBodyColliderRadiusDefault;
+        agent.baseOffset = 0.87f;
         agent.obstacleAvoidanceType = UnityEngine.AI.ObstacleAvoidanceType.LowQualityObstacleAvoidance;
 
         var bodyCollider = root.AddComponent<CapsuleCollider>();
-        bodyCollider.height = 2f;
-        bodyCollider.radius = 0.45f;
-        bodyCollider.center = new Vector3(0f, 1f, 0f);
+        bodyCollider.height = 1.74f;
+        bodyCollider.radius = CwslGameConstants.PlayerBodyColliderRadiusDefault;
+        bodyCollider.center = new Vector3(0f, 0.87f, 0f);
 
         root.AddComponent<NetworkObject>();
         root.AddComponent<Unity.Netcode.Components.NetworkTransform>();
         root.AddComponent<CwslPlayerHealth>();
         root.AddComponent<CwslPlayerGold>();
         root.AddComponent<CwslPlayerMovement>();
+        root.AddComponent<CwslPlayerBodyCollider>();
         root.AddComponent<CwslPlayerVisualScale>();
         root.AddComponent<CwslPlayerSelection>();
         root.AddComponent<CwslPlayerController>();
@@ -311,6 +318,7 @@ public static class CwslGameSceneSetup
         root.AddComponent<CwslMissileTankSkill>();
         root.AddComponent<CwslRedMageMeteorSkill>();
         root.AddComponent<CwslMomentumRammerSkill>();
+        root.AddComponent<CwslPlayerStun>();
         root.AddComponent<CwslPlayerCannonAim>();
         root.AddComponent<CwslPlayerShieldFortifyVisual>();
         root.AddComponent<CwslPlayerShieldBubble>();
