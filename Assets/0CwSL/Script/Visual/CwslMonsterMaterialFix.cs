@@ -12,7 +12,11 @@ public static class CwslMonsterMaterialFix
 
             var color = fallback;
             if (renderer.sharedMaterial != null && CwslMaterialUtil.IsMaterialValid(renderer.sharedMaterial))
-                color = renderer.sharedMaterial.color;
+            {
+                color = renderer.sharedMaterial.HasProperty("_BaseColor")
+                    ? renderer.sharedMaterial.GetColor("_BaseColor")
+                    : renderer.sharedMaterial.color;
+            }
 
             CwslMaterialUtil.ApplyColor(renderer, color);
         }

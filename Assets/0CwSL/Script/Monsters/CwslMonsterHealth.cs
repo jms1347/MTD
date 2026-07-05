@@ -57,8 +57,40 @@ public class CwslMonsterHealth : NetworkBehaviour, ICwslPooledNetworkObject
     public override void OnNetworkSpawn()
     {
         EnsureCombatHitCollider();
+        SyncMonsterVisualsForNetwork();
+
         if (IsServer && !IsBoss)
             health.Value = maxHealth;
+    }
+
+    private void SyncMonsterVisualsForNetwork()
+    {
+        var resolvedType = ResolveMonsterTypeFromComponents();
+        if (MonsterType == default)
+            Configure(resolvedType);
+
+        var type = MonsterType != default ? MonsterType : resolvedType;
+        CwslMonsterMaterialFix.Refresh(transform, type);
+
+        if (!IsServer)
+            GetComponent<CwslMonsterBase>()?.EnsureClientVisuals(type);
+
+        if (isExecutive)
+            CwslMonsterExecutiveVisual.Apply(transform);
+    }
+
+    private CwslMonsterType ResolveMonsterTypeFromComponents()
+    {
+        if (GetComponent<CwslBossHongmyeongbo>() != null)
+            return CwslMonsterType.BossHongmyeongbo;
+        if (GetComponent<CwslSuicideMonster>() != null)
+            return CwslMonsterType.Suicide;
+        if (GetComponent<CwslMeleeMonster>() != null)
+            return CwslMonsterType.Melee;
+        if (GetComponent<CwslRangedMonster>() != null)
+            return CwslMonsterType.Ranged;
+
+        return MonsterType != default ? MonsterType : CwslMonsterType.Melee;
     }
 
     public void OnSpawnedFromPool()
@@ -67,9 +99,7 @@ public class CwslMonsterHealth : NetworkBehaviour, ICwslPooledNetworkObject
         if (IsServer && !IsBoss)
             health.Value = maxHealth;
 
-        CwslMonsterMaterialFix.Refresh(transform, MonsterType);
-        if (isExecutive)
-            CwslMonsterExecutiveVisual.Apply(transform);
+        SyncMonsterVisualsForNetwork();
     }
 
     public void OnReturnedToPool()

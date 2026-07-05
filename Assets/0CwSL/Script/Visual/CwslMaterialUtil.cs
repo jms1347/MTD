@@ -4,6 +4,13 @@ using UnityEngine.Rendering;
 public static class CwslMaterialUtil
 {
     private static Material sharedFallback;
+    private static Shader cachedShader;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    private static void WarmShaderCache()
+    {
+        _ = ResolveShader();
+    }
 
     public static Material CreateColored(Color color)
     {
@@ -92,21 +99,22 @@ public static class CwslMaterialUtil
 
     private static Shader ResolveShader()
     {
-        var standard = Shader.Find("Standard");
-        if (standard != null)
-            return standard;
-
-        var diffuse = Shader.Find("Legacy Shaders/Diffuse");
-        if (diffuse != null)
-            return diffuse;
+        if (cachedShader != null)
+            return cachedShader;
 
         if (GraphicsSettings.currentRenderPipeline != null)
         {
-            var urp = Shader.Find("Universal Render Pipeline/Lit");
-            if (urp != null)
-                return urp;
+            cachedShader = Shader.Find("Universal Render Pipeline/Lit")
+                ?? Shader.Find("Universal Render Pipeline/Simple Lit")
+                ?? Shader.Find("Sprites/Default");
+            if (cachedShader != null)
+                return cachedShader;
         }
 
-        return Shader.Find("Sprites/Default");
+        cachedShader = Shader.Find("Standard")
+            ?? Shader.Find("Legacy Shaders/Diffuse")
+            ?? Shader.Find("Sprites/Default");
+
+        return cachedShader;
     }
 }

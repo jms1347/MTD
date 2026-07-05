@@ -21,6 +21,14 @@ public abstract class CwslMonsterBase : NetworkBehaviour
         CwslMonsterMaterialFix.Refresh(transform, type);
     }
 
+    /// <summary>게스트 클라이언트 — 타입·위협 라이트 등 비주얼만 동기화 (서버 로직 없음).</summary>
+    public void EnsureClientVisuals(CwslMonsterType type)
+    {
+        MonsterType = type;
+        EnsureMeleeLungeVisual();
+        EnsureThreatLight();
+    }
+
     private void EnsureThreatLight()
     {
         if (MonsterType == CwslMonsterType.Suicide)
