@@ -313,6 +313,26 @@ public class CwslArenaTrapSystem : NetworkBehaviour
 
         nextLightningStrikeTime = Time.time + CwslGameConstants.LightningStrikeIntervalSeconds;
         StrikePlayersInLightningRangeServer();
+        ShockMonstersInLightningRangeServer();
+    }
+
+    private void ShockMonstersInLightningRangeServer()
+    {
+        var radiusSqr = CwslGameConstants.LightningModeZoneRadius * CwslGameConstants.LightningModeZoneRadius;
+        var monsters = FindObjectsByType<CwslMonsterHealth>(FindObjectsSortMode.None);
+        foreach (var monster in monsters)
+        {
+            if (monster == null || !monster.IsAlive)
+                continue;
+
+            var flat = monster.transform.position - lightningCenter;
+            flat.y = 0f;
+            if (flat.sqrMagnitude > radiusSqr)
+                continue;
+
+            CwslMonsterStatusController.Ensure(monster)
+                ?.ApplyShockServer(CwslGameConstants.MonsterShockDuration);
+        }
     }
 
     private void StrikePlayersInLightningRangeServer()

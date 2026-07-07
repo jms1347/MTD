@@ -4,9 +4,8 @@ using UnityEngine;
 /// <summary>탱커 E/R 스킬 방패 연출 — 지진 강타·회전.</summary>
 public class CwslTankShieldSkillVisual : MonoBehaviour
 {
-    private const float VisualGroundY = 0.05f;
-    private const float ShieldBottomLocalY = -0.68f;
-    private const float SlamPitchDegrees = 78f;
+    private const float VisualGroundY = CwslTankShieldVfxUtil.VisualGroundY;
+    private const float ShieldBottomLocalY = CwslTankShieldVfxUtil.ShieldBottomLocalY;
 
     private Transform shield;
     private Transform visualRoot;
@@ -15,6 +14,7 @@ public class CwslTankShieldSkillVisual : MonoBehaviour
     private Vector3 shieldBaseLocalScale;
     private Vector3 visualBaseLocalPosition;
     private Coroutine routine;
+    private GameObject whirlwindInstance;
 
     public bool IsAnimating { get; private set; }
 
@@ -28,6 +28,8 @@ public class CwslTankShieldSkillVisual : MonoBehaviour
         CacheParts();
         if (shield == null)
             return;
+
+        RefreshShieldBase();
 
         if (routine != null)
             StopCoroutine(routine);
@@ -63,101 +65,154 @@ public class CwslTankShieldSkillVisual : MonoBehaviour
         visualBaseLocalPosition = visualRoot.localPosition;
     }
 
+    private void RefreshShieldBase()
+    {
+        if (shield == null)
+            return;
+
+        var scale = shield.localScale;
+        if (IsFinite(scale))
+            shieldBaseLocalScale = scale;
+    }
+
     private IEnumerator SlamRoutine(bool empowered)
     {
         IsAnimating = true;
 
-        var startPos = shield.localPosition;
+        var startPos = Sanitize(shield.localPosition, shieldBaseLocalPosition);
         var startRot = shield.localRotation;
-        var startScale = shield.localScale;
-        var startBodyPos = visualRoot.localPosition;
+        if (!IsFinite(startRot))
+            startRot = shieldBaseLocalRotation;
 
-        var slamScale = empowered
-            ? startScale
-            : Vector3.Scale(shieldBaseLocalScale, new Vector3(1.12f, 1.12f, 1.12f));
+        var scaleY = SafeScaleY(shield.localScale);
+        var verticalRot = shieldBaseLocalRotation * Quaternion.Euler(CwslGameConstants.TankShieldSlamVerticalLocalEuler);
+
+        var holdPos = shieldBaseLocalPosition + CwslGameConstants.TankShieldSlamVerticalHoldOffset;
+        if (empowered)
+            holdPos += CwslGameConstants.TankShieldSlamVerticalHoldEmpoweredOffset;
+        holdPos = Sanitize(holdPos, shieldBaseLocalPosition + Vector3.up * 1.1f);
+
+        ComputeSlamDownPosition(shieldBaseLocalPosition, verticalRot, scaleY, empowered, out var slamPos);
+        slamPos = Sanitize(slamPos, holdPos + Vector3.down * 1.2f);
 
         var windup = CwslGameConstants.TankShieldSlamWindup;
-        var raiseLift = empowered ? 0.62f : 0.42f;
-        var raisedPos = startPos + new Vector3(0f, raiseLift * Mathf.Max(1f, startScale.y), -0.2f);
-        var raisedRot = startRot * Quaternion.Euler(-52f, 0f, 0f);
-        var raisedScale = empowered
-            ? startScale
-            : Vector3.Lerp(startScale, slamScale, 0.85f);
+        var raiseTime = Mathf.Max(0.01f, windup * 0.62f);
+        var holdTime = windup * 0.28f;
+        var settleTime = Mathf.Max(0.04f, windup - raiseTime - holdTime);
 
         var timer = 0f;
-        while (timer < windup)
+        while (timer < raiseTime)
         {
             timer += Time.deltaTime;
-            var t = Mathf.SmoothStep(0f, 1f, timer / windup);
-            shield.localPosition = Vector3.Lerp(startPos, raisedPos, t);
-            shield.localRotation = Quaternion.Slerp(startRot, raisedRot, t);
-            shield.localScale = Vector3.Lerp(startScale, raisedScale, t);
+            var t = Mathf.SmoothStep(0f, 1f, timer / raiseTime);
+            shield.localPosition = Vector3.Lerp(startPos, holdPos, t);
+            shield.localRotation = Quaternion.Slerp(startRot, verticalRot, t);
             yield return null;
         }
 
-        ComputeGroundSlamPose(startPos, startRot, raisedScale, out var slamPos, out var slamRot);
-        var slamBodyPos = startBodyPos + new Vector3(0f, empowered ? -0.06f : -0.03f, 0.16f);
+        timer = 0f;
+        while (timer < settleTime)
+        {
+            timer += Time.deltaTime;
+            shield.localPosition = holdPos;
+            shield.localRotation = verticalRot;
+            yield return null;
+        }
 
         timer = 0f;
-        const float slamDown = 0.16f;
+        while (timer < holdTime)
+        {
+            timer += Time.deltaTime;
+            shield.localPosition = holdPos;
+            shield.localRotation = verticalRot;
+            yield return null;
+        }
+
+        timer = 0f;
+        const float slamDown = 0.11f;
         while (timer < slamDown)
         {
             timer += Time.deltaTime;
-            var t = 1f - Mathf.Pow(1f - timer / slamDown, 3f);
-            shield.localPosition = Vector3.Lerp(raisedPos, slamPos, t);
-            shield.localRotation = Quaternion.Slerp(raisedRot, slamRot, t);
-            shield.localScale = raisedScale;
-            visualRoot.localPosition = Vector3.Lerp(startBodyPos, slamBodyPos, t);
+            var t = 1f - Mathf.Pow(Mathf.Clamp01(1f - timer / slamDown), 3.5f);
+            shield.localPosition = Vector3.Lerp(holdPos, slamPos, t);
+            shield.localRotation = verticalRot;
             yield return null;
         }
 
-        var hitForward = 0.55f + Mathf.Max(0f, raisedScale.x - 1f) * 0.14f;
-        var hitPoint = transform.root.position + transform.root.forward * hitForward + Vector3.up * 0.08f;
-        CwslVfxSpawner.SpawnMeleeHit(hitPoint, transform.root.rotation);
-        CwslVfxSpawner.SpawnFortifyBlock(hitPoint + Vector3.up * 0.12f);
+        shield.localPosition = slamPos;
+        shield.localRotation = verticalRot;
 
-        var recoverPos = empowered ? startPos : shieldBaseLocalPosition;
-        var recoverRot = empowered ? startRot : shieldBaseLocalRotation;
-        var recoverScale = empowered ? startScale : shieldBaseLocalScale;
+        var root = transform.root;
+        var groundPoint = CwslTankShieldVfxUtil.GetShieldBottomWorldPoint(shield);
+        var groundRotation = CwslTankShieldVfxUtil.GetSlamGroundRotation(root);
+        var effectScale = CwslTankShieldVfxUtil.GetSlamGroundHitScale(root, empowered);
+        CwslVfxSpawner.SpawnShieldSlamGroundHit(groundPoint, groundRotation, effectScale, empowered);
 
         timer = 0f;
-        const float recover = 0.3f;
+        const float recover = 0.28f;
         while (timer < recover)
         {
             timer += Time.deltaTime;
             var t = timer / recover;
-            shield.localPosition = Vector3.Lerp(slamPos, recoverPos, t);
-            shield.localRotation = Quaternion.Slerp(slamRot, recoverRot, t);
-            shield.localScale = Vector3.Lerp(raisedScale, recoverScale, t);
-            visualRoot.localPosition = Vector3.Lerp(slamBodyPos, startBodyPos, t);
+            shield.localPosition = Vector3.Lerp(slamPos, startPos, t);
+            shield.localRotation = Quaternion.Slerp(verticalRot, startRot, t);
             yield return null;
         }
 
-        shield.localPosition = recoverPos;
-        shield.localRotation = recoverRot;
-        shield.localScale = recoverScale;
-        visualRoot.localPosition = startBodyPos;
+        shield.localPosition = startPos;
+        shield.localRotation = startRot;
 
         IsAnimating = false;
         routine = null;
     }
 
-    private void ComputeGroundSlamPose(
+    private static void ComputeSlamDownPosition(
         Vector3 referencePos,
-        Quaternion referenceRot,
-        Vector3 scale,
-        out Vector3 slamPos,
-        out Quaternion slamRot)
+        Quaternion verticalRot,
+        float scaleY,
+        bool empowered,
+        out Vector3 slamPos)
     {
-        slamRot = referenceRot * Quaternion.Euler(SlamPitchDegrees, 0f, 0f);
+        scaleY = Mathf.Max(0.01f, scaleY);
+        if (!float.IsFinite(scaleY))
+            scaleY = 1f;
 
-        var bottomLocal = new Vector3(0f, ShieldBottomLocalY * scale.y, 0f);
-        var bottomOffset = slamRot * bottomLocal;
+        var bottomLocal = new Vector3(0f, ShieldBottomLocalY * scaleY, 0.06f);
+        var bottomOffset = verticalRot * bottomLocal;
+        if (!IsFinite(bottomOffset))
+        {
+            slamPos = referencePos;
+            slamPos.y = VisualGroundY + 0.35f * scaleY;
+            slamPos.z += empowered ? 0.2f : 0.12f;
+            return;
+        }
+
         var slamY = VisualGroundY - bottomOffset.y;
-        var forwardBonus = 0.34f + Mathf.Max(0f, scale.x - 1f) * 0.18f;
+        if (!float.IsFinite(slamY))
+            slamY = VisualGroundY + 0.35f * scaleY;
 
+        var forwardBonus = (empowered ? 0.2f : 0.12f) * scaleY;
         slamPos = new Vector3(referencePos.x, slamY, referencePos.z + forwardBonus);
     }
+
+    private static float SafeScaleY(Vector3 scale)
+    {
+        var y = Mathf.Abs(scale.y);
+        if (!float.IsFinite(y) || y < 0.01f)
+            y = 1f;
+
+        return y;
+    }
+
+    private static bool IsFinite(Vector3 value) =>
+        float.IsFinite(value.x) && float.IsFinite(value.y) && float.IsFinite(value.z);
+
+    private static Vector3 Sanitize(Vector3 value, Vector3 fallback) =>
+        IsFinite(value) ? value : fallback;
+
+    private static bool IsFinite(Quaternion value) =>
+        float.IsFinite(value.x) && float.IsFinite(value.y)
+        && float.IsFinite(value.z) && float.IsFinite(value.w);
 
     private IEnumerator WhirlwindRoutine(float duration, bool empowered)
     {
@@ -175,12 +230,10 @@ public class CwslTankShieldSkillVisual : MonoBehaviour
         var reach = empowered ? 1.38f : 1f;
         var scaleReach = Mathf.Max(1f, whirlScale.x);
 
-        // 1) 방패를 쫙 펼쳐 들어 올림
         var spreadPos = startPos + new Vector3(0f, 0.18f * scaleReach, 0.42f * reach);
         var spreadRot = startRot * Quaternion.Euler(-18f, 8f, -32f);
         var spreadScale = Vector3.Lerp(startScale, whirlScale, 0.75f);
 
-        // 2) 끝을 잡고 가로로 내밀어 든 자세
         var horizontalRot = startRot * Quaternion.Euler(94f, 6f, -90f);
         var horizontalPos = startPos + new Vector3(
             0.1f,
@@ -213,7 +266,10 @@ public class CwslTankShieldSkillVisual : MonoBehaviour
             yield return null;
         }
 
-        // 3) 가로로 든 방패를 수평 회전 (캐릭터 본체 회전과 합쳐져 휠윈드 느낌)
+        var effectScale = CwslTankShieldVfxUtil.GetShieldEffectScale(transform.root, empowered);
+        var vfxScale = effectScale * (empowered ? 0.58f : 0.42f);
+        whirlwindInstance = CwslVfxSpawner.AttachShieldWhirlwind(shield, vfxScale, duration + 0.4f);
+
         var spinAccum = 0f;
         timer = 0f;
         while (timer < duration)
@@ -226,6 +282,8 @@ public class CwslTankShieldSkillVisual : MonoBehaviour
             visualRoot.localPosition = braceBodyPos;
             yield return null;
         }
+
+        ClearWhirlwindFx();
 
         var recoverPos = empowered ? startPos : shieldBaseLocalPosition;
         var recoverRot = empowered ? startRot : shieldBaseLocalRotation;
@@ -251,5 +309,19 @@ public class CwslTankShieldSkillVisual : MonoBehaviour
 
         IsAnimating = false;
         routine = null;
+    }
+
+    private void ClearWhirlwindFx()
+    {
+        if (whirlwindInstance == null)
+            return;
+
+        Destroy(whirlwindInstance);
+        whirlwindInstance = null;
+    }
+
+    private void OnDisable()
+    {
+        ClearWhirlwindFx();
     }
 }

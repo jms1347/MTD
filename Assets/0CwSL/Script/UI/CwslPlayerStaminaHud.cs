@@ -17,6 +17,7 @@ public class CwslPlayerStaminaHud : MonoBehaviour
             hud = existing.GetComponent<CwslPlayerStaminaHud>();
             if (hud == null)
                 hud = existing.gameObject.AddComponent<CwslPlayerStaminaHud>();
+            hud.EnsureUiBuilt(existing.GetComponent<RectTransform>());
         }
         else
         {
@@ -28,6 +29,14 @@ public class CwslPlayerStaminaHud : MonoBehaviour
 
         hud.Bind(stamina);
         return hud;
+    }
+
+    private void EnsureUiBuilt(RectTransform rect)
+    {
+        if (fillImage != null || rect == null)
+            return;
+
+        BuildUi(rect);
     }
 
     private void BuildUi(RectTransform rect)
@@ -55,9 +64,7 @@ public class CwslPlayerStaminaHud : MonoBehaviour
         fillRect.offsetMin = new Vector2(2f, 2f);
         fillRect.offsetMax = new Vector2(-2f, -2f);
         fillImage = fillGo.GetComponent<Image>();
-        fillImage.color = new Color(0.35f, 0.82f, 1f, 0.95f);
-        fillImage.type = Image.Type.Filled;
-        fillImage.fillMethod = Image.FillMethod.Horizontal;
+        CwslUiSpriteUtil.ConfigureHorizontalFill(fillImage, new Color(0.35f, 0.82f, 1f, 0.95f));
 
         var labelGo = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
         labelGo.transform.SetParent(transform, false);
@@ -98,7 +105,12 @@ public class CwslPlayerStaminaHud : MonoBehaviour
     private void Refresh(float current, float max)
     {
         if (fillImage != null)
+        {
+            if (fillImage.sprite == null)
+                CwslUiSpriteUtil.ConfigureHorizontalFill(fillImage, new Color(0.35f, 0.82f, 1f, 0.95f));
+
             fillImage.fillAmount = max > 0f ? current / max : 0f;
+        }
 
         if (label != null)
             label.text = $"스테미너 {Mathf.CeilToInt(current)} / {Mathf.CeilToInt(max)}";

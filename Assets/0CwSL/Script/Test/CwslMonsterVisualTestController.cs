@@ -9,6 +9,7 @@ public class CwslMonsterVisualTestController : MonoBehaviour
     {
         CwslMonsterType.Melee,
         CwslMonsterType.Ranged,
+        CwslMonsterType.InkSniper,
         CwslMonsterType.Suicide,
         CwslMonsterType.StickySuicide,
         CwslMonsterType.KoreaUniversitySoldier,
@@ -17,6 +18,7 @@ public class CwslMonsterVisualTestController : MonoBehaviour
         CwslMonsterType.NexusSuicide,
         CwslMonsterType.MidBoss,
         CwslMonsterType.DefenseBoss,
+        CwslMonsterType.SeniorCoach,
         CwslMonsterType.BossHongmyeongbo
     };
 
@@ -24,7 +26,7 @@ public class CwslMonsterVisualTestController : MonoBehaviour
     [SerializeField] private CwslMonsterType previewType = CwslMonsterType.Suicide;
     [SerializeField] private bool autoWalkInPlayMode = true;
     [SerializeField] private bool showHudInPlayMode = true;
-    [SerializeField] private Vector3 spawnOffset = Vector3.zero;
+    [SerializeField] private Vector3 spawnOffset = new(4f, 0f, 0f);
     [SerializeField] private float spawnSpacing = 2.4f;
 
     private Transform previewRoot;
@@ -35,6 +37,7 @@ public class CwslMonsterVisualTestController : MonoBehaviour
 
     private void OnEnable()
     {
+        EnsureAssetsLoaded();
         if (!Application.isPlaying)
             RebuildPreview();
     }
@@ -44,9 +47,20 @@ public class CwslMonsterVisualTestController : MonoBehaviour
         if (!Application.isPlaying)
             return;
 
+        EnsureAssetsLoaded();
         RebuildPreview();
         if (autoWalkInPlayMode)
             SetAutoWalk(true);
+    }
+
+    private void EnsureAssetsLoaded()
+    {
+        if (assets != null)
+            return;
+
+#if UNITY_EDITOR
+        assets = UnityEditor.AssetDatabase.LoadAssetAtPath<CwslGameAssets>("Assets/0CwSL/Data/CwslGameAssets.asset");
+#endif
     }
 
     private void OnGUI()
@@ -91,6 +105,18 @@ public class CwslMonsterVisualTestController : MonoBehaviour
             PlaySuicideExplosion();
         if (GUILayout.Button("몬스터 사망 VFX"))
             PlayDeathVfx();
+        if (GUILayout.Button("스턴 VFX"))
+            PlayStunVfx();
+        if (GUILayout.Button("화상 VFX (UkDefense)"))
+            PlayStatusVfx(CwslMonsterStatusKind.Burning);
+        if (GUILayout.Button("동상 VFX (UkDefense)"))
+            PlayStatusVfx(CwslMonsterStatusKind.Slowed);
+        if (GUILayout.Button("감전 VFX (UkDefense)"))
+            PlayStatusVfx(CwslMonsterStatusKind.Shocked);
+        if (GUILayout.Button("중독 VFX (UkDefense)"))
+            PlayStatusVfx(CwslMonsterStatusKind.Poisoned);
+        if (GUILayout.Button("상태 VFX 전부 제거"))
+            ClearStatusVfx();
         if (GUILayout.Button("장착형 + 아군 병사 셋업"))
             SetupStickyAttachDemo();
 
@@ -130,6 +156,16 @@ public class CwslMonsterVisualTestController : MonoBehaviour
         if (visual == null)
             return;
 
+        var slimeVisual = visual.GetComponent<CwslSlimeMeleeVisual>();
+        if (slimeVisual != null)
+        {
+            if (!Application.isPlaying)
+                return;
+
+            StartCoroutine(SlimeMeleeRoutine(slimeVisual));
+            return;
+        }
+
         var lunge = visual.GetComponent<CwslMeleeLungeVisual>();
         if (lunge == null)
             lunge = visual.gameObject.AddComponent<CwslMeleeLungeVisual>();
@@ -142,17 +178,43 @@ public class CwslMonsterVisualTestController : MonoBehaviour
 
     public void PlaySuicideExplosion()
     {
-        var position = previewRoot != null ? previewRoot.position : transform.position + spawnOffset;
-        SpawnVfx(assets != null ? assets.suicideExplosionVfx : null, position, CwslGameConstants.SuicideExplosionScale);
+        var position = ResolvePreviewBodyPosition();
+        if (Application.isPlaying && CwslGameSession.Instance != null)
+            CwslVfxSpawner.SpawnSuicideExplosion(position);
+        else
+            SpawnEffectVfx(assets != null ? assets.suicideExplosionVfx : null, position, CwslGameConstants.SuicideExplosionScale);
     }
 
     public void PlayDeathVfx()
     {
-        var position = previewRoot != null ? previewRoot.position : transform.position + spawnOffset;
-        var prefab = assets != null
-            ? (previewType == CwslMonsterType.BossHongmyeongbo ? assets.bossDeathVfx : assets.enemyDeathVfx)
-            : null;
-        SpawnVfx(prefab, position + Vector3.up * 0.5f, 1f);
+        var position = ResolvePreviewBodyPosition();
+        SpawnEffectVfx(ResolveDeathVfxPrefab(), position + Vector3.up * 0.5f, 1f);
+    }
+
+    public void PlayStunVfx()
+    {
+        if (!Application.isPlaying || previewRoot == null)
+            return;
+
+        CwslMonsterStunVisual.Ensure(previewRoot.gameObject)
+            .PlayStun(ResolvePreviewBodyPosition(), CwslGameConstants.TankShieldSlamStunDuration);
+    }
+
+    public void PlayStatusVfx(CwslMonsterStatusKind kind)
+    {
+        if (!Application.isPlaying || previewRoot == null)
+            return;
+
+        CwslVisualTestAssetsContext.Set(assets);
+        CwslMonsterStatusVfx.Ensure(previewRoot.gameObject)?.SetStatusActive(kind, true);
+    }
+
+    public void ClearStatusVfx()
+    {
+        if (!Application.isPlaying || previewRoot == null)
+            return;
+
+        CwslMonsterStatusVfx.Ensure(previewRoot.gameObject)?.ClearAll();
     }
 
     public void SetupStickyAttachDemo()
@@ -167,6 +229,13 @@ public class CwslMonsterVisualTestController : MonoBehaviour
 
         if (allyPreviewRoot != null && previewRoot != null && Application.isPlaying)
             StartCoroutine(StickyApproachRoutine(allyPreviewRoot, previewRoot));
+    }
+
+    private IEnumerator SlimeMeleeRoutine(CwslSlimeMeleeVisual slimeVisual)
+    {
+        slimeVisual.PlayWindup();
+        yield return new WaitForSeconds(0.14f);
+        slimeVisual.PlayHit();
     }
 
     private IEnumerator MeleeLungeRoutine(CwslMeleeLungeVisual lunge)
@@ -193,6 +262,12 @@ public class CwslMonsterVisualTestController : MonoBehaviour
         }
 
         sticky.position = target;
+
+        if (Application.isPlaying)
+        {
+            var fuseBurn = sticky.GetComponentInChildren<CwslStickyMineFuseBurnVisual>(true);
+            fuseBurn?.BeginAttach(ally, 3f);
+        }
     }
 
     private Transform CreatePreview(CwslMonsterType type, Vector3 position)
@@ -225,6 +300,7 @@ public class CwslMonsterVisualTestController : MonoBehaviour
         }
 
         instance.name = "Preview_" + type;
+        CwslMonsterVisualRefresh.Refresh(instance.transform, type);
         EnsurePreviewExtras(instance.transform, type);
         ApplyThreatLight(instance.transform, type);
 
@@ -246,13 +322,17 @@ public class CwslMonsterVisualTestController : MonoBehaviour
             if (visual.GetComponent<CwslMeleeLungeVisual>() == null)
                 visual.gameObject.AddComponent<CwslMeleeLungeVisual>();
         }
+
+        if (root.GetComponent<CwslMonsterStunVisual>() == null)
+            root.gameObject.AddComponent<CwslMonsterStunVisual>();
     }
 
     private static void ApplyThreatLight(Transform root, CwslMonsterType type)
     {
         var color = CwslMonsterVisualPalette.GetThreatLightColor(type);
         var isSuicide = type is CwslMonsterType.Suicide or CwslMonsterType.NexusSuicide or CwslMonsterType.StickySuicide;
-        var isRanged = type is CwslMonsterType.Ranged or CwslMonsterType.NexusRanged;
+        var isRanged = type is CwslMonsterType.Ranged or CwslMonsterType.NexusRanged
+            or CwslMonsterType.InkSniper or CwslMonsterType.NexusInkSniper;
         var isNexus = CwslMonsterTypeUtil.IsNexusPriority(type);
         if (!isSuicide && !isRanged && !isNexus)
             return;
@@ -271,12 +351,21 @@ public class CwslMonsterVisualTestController : MonoBehaviour
         return type switch
         {
             CwslMonsterType.Ranged or CwslMonsterType.NexusRanged => assets.rangedMonsterPrefab,
+            CwslMonsterType.InkSniper or CwslMonsterType.NexusInkSniper =>
+                assets.inkSniperMonsterPrefab != null
+                    ? assets.inkSniperMonsterPrefab
+                    : assets.rangedMonsterPrefab,
             CwslMonsterType.Suicide or CwslMonsterType.NexusSuicide => assets.suicideMonsterPrefab,
             CwslMonsterType.StickySuicide => assets.stickySuicideMonsterPrefab,
-            CwslMonsterType.Melee or CwslMonsterType.NexusMelee => assets.meleeMonsterPrefab,
+            CwslMonsterType.Melee => assets.meleeMonsterPrefab,
+            CwslMonsterType.NexusMelee =>
+                assets.nexusMeleeMonsterPrefab != null
+                    ? assets.nexusMeleeMonsterPrefab
+                    : assets.meleeMonsterPrefab,
             CwslMonsterType.KoreaUniversitySoldier => assets.koreaUniversitySoldierPrefab,
             CwslMonsterType.MidBoss => assets.midBossMonsterPrefab,
             CwslMonsterType.DefenseBoss => assets.defenseBossMonsterPrefab,
+            CwslMonsterType.SeniorCoach => assets.seniorCoachMonsterPrefab,
             CwslMonsterType.BossHongmyeongbo => assets.bossPrefab,
             _ => null
         };
@@ -288,7 +377,35 @@ public class CwslMonsterVisualTestController : MonoBehaviour
             behaviour.enabled = false;
     }
 
-    private static void SpawnVfx(GameObject prefab, Vector3 position, float scale)
+    private GameObject ResolveDeathVfxPrefab()
+    {
+        if (assets == null)
+            return null;
+
+        return assets.enemyDeathVfx
+               ?? assets.bossDeathVfx
+               ?? assets.suicideBomberDeathVfx;
+    }
+
+    private Vector3 ResolvePreviewBodyPosition()
+    {
+        if (previewRoot == null)
+            return transform.position + spawnOffset + Vector3.up * 0.58f;
+
+        var visual = previewRoot.Find("Visual");
+        if (visual != null)
+        {
+            var anchor = visual.Find("ExplosionAnchor");
+            if (anchor != null)
+                return anchor.position;
+
+            return visual.TransformPoint(new Vector3(0f, 0.58f, 0f));
+        }
+
+        return previewRoot.position + Vector3.up * 0.58f;
+    }
+
+    private static void SpawnEffectVfx(GameObject prefab, Vector3 position, float scale)
     {
         if (prefab == null)
         {
@@ -299,7 +416,33 @@ public class CwslMonsterVisualTestController : MonoBehaviour
         var instance = Instantiate(prefab, position, Quaternion.identity);
         if (Mathf.Abs(scale - 1f) > 0.001f)
             instance.transform.localScale = Vector3.one * scale;
+
+        RestartEffectParticles(instance);
         Destroy(instance, 4f);
+    }
+
+    private static void RestartEffectParticles(GameObject root)
+    {
+        foreach (var collider in root.GetComponentsInChildren<Collider>(true))
+            collider.enabled = false;
+        foreach (var rigidbody in root.GetComponentsInChildren<Rigidbody>(true))
+        {
+            rigidbody.isKinematic = true;
+            rigidbody.detectCollisions = false;
+        }
+
+        foreach (var ps in root.GetComponentsInChildren<ParticleSystem>(true))
+        {
+            var main = ps.main;
+            main.scalingMode = ParticleSystemScalingMode.Hierarchy;
+            ps.Clear(true);
+            ps.Play(true);
+        }
+    }
+
+    private static void SpawnVfx(GameObject prefab, Vector3 position, float scale)
+    {
+        SpawnEffectVfx(prefab, position, scale);
     }
 
     private void ClearChildren(Transform target)

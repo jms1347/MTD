@@ -1,3 +1,5 @@
+using UnityEngine;
+
 public static class CwslGameConstants
 {
     public const string GameSceneName = "CwslGameScene";
@@ -24,7 +26,8 @@ public static class CwslGameConstants
     public const float PlayerDefense = 15f;
     public const float PlayerVisionRadius = 16f;
     public const float PlayerMaxStamina = 100f;
-    public const float PlayerStaminaRegenPerSecond = 15f;
+    public const float PlayerStaminaRegenPerSecond = 5f;
+    public const float SkillCooldownMultiplier = 2f;
     public const int SkillsPerCharacter = 4;
     public const float DefaultSkillStaminaCost = 22f;
     public const int StartingGold = 50;
@@ -92,6 +95,15 @@ public static class CwslGameConstants
     public const float GatherSlowGoldIntervalSeconds = 0.5f;
     public const float AttackRange = 2.8f;
     public const float MissileTankRange = 24f;
+    public const float MissileTankPowerBoostDuration = 10f;
+    public const float MissileTankPowerBoostSpeedMultiplier = 2f;
+    public const float MissileTankPowerBoostFireCooldownMultiplier = 2f;
+    public const int MissileTankPowerBoostMaxPierce = 5;
+    public const float MissileTankSmokeDashDistance = 4.2f;
+    public const float MissileTankSmokeDashDuration = 0.24f;
+    public const float MissileTankSmokeZoneRadius = 3.6f;
+    public const float MissileTankSmokeZoneDuration = 5f;
+    public const float MissileTankSmokeStunDuration = 5f;
     public const float AttackCooldown = 0.45f;
     public const float AttackDamage = PlayerAttackDamage;
     public const int TankHitGoldCost = 1;
@@ -99,9 +111,38 @@ public static class CwslGameConstants
     public const int MeteorGoldCost = 5;
     public const int HudCanvasSortOrder = 100;
     public const int VisionOverlaySortOrder = 50;
+    public const float InkBlindDurationSeconds = 3f;
+
     public const float BlindVisionRadius = 2.8f;
     public const float RedMageMeteorScryRadius = 5.8f;
     public const float RedMageMeteorScryDuration = 2.8f;
+
+    public const float RedMageFrozenOrbSpeed = 8f;
+    public const float RedMageFrozenOrbRange = 22f;
+    public const float RedMageFrozenOrbCastDuration = 0.4f;
+    public const float RedMageFrozenOrbShardSpeed = 16f;
+    public const float RedMageFrozenOrbShardEmitInterval = 0.05f;
+    public const float RedMageFrozenOrbShardDamageRatio = 0.24f;
+    public const float RedMageFrozenOrbShardLifetime = 0.7f;
+    public const float RedMageFrozenOrbScaleDrainPerShot = 0.03f;
+    public const int RedMageFrozenOrbEmitDirections = 8;
+    public const int RedMageFrozenOrbFrostStacks = 2;
+    public const float RedMageFrozenOrbFrostDuration = 2.5f;
+
+    public const float RedMageLightningOrbForwardDistance = 3.2f;
+    public const float RedMageLightningOrbHeight = 1.4f;
+    public const float RedMageLightningOrbLifetime = 1.2f;
+    public const float RedMageLightningOrbChargeSeconds = 0.18f;
+    public const float RedMageLightningOrbCastDuration = 0.45f;
+    public const float RedMageLightningChainRadius = 4.5f;
+    public const int RedMageLightningChainMaxHits = 5;
+    public const float RedMageLightningShockDuration = 1.6f;
+
+    public const float RedMageTeleportDistance = 7f;
+    public const float RedMageTeleportCastDuration = 0.35f;
+    public const float RedMageTeleportArrivalDelay = 0.2f;
+    public const float RedMageTeleportDepartPortalLifetime = 1f;
+    public const float RedMageTeleportArrivePortalLifetime = 0.55f;
     public const float PlayerArrowSpawnForwardOffset = 0.55f;
     public const float PlayerBulletSpawnMinOffset = 0.02f;
     public const float PlayerArrowMinHitDistance = 0.03f;
@@ -123,8 +164,8 @@ public static class CwslGameConstants
 
     public const float TankShieldDashDistance = 5.5f;
     public const float TankShieldDashDuration = 0.24f;
+    public const float TankShieldDashCastDuration = 1f;
     public const float TankShieldDashSpeed = 24f;
-    public const float TankShieldDashCooldown = 4.5f;
     public const float TankShieldDashPushRadius = 0.95f;
     public const float TankShieldDashPushDistance = 2.6f;
     public const float TankShieldDashPushDuration = 0.34f;
@@ -138,8 +179,15 @@ public static class CwslGameConstants
 
     public const float TankShieldSlamRadius = 3.2f;
     public const float TankShieldSlamStunDuration = 2f;
-    public const float TankShieldSlamWindup = 0.45f;
-    public const float TankShieldSlamCooldown = 8f;
+    public const float TankShieldSlamWindup = 0.52f;
+    public const float TankShieldSlamRaiseHeight = 0.88f;
+    public const float TankShieldSlamRaiseHeightEmpowered = 1.12f;
+    public static readonly Vector3 TankShieldSlamVerticalHoldOffset = new(0f, 1.16f, -0.6f);
+    public static readonly Vector3 TankShieldSlamVerticalHoldEmpoweredOffset = new(0f, 0.42f, -0.04f);
+    public static readonly Vector3 TankShieldSlamVerticalLocalEuler = new(-88f, 0f, 0f);
+    public const float TankShieldSlamSoftVfxScale = 0.68f;
+    public const float TankShieldSlamCartoonyVfxScale = 1.45f;
+    public const float TankShieldSlamCastDuration = 0.91f;
     public const float TankShieldSlamShakeDuration = 0.38f;
     public const float TankShieldSlamShakeMagnitude = 0.24f;
 
@@ -147,7 +195,17 @@ public static class CwslGameConstants
     public const float TankShieldWhirlwindRadius = 2.9f;
     public const float TankShieldWhirlwindTickInterval = 0.5f;
     public const float TankShieldWhirlwindDamagePerTick = 0.55f;
-    public const float TankShieldWhirlwindCooldown = 12f;
+    public const float MeteorCastDuration = 0.55f;
+    public const int MeteorGroundFirePatchCountMin = 5;
+    public const int MeteorGroundFirePatchCountMax = 9;
+    public const float MeteorGroundFireLifetimeMin = 1f;
+    public const float MeteorGroundFireLifetimeMax = 3f;
+    public const float MonsterBurnDuration = 3f;
+    public const float MonsterBurnTotalDamage = 18f;
+    public const float MonsterShockDuration = 1.4f;
+    public const float MonsterPoisonDuration = 5f;
+    public const float MonsterPoisonTickDamage = 12f;
+    public const float MonsterPoisonArmorPerStack = 5f;
     public const float TankShieldWhirlwindSpinSpeed = 900f;
     public const float TankShieldWhirlwindMoveSpeedMultiplier = 1.2f;
 
@@ -163,7 +221,36 @@ public static class CwslGameConstants
     public const long CheatKarmaIncrement = 100L; // TODO(릴리즈): U키 치트용 — 정식 버전 전 제거
 
     public const float BossMaxHealth = 15000f;
-    public const float BossVisualScale = 10f;
+    /// <summary>고려대 모델 기준 보스 시각·콜라이더 배율.</summary>
+    public const float BossVisualScale = 5f;
+    public const float MidBossKuVisualScale = 3f;
+    public const float SeniorCoachKuVisualScale = 3f;
+
+    // --- 홍명보 보스 스킬 ---
+    public const int BossReverseZoneCountMin = 5;
+    public const int BossReverseZoneCountMax = 7;
+    public const float BossReverseZoneRadius = 3.2f;
+    public const float BossReverseTelegraphSeconds = 1.5f;
+    public const float BossReverseCastBuffer = 0.5f;
+    public const float BossReverseExplosionDamage = 80f;
+    public const float BossReverseControlDuration = 3f;
+    public const float BossBarrageDuration = 5f;
+    public const float BossBarrageInterval = 0.5f;
+    public const int BossBarrageProjectileCount = 36;
+    public const float BossBarrageProjectileSpeed = 14f;
+    public const float BossBarrageProjectileLifetime = 6f;
+    public const float BossBarrageDamage = 35f;
+    public const float BossSafeZoneRadius = 3f;
+    public const int BossInfectionOrbCount = 3;
+    public const float BossInfectionOrbSpeed = 6f;
+    public const float BossInfectionOrbLifetime = 9f;
+    public const float BossInfectionOrbRadius = 1.4f;
+    public const float BossInfectedDuration = 3f;
+    public const float BossInfectedSpikeInterval = 1f;
+    public const float BossInfectedSpikeSpeed = 18f;
+    public const float BossInfectedSpikeLifetime = 2.5f;
+    public const float BossInfectedSpikeDamage = 25f;
+
     public const float BossAttackIntervalPhase1 = 6.5f;
     public const float BossAttackIntervalPhase2 = 5.5f;
     public const float BossAttackIntervalPhase3 = 4.5f;
@@ -369,6 +456,18 @@ public static class CwslGameConstants
     public const float HazardWaterSlowMultiplier = 0.45f;
 
     public const float SpawnIntervalSeconds = 1.35f;
+    /// <summary>먹물 스나이퍼(일반·넥서스) 스폰 확률 — 약 1%.</summary>
+    public const float InkSniperSpawnChance = 0.01f;
+    public const float InkSniperFireCooldownSeconds = 10f;
+
+    public const float SeniorCoachFrenzyAuraRadius = 10f;
+    public const float SeniorCoachFrenzySpeedMultiplier = 1.3f;
+    public const float SeniorCoachIronShieldInterval = 20f;
+    public const int SeniorCoachIronShieldTargetCount = 2;
+    public const float SeniorCoachAceSpotlightDuration = 7f;
+    public const float SeniorCoachAceSpotlightCooldown = 14f;
+    public const float SeniorCoachOrbitSpeed = 2.6f;
+    public const float SeniorCoachOrbitInset = 2.1f;
     public const int MaxAliveMonsters = 65;
     public const float MonsterSpawnWarningSeconds = 2f;
     public const float MonsterSpawnWarningRadius = 1.8f;

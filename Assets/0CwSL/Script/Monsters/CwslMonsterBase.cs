@@ -31,6 +31,8 @@ public abstract class CwslMonsterBase : NetworkBehaviour
         EnsureLegWalkVisual();
         EnsureThreatLight();
         ApplyScaleMultiplier();
+        health?.RefreshCombatHitCollider();
+        health?.SyncHealthAfterConfigureServer();
     }
 
     private float ApplyDefenseProfile(CwslMonsterType type)
@@ -55,6 +57,9 @@ public abstract class CwslMonsterBase : NetworkBehaviour
             case CwslMonsterType.DefenseBoss:
                 localScaleMultiplier = manager.DefenseBossScaleMultiplier;
                 return manager.DefenseBossHealthMultiplier;
+            case CwslMonsterType.SeniorCoach:
+                localScaleMultiplier = manager.SeniorCoachScaleMultiplier;
+                return manager.SeniorCoachHealthMultiplier;
             default:
                 return 1f;
         }
@@ -124,7 +129,24 @@ public abstract class CwslMonsterBase : NetworkBehaviour
             return;
 
         var visual = transform.Find("Visual");
-        if (visual != null && visual.GetComponent<CwslMeleeLungeVisual>() == null)
+        if (visual == null)
+            return;
+
+        if (visual.GetComponent<CwslSlimeMeleeVisual>() != null)
+        {
+            var legacyLunge = visual.GetComponent<CwslMeleeLungeVisual>();
+            if (legacyLunge != null)
+            {
+                if (Application.isPlaying)
+                    Destroy(legacyLunge);
+                else
+                    DestroyImmediate(legacyLunge);
+            }
+
+            return;
+        }
+
+        if (visual.GetComponent<CwslMeleeLungeVisual>() == null)
             visual.gameObject.AddComponent<CwslMeleeLungeVisual>();
     }
 
@@ -141,7 +163,9 @@ public abstract class CwslMonsterBase : NetworkBehaviour
         if (GetComponent<CwslMonsterKnockback>()?.IsKnockedBack == true)
             return;
 
-        if (GetComponent<CwslMonsterStun>()?.IsStunned == true)
+        var status = GetComponent<CwslMonsterStatusController>();
+        if (GetComponent<CwslMonsterStun>()?.IsStunned == true
+            || (status != null && status.BlocksAction))
             return;
 
         targetRefreshTimer -= Time.deltaTime;
@@ -161,6 +185,19 @@ public abstract class CwslMonsterBase : NetworkBehaviour
 
     protected void RefreshTarget()
     {
+        var forcedComponent = GetComponent<CwslMonsterForcedTarget>();
+        if (forcedComponent != null && forcedComponent.TryGetTarget(out var localForced))
+        {
+            currentTarget = localForced;
+            return;
+        }
+
+        if (CwslMonsterGlobalAggro.TryGetForcedPlayerTarget(out var forcedTarget))
+        {
+            currentTarget = forcedTarget;
+            return;
+        }
+
         if (targetingMode == CwslMonsterTargetingMode.NexusFirst)
         {
             if (TryGetNexusTarget(out var nexusTarget))
@@ -268,10 +305,12 @@ public abstract class CwslMonsterBase : NetworkBehaviour
 
         var runtime = GetComponent<CwslMonsterRuntimeStats>();
         var runtimeSpeed = runtime != null ? runtime.SpeedMultiplier : 1f;
+        var statusSlow = GetComponent<CwslMonsterStatusController>()?.GetMoveSpeedMultiplier() ?? 1f;
         LastWalkSpeed = moveSpeed * speedMultiplier * localSpeedMultiplier * runtimeSpeed
             * CwslMonsterStatCatalog.GlobalMoveSpeedMultiplier
             * CwslArenaZones.GetMonsterSpeedMultiplier(transform.position)
-            * (GetComponent<CwslSlowModifier>()?.SpeedMultiplier ?? 1f);
+            * (GetComponent<CwslSlowModifier>()?.SpeedMultiplier ?? 1f)
+            * statusSlow;
 
         var step = flat.normalized * (LastWalkSpeed * Time.deltaTime);
         var next = transform.position + step;

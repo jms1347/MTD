@@ -16,8 +16,8 @@ public class CwslTankShieldSlamSkill : CwslPlayerSkillBase
     private CwslTankShieldWhirlwindSkill whirlwindSkill;
     private NavMeshAgent agent;
     private Coroutine slamRoutine;
-    private float nextSlamTime;
     private Vector3 slamKnockbackDirection;
+    private CwslPlayerSkillCooldowns skillCooldowns;
 
     public bool IsSlamming => slamRoutine != null;
 
@@ -37,6 +37,7 @@ public class CwslTankShieldSlamSkill : CwslPlayerSkillBase
         dashSkill = GetComponent<CwslTankShieldDashSkill>();
         whirlwindSkill = GetComponent<CwslTankShieldWhirlwindSkill>();
         agent = GetComponent<NavMeshAgent>();
+        skillCooldowns = GetComponent<CwslPlayerSkillCooldowns>();
     }
 
     public override bool CanUseSkillSlotServer(ulong senderClientId, int slotIndex, Vector3 worldPoint)
@@ -61,7 +62,7 @@ public class CwslTankShieldSlamSkill : CwslPlayerSkillBase
             return false;
 
         slamKnockbackDirection = ResolveKnockbackDirection(worldPoint);
-        nextSlamTime = Time.time + CwslGameConstants.TankShieldSlamCooldown;
+        skillCooldowns?.BeginCooldown(BoundSlotIndex);
         slamRoutine = StartCoroutine(SlamRoutine());
         return true;
     }
@@ -89,7 +90,10 @@ public class CwslTankShieldSlamSkill : CwslPlayerSkillBase
         if (!IsServer || senderClientId != OwnerClientId)
             return false;
 
-        if (slamRoutine != null || Time.time < nextSlamTime)
+        if (slamRoutine != null)
+            return false;
+
+        if (skillCooldowns != null && !skillCooldowns.IsReady(BoundSlotIndex))
             return false;
 
         if (playerHealth != null && !playerHealth.IsAlive)
@@ -143,10 +147,7 @@ public class CwslTankShieldSlamSkill : CwslPlayerSkillBase
             if (flat.sqrMagnitude > radiusSq)
                 continue;
 
-            var stun = monster.GetComponent<CwslMonsterStun>();
-            if (stun == null)
-                stun = monster.gameObject.AddComponent<CwslMonsterStun>();
-            stun.ApplyStunServer(stunDuration);
+            CwslMonsterStatusController.Ensure(monster)?.ApplyShockServer(stunDuration);
 
             var knockback = monster.GetComponent<CwslMonsterKnockback>();
             if (knockback == null)

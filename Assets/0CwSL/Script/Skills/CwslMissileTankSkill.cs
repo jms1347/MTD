@@ -32,6 +32,8 @@ public class CwslMissileTankSkill : CwslPlayerSkillBase
     private CwslPlayerMovement movement;
     private CwslPlayerCombat combat;
     private NavMeshAgent navAgent;
+    private CwslMissileTankAmmoController ammoController;
+    private CwslMissileTankPowerBoostSkill powerBoostSkill;
     private bool manualCombatFacing;
 
     public float AttackRange => CwslGameConstants.MissileTankRange;
@@ -61,6 +63,8 @@ public class CwslMissileTankSkill : CwslPlayerSkillBase
         movement = GetComponent<CwslPlayerMovement>();
         combat = GetComponent<CwslPlayerCombat>();
         navAgent = GetComponent<NavMeshAgent>();
+        ammoController = GetComponent<CwslMissileTankAmmoController>();
+        powerBoostSkill = GetComponent<CwslMissileTankPowerBoostSkill>();
     }
 
     private void Update()
@@ -190,13 +194,17 @@ public class CwslMissileTankSkill : CwslPlayerSkillBase
             return false;
 
         FireFromGun(GunSide.Right);
-        nextRightFireTime = Time.time + GunCooldown;
+        nextRightFireTime = Time.time + ResolveGunCooldown();
         return true;
     }
 
     private bool TryFireDualWieldServer()
     {
         var playerSkills = GetComponent<CwslPlayerSkills>();
+        var skillCooldowns = GetComponent<CwslPlayerSkillCooldowns>();
+        if (skillCooldowns != null && !skillCooldowns.IsReady(0))
+            return false;
+
         if (playerSkills != null && !playerSkills.TrySpendStaminaForSlot(0))
             return false;
 
@@ -216,9 +224,10 @@ public class CwslMissileTankSkill : CwslPlayerSkillBase
         if (!TryPrepareShot(out var aimPoint, out var fireDirection, out var shotTarget))
             return false;
 
-        FireProjectileServer(fireDirection, piercing: false, useLeftMuzzle: false, shotTarget);
-        FireProjectileServer(fireDirection, piercing: false, useLeftMuzzle: true, shotTarget);
+        FireProjectileServer(fireDirection, useLeftMuzzle: false, shotTarget);
+        FireProjectileServer(fireDirection, useLeftMuzzle: true, shotTarget);
         PlayDualFireClientRpc(aimPoint);
+        skillCooldowns?.BeginCooldown(0);
         return true;
     }
 
@@ -228,7 +237,7 @@ public class CwslMissileTankSkill : CwslPlayerSkillBase
             return;
 
         var useLeftGun = gun == GunSide.Left;
-        FireProjectileServer(fireDirection, piercing: false, useLeftGun, shotTarget);
+        FireProjectileServer(fireDirection, useLeftGun, shotTarget);
         PlayFireClientRpc(aimPoint, useLeftGun);
     }
 
@@ -383,11 +392,42 @@ public class CwslMissileTankSkill : CwslPlayerSkillBase
         return flat.magnitude <= CwslGameConstants.MissileTankRange;
     }
 
+    public void FireSmokeBombServer(Vector3 fireDirection)
+    {
+        if (!IsServer)
+            return;
+
+        FireProjectileServer(
+            fireDirection,
+            useLeftMuzzle: false,
+            homingTarget: null,
+            forceSmokeBomb: true);
+    }
+
+    private float ResolveGunCooldown()
+    {
+        var multiplier = powerBoostSkill != null && powerBoostSkill.IsActive
+            ? CwslGameConstants.MissileTankPowerBoostFireCooldownMultiplier
+            : 1f;
+        return GunCooldown * multiplier;
+    }
+
+    private int ResolveMaxPierceHits()
+    {
+        if (powerBoostSkill == null || !powerBoostSkill.IsActive)
+            return 0;
+
+        return CwslGameConstants.MissileTankPowerBoostMaxPierce;
+    }
+
+    private CwslMissileTankAmmoKind ResolveCurrentAmmo() =>
+        ammoController != null ? ammoController.CurrentAmmo : CwslMissileTankAmmoKind.Basic;
+
     private void FireProjectileServer(
         Vector3 fireDirection,
-        bool piercing,
         bool useLeftMuzzle,
-        CwslMonsterHealth homingTarget)
+        CwslMonsterHealth homingTarget,
+        bool forceSmokeBomb = false)
     {
         var session = CwslGameSession.Instance;
         if (session == null || session.Assets.playerMissilePrefab == null)
@@ -413,15 +453,18 @@ public class CwslMissileTankSkill : CwslPlayerSkillBase
             ? CwslCharacterStatCatalog.GetAttackPower(playerCharacter.CharacterId)
             : CwslGameConstants.AttackDamage;
 
-        projectile?.Configure(
+        var ammo = forceSmokeBomb ? CwslMissileTankAmmoKind.Basic : ResolveCurrentAmmo();
+        projectile?.ConfigureAdvanced(
             fireDirection,
             MissileSpeed,
             MissileLifetime,
             OwnerClientId,
             attackPower,
-            piercing,
             NetworkObject,
-            homingTarget);
+            homingTarget,
+            ammo,
+            forceSmokeBomb ? 0 : ResolveMaxPierceHits(),
+            forceSmokeBomb);
     }
 
     private Vector3 ResolveMuzzlePosition(bool useLeftMuzzle)
@@ -447,6 +490,16 @@ public class CwslMissileTankSkill : CwslPlayerSkillBase
         var distance = toTarget.magnitude;
         var leadRoom = 0.12f;
         return Mathf.Clamp(distance - leadRoom, CwslGameConstants.PlayerBulletSpawnMinOffset, maxOffset);
+    }
+
+    [ClientRpc]
+    public void PlaySmokeZoneVisualClientRpc(Vector3 center, float radius, float duration)
+    {
+        var prefab = CwslGameSession.Instance?.Assets?.missileTankSmokeZoneVfx;
+        if (prefab == null)
+            return;
+
+        CwslVfxSpawner.Spawn(prefab, center, Quaternion.identity, duration, radius * 0.55f);
     }
 
     [ClientRpc]

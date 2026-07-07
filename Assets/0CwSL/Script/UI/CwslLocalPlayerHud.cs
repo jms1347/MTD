@@ -55,6 +55,8 @@ public class CwslLocalPlayerHud : NetworkBehaviour
     private void HandleCharacterChangedForHud(CwslCharacterId characterId)
     {
         RefreshHint(characterId);
+        if (hudCanvasTransform != null)
+            EnsureSkillCooldownHud(hudCanvasTransform);
         TryShowCharacterIntroPopup(characterId);
     }
 
@@ -109,6 +111,7 @@ public class CwslLocalPlayerHud : NetworkBehaviour
         CwslDefenseHud.Ensure(canvasTransform);
         EnsureMinimap(canvasTransform);
         EnsureStaminaHud(canvasTransform);
+        EnsureSkillCooldownHud(canvasTransform);
         if (GetComponent<CwslArenaGimmickVisualRunner>() == null && !CwslGameConstants.UseDefenseMode)
             gameObject.AddComponent<CwslArenaGimmickVisualRunner>();
         if (GetComponent<CwslArenaTrapVisualRunner>() == null && !CwslGameConstants.UseDefenseMode)
@@ -178,6 +181,15 @@ public class CwslLocalPlayerHud : NetworkBehaviour
             stamina = gameObject.AddComponent<CwslPlayerStamina>();
 
         CwslPlayerStaminaHud.Ensure(canvasTransform, stamina);
+    }
+
+    private void EnsureSkillCooldownHud(Transform canvasTransform)
+    {
+        var cooldowns = GetComponent<CwslPlayerSkillCooldowns>();
+        if (cooldowns == null)
+            cooldowns = gameObject.AddComponent<CwslPlayerSkillCooldowns>();
+
+        CwslPlayerSkillCooldownHud.Ensure(canvasTransform, cooldowns, playerCharacter);
     }
 
     private void RefreshHint(CwslCharacterId characterId)

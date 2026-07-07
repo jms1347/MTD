@@ -51,6 +51,17 @@ public class CwslSuicideFuseVisual : MonoBehaviour
         instance.transform.localScale = Vector3.one * scale;
     }
 
+    public void SetBurningActive(bool active)
+    {
+        if (instance == null)
+            Refresh();
+
+        if (instance == null)
+            return;
+
+        instance.SetActive(active);
+    }
+
     private static GameObject ResolvePrefab()
     {
         var assets = CwslGameSession.Instance?.Assets;

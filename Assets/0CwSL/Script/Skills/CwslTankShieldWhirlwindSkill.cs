@@ -17,7 +17,7 @@ public class CwslTankShieldWhirlwindSkill : CwslPlayerSkillBase
     private CwslTankShieldSlamSkill slamSkill;
     private NavMeshAgent agent;
     private Coroutine whirlRoutine;
-    private float nextWhirlTime;
+    private CwslPlayerSkillCooldowns skillCooldowns;
 
     public bool IsWhirlwinding => whirlRoutine != null;
 
@@ -38,6 +38,7 @@ public class CwslTankShieldWhirlwindSkill : CwslPlayerSkillBase
         dashSkill = GetComponent<CwslTankShieldDashSkill>();
         slamSkill = GetComponent<CwslTankShieldSlamSkill>();
         agent = GetComponent<NavMeshAgent>();
+        skillCooldowns = GetComponent<CwslPlayerSkillCooldowns>();
     }
 
     public override void OnNetworkDespawn()
@@ -67,7 +68,10 @@ public class CwslTankShieldWhirlwindSkill : CwslPlayerSkillBase
         if (!IsServer || senderClientId != OwnerClientId)
             return false;
 
-        if (whirlRoutine != null || Time.time < nextWhirlTime)
+        if (whirlRoutine != null)
+            return false;
+
+        if (skillCooldowns != null && !skillCooldowns.IsReady(BoundSlotIndex))
             return false;
 
         if (playerHealth != null && !playerHealth.IsAlive)
@@ -90,7 +94,7 @@ public class CwslTankShieldWhirlwindSkill : CwslPlayerSkillBase
         if (!CanCastServer(senderClientId))
             return false;
 
-        nextWhirlTime = Time.time + CwslGameConstants.TankShieldWhirlwindCooldown;
+        skillCooldowns?.BeginCooldown(BoundSlotIndex);
         whirlRoutine = StartCoroutine(WhirlwindRoutine());
         return true;
     }
@@ -191,14 +195,23 @@ public class CwslTankShieldWhirlwindSkill : CwslPlayerSkillBase
             monster.DamageFromPlayer(OwnerClientId, damage);
 
             if (flat.sqrMagnitude > 0.0001f)
-            {
-                var knockback = monster.GetComponent<CwslMonsterKnockback>();
-                if (knockback == null)
-                    knockback = monster.gameObject.AddComponent<CwslMonsterKnockback>();
-                var push = empowered ? 1.35f : 0.55f;
-                knockback.ApplyKnockbackServer(flat.normalized, push, 0.22f);
-            }
+                ApplyWhirlwindHitReact(monster, flat.normalized, empowered);
         }
+    }
+
+    private static void ApplyWhirlwindHitReact(CwslMonsterHealth monster, Vector3 worldDirection, bool empowered)
+    {
+        if (monster == null)
+            return;
+
+        var knockback = monster.GetComponent<CwslMonsterKnockback>();
+        if (knockback == null)
+            knockback = monster.gameObject.AddComponent<CwslMonsterKnockback>();
+
+        var push = empowered ? 0.48f : 0.3f;
+        var duration = 0.12f;
+        knockback.ApplyKnockbackServer(worldDirection, push, duration);
+        monster.NotifyHitFlinchServer(worldDirection, push);
     }
 
     [ClientRpc]

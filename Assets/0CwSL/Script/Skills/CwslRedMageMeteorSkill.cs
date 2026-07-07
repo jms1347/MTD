@@ -11,21 +11,25 @@ public class CwslRedMageMeteorSkill : CwslPlayerSkillBase
     private const float FallHeight = 18f;
     private const float FallDuration = 0.55f;
     private const float BurnLifetime = 3.2f;
-    private const float Cooldown = 0.85f;
 
-    private float nextCastTime;
+    private CwslPlayerSkillCooldowns skillCooldowns;
 
     public override CwslSkillActivationType ActivationType => CwslSkillActivationType.GroundTarget;
 
     public override bool IsActiveForCharacter(CwslCharacterId characterId) =>
         characterId == CwslCharacterId.RedMage;
 
+    public override void OnNetworkSpawn()
+    {
+        skillCooldowns = GetComponent<CwslPlayerSkillCooldowns>();
+    }
+
     public override bool CanCastServer(ulong senderClientId)
     {
         if (!IsServer)
             return false;
 
-        if (Time.time < nextCastTime)
+        if (skillCooldowns != null && !skillCooldowns.IsReady(0))
             return false;
 
         var gold = GetComponent<CwslPlayerGold>();
@@ -40,10 +44,10 @@ public class CwslRedMageMeteorSkill : CwslPlayerSkillBase
         if (!IsServer)
             return;
 
-        if (Time.time < nextCastTime)
+        if (skillCooldowns != null && !skillCooldowns.IsReady(0))
             return;
 
-        nextCastTime = Time.time + Cooldown;
+        skillCooldowns?.BeginCooldown(0);
         var impactPoint = worldPoint;
         impactPoint.y = 0f;
 

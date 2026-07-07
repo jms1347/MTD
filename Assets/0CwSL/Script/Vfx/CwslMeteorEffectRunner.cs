@@ -1,16 +1,16 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class CwslMeteorEffectRunner : MonoBehaviour
 {
     private const float EffectScaleMultiplier = 0.8f;
+    private const float GroundFireScale = 0.42f;
 
     // ETFX 미사일은 보통 local +Z가 진행 방향. 낙하 시 코가 아래를 향하도록 함.
     private static readonly Quaternion FallRotation = Quaternion.LookRotation(Vector3.down, Vector3.forward);
     // 지상 폭발은 Y-up (옆으로 눕지 않게)
     private static readonly Quaternion ImpactRotation = Quaternion.identity;
-    // 그을림 데칼은 바닥에 붙도록 X축 90도
-    private static readonly Quaternion BurnRotation = Quaternion.Euler(90f, 0f, 0f);
 
     public void Play(Vector3 impactPoint, float fallHeight, float fallDuration, float burnLifetime, float areaRadius)
     {
@@ -27,10 +27,8 @@ public class CwslMeteorEffectRunner : MonoBehaviour
         var assets = CwslGameSession.Instance?.Assets;
         var start = impactPoint + Vector3.up * fallHeight;
 
-        // 영역 직경에 맞춰 스케일 (데미지 반경만큼 크게)
         var fallScale = areaRadius * 0.55f * EffectScaleMultiplier;
         var impactScale = areaRadius * 0.95f * EffectScaleMultiplier;
-        var burnScale = areaRadius * 2.15f * EffectScaleMultiplier;
 
         var fallVisual = SpawnVisual(assets?.meteorFallVfx, start, FallRotation, fallScale);
         if (fallVisual == null)
@@ -64,20 +62,48 @@ public class CwslMeteorEffectRunner : MonoBehaviour
             Destroy(impact, 5f);
         }
 
-        var burn = SpawnVisual(
-            assets?.meteorBurnVfx,
-            impactPoint + Vector3.up * 0.03f,
-            BurnRotation,
-            burnScale);
-        if (burn == null)
-            burn = CreateFallbackBurn(impactPoint, areaRadius);
-        else
-            Destroy(burn, burnLifetime);
+        SpawnRandomGroundFires(impactPoint, areaRadius, assets);
 
-        if (burn != null)
-            Destroy(burn, burnLifetime);
+        Destroy(gameObject, CwslGameConstants.MeteorGroundFireLifetimeMax + 0.15f);
+    }
 
-        Destroy(gameObject, burnLifetime + 0.1f);
+    private static void SpawnRandomGroundFires(Vector3 center, float radius, CwslGameAssets assets)
+    {
+        var prefabs = CollectGroundFirePrefabs(assets);
+        if (prefabs.Count == 0)
+            return;
+
+        var count = Random.Range(
+            CwslGameConstants.MeteorGroundFirePatchCountMin,
+            CwslGameConstants.MeteorGroundFirePatchCountMax + 1);
+
+        for (var i = 0; i < count; i++)
+        {
+            var angle = Random.Range(0f, Mathf.PI * 2f);
+            var dist = Random.Range(radius * 0.08f, radius * 0.88f);
+            var position = center + new Vector3(Mathf.Cos(angle) * dist, 0.03f, Mathf.Sin(angle) * dist);
+            var prefab = prefabs[Random.Range(0, prefabs.Count)];
+            var lifetime = Random.Range(
+                CwslGameConstants.MeteorGroundFireLifetimeMin,
+                CwslGameConstants.MeteorGroundFireLifetimeMax);
+            var scale = Random.Range(0.75f, 1.15f) * GroundFireScale;
+            CwslVfxSpawner.Spawn(prefab, position, ImpactRotation, lifetime, scale);
+        }
+    }
+
+    private static List<GameObject> CollectGroundFirePrefabs(CwslGameAssets assets)
+    {
+        var list = new List<GameObject>(3);
+        if (assets == null)
+            return list;
+
+        if (assets.meteorGroundFireSoftAbVfx != null)
+            list.Add(assets.meteorGroundFireSoftAbVfx);
+        if (assets.meteorGroundFireSoftBigVfx != null)
+            list.Add(assets.meteorGroundFireSoftBigVfx);
+        if (assets.meteorGroundFireAdditiveVfx != null)
+            list.Add(assets.meteorGroundFireAdditiveVfx);
+        return list;
     }
 
     private static GameObject SpawnVisual(GameObject prefab, Vector3 position, Quaternion rotation, float scale)
@@ -100,7 +126,6 @@ public class CwslMeteorEffectRunner : MonoBehaviour
             rigidbody.detectCollisions = false;
         }
 
-        // 파티클이 스케일을 따라가도록
         foreach (var ps in instance.GetComponentsInChildren<ParticleSystem>(true))
         {
             var main = ps.main;
@@ -119,17 +144,6 @@ public class CwslMeteorEffectRunner : MonoBehaviour
         Object.Destroy(go.GetComponent<Collider>());
         CwslMaterialUtil.ApplyColor(go.GetComponent<Renderer>(), new Color(1f, 0.35f, 0.05f));
         CwslThreatLight.Ensure(go.transform, new Color(1f, 0.25f, 0.05f), 8f, 5f, Vector3.zero);
-        return go;
-    }
-
-    private static GameObject CreateFallbackBurn(Vector3 position, float areaRadius)
-    {
-        var go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        go.name = "BurnFallback";
-        go.transform.position = position + Vector3.up * 0.03f;
-        go.transform.localScale = new Vector3(areaRadius * 2f * EffectScaleMultiplier, 0.03f, areaRadius * 2f * EffectScaleMultiplier);
-        Object.Destroy(go.GetComponent<Collider>());
-        CwslMaterialUtil.ApplyColor(go.GetComponent<Renderer>(), new Color(0.22f, 0.07f, 0.03f));
         return go;
     }
 }

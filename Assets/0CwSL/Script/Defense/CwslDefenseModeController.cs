@@ -565,6 +565,10 @@ public class CwslDefenseModeController : NetworkBehaviour
 
                 SpawnFromRandomBase(CwslMonsterType.DefenseBoss);
 
+            if (manager.SpawnSeniorCoachEachMinute)
+
+                SpawnSeniorCoachAtMapEdge();
+
         }
 
 
@@ -972,6 +976,18 @@ public class CwslDefenseModeController : NetworkBehaviour
 
 
         CwslGameSession.Instance?.MonsterSpawner?.QueueDefenseSpawnServer(chosen.SpawnPosition, type);
+
+    }
+
+
+
+    private void SpawnSeniorCoachAtMapEdge()
+
+    {
+
+        var position = CwslArenaUtility.GetRandomMapEdgeSpawnPosition(CwslGameConstants.SeniorCoachOrbitInset);
+
+        CwslGameSession.Instance?.MonsterSpawner?.QueueDefenseSpawnServer(position, CwslMonsterType.SeniorCoach);
 
     }
 

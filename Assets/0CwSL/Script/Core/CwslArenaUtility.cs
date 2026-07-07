@@ -127,4 +127,42 @@ public static class CwslArenaUtility
         position.z = Mathf.Clamp(position.z, -extent, extent);
         return position;
     }
+
+    public static float GetMapEdgePerimeter(float inset = -1f)
+    {
+        if (inset < 0f)
+            inset = CwslGameConstants.MapEdgeSpawnInset;
+
+        var edge = GetMapEdgeHalfExtent(inset);
+        return edge * 8f;
+    }
+
+    /// <summary>맵 사각형 외곽을 시계 방향으로 도는 위치.</summary>
+    public static Vector3 GetMapEdgeOrbitPosition(float distanceAlongPerimeter, float inset = -1f)
+    {
+        if (inset < 0f)
+            inset = CwslGameConstants.MapEdgeSpawnInset;
+
+        var edge = GetMapEdgeHalfExtent(inset);
+        var sideLength = edge * 2f;
+        var perimeter = sideLength * 4f;
+        if (perimeter <= 0.001f)
+            return new Vector3(edge, CwslGameConstants.SpawnHeight, -edge);
+
+        var t = Mathf.Repeat(distanceAlongPerimeter, perimeter);
+
+        if (t < sideLength)
+            return new Vector3(edge, CwslGameConstants.SpawnHeight, -edge + t);
+
+        t -= sideLength;
+        if (t < sideLength)
+            return new Vector3(edge - t, CwslGameConstants.SpawnHeight, edge);
+
+        t -= sideLength;
+        if (t < sideLength)
+            return new Vector3(-edge, CwslGameConstants.SpawnHeight, edge - t);
+
+        t -= sideLength;
+        return new Vector3(-edge + t, CwslGameConstants.SpawnHeight, -edge);
+    }
 }

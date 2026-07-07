@@ -170,6 +170,9 @@ public class CwslMonsterSpawner : NetworkBehaviour
 
     private static CwslMonsterType RollDefenseMinionType()
     {
+        if (Random.value < CwslGameConstants.InkSniperSpawnChance)
+            return Random.value < 0.4f ? CwslMonsterType.NexusInkSniper : CwslMonsterType.InkSniper;
+
         return Random.Range(0, 7) switch
         {
             0 => CwslMonsterType.Melee,
@@ -187,6 +190,9 @@ public class CwslMonsterSpawner : NetworkBehaviour
         if (forcedType != CwslMonsterType.Melee)
             return forcedType;
 
+        if (Random.value < CwslGameConstants.InkSniperSpawnChance)
+            return CwslMonsterType.InkSniper;
+
         return Random.Range(0, 4) switch
         {
             0 => CwslMonsterType.Ranged,
@@ -196,19 +202,19 @@ public class CwslMonsterSpawner : NetworkBehaviour
         };
     }
 
-    private void SpawnMonsterAtServer(Vector3 position, CwslMonsterType type, bool isExecutive)
+    private NetworkObject SpawnMonsterAtServer(Vector3 position, CwslMonsterType type, bool isExecutive)
     {
         var session = CwslGameSession.Instance;
         if (session == null)
-            return;
+            return null;
 
         var prefab = session.GetMonsterPrefab(type);
         if (prefab == null)
-            return;
+            return null;
 
         var networkObject = CwslNetworkPoolService.Instance?.Get(prefab, position, Quaternion.identity);
         if (networkObject == null)
-            return;
+            return null;
 
         var instance = networkObject.gameObject;
         instance.transform.localScale = Vector3.one;
@@ -228,6 +234,52 @@ public class CwslMonsterSpawner : NetworkBehaviour
             health.OnKilled += HandleMonsterKilled;
 
         aliveCount++;
+        return networkObject;
+    }
+
+    /// <summary>홍명보 「싸워」 — 맵 가장자리 엘리트 2 + 자폭 3, 최저 HP 플레이어 추적.</summary>
+    public void SpawnBossElitePackAtEdgeServer(Vector3 edgeCenter, NetworkObject forcedPlayerTarget)
+    {
+        if (!IsServer || forcedPlayerTarget == null)
+            return;
+
+        var spread = 3.5f;
+        SpawnBossSkillMonsterImmediate(edgeCenter, CwslMonsterType.KoreaUniversitySoldier, forcedPlayerTarget);
+        SpawnBossSkillMonsterImmediate(
+            edgeCenter + new Vector3(spread, 0f, 0f),
+            CwslMonsterType.KoreaUniversitySoldier,
+            forcedPlayerTarget);
+        SpawnBossSkillMonsterImmediate(
+            edgeCenter + new Vector3(-spread * 0.5f, 0f, spread),
+            CwslMonsterType.Suicide,
+            forcedPlayerTarget);
+        SpawnBossSkillMonsterImmediate(
+            edgeCenter + new Vector3(spread * 0.5f, 0f, -spread),
+            CwslMonsterType.Suicide,
+            forcedPlayerTarget);
+        SpawnBossSkillMonsterImmediate(
+            edgeCenter + new Vector3(0f, 0f, spread * 0.8f),
+            CwslMonsterType.Suicide,
+            forcedPlayerTarget);
+    }
+
+    private void SpawnBossSkillMonsterImmediate(
+        Vector3 position,
+        CwslMonsterType type,
+        NetworkObject forcedPlayerTarget)
+    {
+        if (aliveCount >= maxAliveMonsters)
+            return;
+
+        position = CwslArenaUtility.ClampToArena(position);
+        var spawned = SpawnMonsterAtServer(position, type, isExecutive: false);
+        if (spawned == null)
+            return;
+
+        var forced = spawned.GetComponent<CwslMonsterForcedTarget>();
+        if (forced == null)
+            forced = spawned.gameObject.AddComponent<CwslMonsterForcedTarget>();
+        forced.SetTargetServer(forcedPlayerTarget);
     }
 
     private void HandleMonsterKilled(CwslMonsterHealth monster, ulong attackerClientId)

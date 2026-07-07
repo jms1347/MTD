@@ -35,9 +35,14 @@ public class CwslMonsterManager : MonoBehaviour
 
     [Header("중간보스")]
     [SerializeField] private float midBossHealthMultiplier = 30f;
-    [SerializeField] private float midBossScaleMultiplier = 2.1f;
+    [SerializeField] private float midBossScaleMultiplier = 3f;
     [SerializeField] private float midBossSpeedMultiplier = 0.667f;
     [SerializeField] private float midBossBuffRadius = 7f;
+
+    [Header("수석 코치")]
+    [SerializeField] private bool spawnSeniorCoachEachMinute = true;
+    [SerializeField] private float seniorCoachHealthMultiplier = 22f;
+    [SerializeField] private float seniorCoachScaleMultiplier = 3f;
 
     [Header("보스")]
     [SerializeField] private float defenseBossHealthMultiplier = 60f;
@@ -64,6 +69,9 @@ public class CwslMonsterManager : MonoBehaviour
     public float MidBossScaleMultiplier => midBossScaleMultiplier;
     public float MidBossSpeedMultiplier => midBossSpeedMultiplier;
     public float MidBossBuffRadius => midBossBuffRadius;
+    public bool SpawnSeniorCoachEachMinute => spawnSeniorCoachEachMinute;
+    public float SeniorCoachHealthMultiplier => seniorCoachHealthMultiplier;
+    public float SeniorCoachScaleMultiplier => seniorCoachScaleMultiplier;
     public float DefenseBossHealthMultiplier => defenseBossHealthMultiplier;
     public float DefenseBossScaleMultiplier => defenseBossScaleMultiplier;
     public float DefenseBossSpeedMultiplier => defenseBossSpeedMultiplier;

@@ -13,24 +13,47 @@ MonoBehaviour:
   m_Name: CwslGameAssets
   m_EditorClassIdentifier: Assembly-CSharp::CwslGameAssets
   darkMissileVfx: {fileID: 150356, guid: a9286d9ebf8c6b947917ec3f20e96819, type: 3}
+  rangedTankProjectileVfx: {fileID: 173562, guid: 985812ee18738f5498883b84d92bd41b, type: 3}
+  rangedTankMuzzleVfx: {fileID: 196364, guid: 061b27571e89e4746921e6780954fc33, type: 3}
+  rangedTankProjectileHitVfx: {fileID: 151354, guid: 666381b24c234194882b77851e943ef1, type: 3}
+  inkBlindAuraVfx: {fileID: 143018, guid: 4ef67ccc10cbe6c4494cb37e4a2cad03, type: 3}
   shadowProjectileHitVfx: {fileID: 133642, guid: 721ed883392764d42a3957861e7752c0, type: 3}
   shadowMuzzleVfx: {fileID: 150312, guid: da454a5cc69c9464aa8eae6b8492536e, type: 3}
-  suicideExplosionVfx: {fileID: 130346, guid: 07bf9ced87963e24299c2c2a22bfeeb6, type: 3}
+  suicideExplosionVfx: {fileID: 105310, guid: e6ea0c2b13012484ba2f5dc1054e6d75, type: 3}
+  suicideBomberDeathVfx: {fileID: 1221293952758510, guid: 21e3fa923d4f261409d83b8d0f6e81c7, type: 3}
   bombFuseVfx: {fileID: 196072, guid: 0b4ea991852d6984aab98759fa8d4ebb, type: 3}
   meleeHitVfx: {fileID: 1493123572548342, guid: 0b76d277096f4dc4fad0065918f5c9d3, type: 3}
-  enemyDeathVfx: {fileID: 160684, guid: de85f8f81ea29ea479250adb36debd92, type: 3}
-  bossDeathVfx: {fileID: 1390804924065176, guid: 72ae485445fce1144bab28ae2f6aadd4, type: 3}
+  enemyDeathVfx: {fileID: 1221293952758510, guid: 21e3fa923d4f261409d83b8d0f6e81c7, type: 3}
+  bossDeathVfx: {fileID: 1221293952758510, guid: 21e3fa923d4f261409d83b8d0f6e81c7, type: 3}
   playerDeathVfx: {fileID: 1631042304284920, guid: 94c74d51bcada5249a6520831c0f6e9b, type: 3}
   goldBurstVfx: {fileID: 143964, guid: 09d9de58ef3bf5444ac94afa0e6013cb, type: 3}
   goldPickupSound: {fileID: 8300000, guid: bd7723e163262f04fb85ffc0537c0a58, type: 3}
   goldMagnetTrailVfx: {fileID: 118250, guid: a79f8048fa75d6c449d730e96bb836fa, type: 3}
   playerMissileVfx: {fileID: 135146, guid: b79841d82f4b1f6499d7f44697afdcbd, type: 3}
+  missileTankPowerBoostVfx: {fileID: 189512, guid: e2a6556875ac55a44b3e6e6a62cdb381, type: 3}
+  missileTankSmokeDashTrailVfx: {fileID: 130620, guid: 1bff3d95f687092458215d6af5ecc998, type: 3}
+  missileTankSmokeBombVfx: {fileID: 164886, guid: e16ed42fec42f5f4eb4f89b453707d71, type: 3}
+  missileTankSmokeZoneVfx: {fileID: 140774, guid: 5f3df74fe190ff84f8893b1bbb6cb3b6, type: 3}
+  missileTankFireAmmoVfx: {fileID: 147436, guid: 3b671081e44be1c4aa4355e8ba6e8a5e, type: 3}
+  missileTankPoisonAmmoVfx: {fileID: 1718891148821202, guid: 809b30582ebd3e34a872e06f41d1fb2f, type: 3}
+  missileTankLightningAmmoVfx: {fileID: 145690, guid: f8719d945ee38e64f8a6a13b8e569992, type: 3}
   gunMuzzleVfx: {fileID: 195376, guid: 346f3bf3686d682498113714ee132099, type: 3}
   fortifyAuraVfx: {fileID: 1135644536747142, guid: c105577ec49dfb3408a7a89c3b7730be, type: 3}
   fortifyBlockVfx: {fileID: 1090678147105552, guid: bac6010fd61d72b419fb265a96000090, type: 3}
+  shieldDashWaveVfx: {fileID: 1140404083555214, guid: e66bddc96394d4a45b8c8fd1ed37a43d, type: 3}
+  shieldWhirlwindVfx: {fileID: 1467648916482132, guid: 4dbdb784e0af38849b77a4985b387e73, type: 3}
+  shieldSlamSoftVfx: {fileID: 180820, guid: a07608802ac497743a7f19f6633fdd70, type: 3}
+  shieldSlamCartoonyVfx: {fileID: 195466, guid: 56c3274d2f9ec214ab584a80b5ce2d6d, type: 3}
+  monsterBurnStatusVfx: {fileID: 1661274407571502, guid: ee669d1e89c1c6c4fb28f6d9939756a0, type: 3}
+  monsterSlowStatusVfx: {fileID: 100000, guid: 7b56cd9b663f23f429e131a54ec87db0, type: 3}
+  monsterShockStatusVfx: {fileID: 1846532664448058, guid: 20980e90dd2e73b419275714d5c124c4, type: 3}
+  monsterPoisonStatusVfx: {fileID: 1865115024312759768, guid: 3088ed555dc10bb49bd7b6b688c2025a, type: 3}
   meteorFallVfx: {fileID: 113030, guid: 25a78a965241d084996f23857207e95f, type: 3}
   meteorImpactVfx: {fileID: 130346, guid: 07bf9ced87963e24299c2c2a22bfeeb6, type: 3}
   meteorBurnVfx: {fileID: 1027697777517218, guid: 628d050c815a3a3448ce1dcdf0578f21, type: 3}
+  meteorGroundFireSoftAbVfx: {fileID: 1681286073628092, guid: 7ce1cf2537abade4bae7a6789ca2223f, type: 3}
+  meteorGroundFireSoftBigVfx: {fileID: 1697846305876678, guid: e0902f682a861c84b874a0581a6a7593, type: 3}
+  meteorGroundFireAdditiveVfx: {fileID: 115116, guid: 402cfc0892ef54047b74d53d5a560238, type: 3}
   rammerStunExplosionVfx: {fileID: 123268, guid: 775fb3e8f5df827428272416a14d9adf, type: 3}
   rammerStunStarsVfx: {fileID: 109542, guid: 2ed06ab528b7c474eb9246421cd7c791, type: 3}
   gatherChargeCircleVfx: {fileID: 124416, guid: 9b95de169c5cf5b46b404f6f2bed4afb, type: 3}
@@ -79,6 +102,9 @@ MonoBehaviour:
   lightningStunExplosionVfx: {fileID: 136540, guid: 215ff560badfe1d4b8391e64e82c5f4e, type: 3}
   lightningStunStrikeVfx: {fileID: 134366, guid: e138ae207292b5d46b564280936b8668, type: 3}
   lightningZoneAuraVfx: {fileID: 134696, guid: b7e5be8cde65c7c42915ee6e2273d19b, type: 3}
+  redMageLightningOrbVfx: {fileID: 190666, guid: 992c31aa5088a9649851c996f2a08b7e, type: 3}
+  redMageLightningExplosionVfx: {fileID: 121496, guid: 5e8a137808d7d374487f34e236c723db, type: 3}
+  redMageTeleportPortalVfx: {fileID: 128752, guid: 8ade55bc7f33dcc46947f3bc7d22bc3b, type: 3}
   hazardAcidPadVfx: {fileID: 112986, guid: e370423ba226169489d92631df31f5af, type: 3}
   hazardLavaPadVfx: {fileID: 129292, guid: d8ac9950df006754ea1bf8311f5c97bc, type: 3}
   hazardWaterPadVfx: {fileID: 130202, guid: 69650b375a92f8e4c8ac8682d63f7451, type: 3}
@@ -103,15 +129,23 @@ MonoBehaviour:
   skillGoldFailSound: {fileID: 8300000, guid: 1977a51030f8f024191e311f880570eb, type: 3}
   playerPrefab: {fileID: 6360497807503343767, guid: 5885e0e861be95e41b8318c7d2df905d, type: 3}
   rangedMonsterPrefab: {fileID: 5648177666945189405, guid: 7c47dd5b69da58e46b0228723bfc6e50, type: 3}
+  inkSniperMonsterPrefab: {fileID: 7496961707958841258, guid: e956cfab686e7f5498a96fc182238940, type: 3}
   suicideMonsterPrefab: {fileID: 693524371213619005, guid: 89969a663620d644fbe8335b472026cd, type: 3}
   meleeMonsterPrefab: {fileID: 7465007812737386769, guid: 2ec1279b68738f04b991358d21d09a5d, type: 3}
+  nexusMeleeMonsterPrefab: {fileID: 6563608533723554948, guid: 3fc4e30206f80424a9f51489186545cd, type: 3}
+  slimeMeleeModelPrefab: {fileID: 6705402075998324148, guid: d941199d4a58fcb45adc75ea8e37c42c, type: 3}
+  slimeNexusMeleeModelPrefab: {fileID: 6688149642241925542, guid: 11eed2dfd1329ab4db9e7f27b8e628b7, type: 3}
+  slimeAnimatorController: {fileID: 9100000, guid: 707b944f06051734793367fc0c69bc07, type: 2}
   koreaUniversitySoldierPrefab: {fileID: 8121496405248439786, guid: e749375458505d6438557d9527f56678, type: 3}
   stickySuicideMonsterPrefab: {fileID: 7352492724226601143, guid: 96dbfc664993ac54598fb98cb23948f5, type: 3}
   projectilePrefab: {fileID: 7720487643500137776, guid: 047c5caa0a97ffa42b3ab283eda90562, type: 3}
+  bossSkillProjectilePrefab: {fileID: 9101957551157521803, guid: 517a29e0170bfa34a96739549228b32f, type: 3}
   playerMissilePrefab: {fileID: 1119159180590963851, guid: 4146e1dbd4978cd4bbacf7eeaca4b646, type: 3}
+  frozenOrbPrefab: {fileID: 2236558183204529545, guid: ded7e6d1661745240933062af566ef38, type: 3}
   bossPrefab: {fileID: 4975743835310029067, guid: 947ba38eea4204749ba65b99196b3922, type: 3}
   midBossMonsterPrefab: {fileID: 1179032646208479811, guid: 8774500c5e509a9418988a412960aee1, type: 3}
   defenseBossMonsterPrefab: {fileID: 8572479323002272293, guid: 1428f2f3c8b4b824eabb63f83e43b59a, type: 3}
+  seniorCoachMonsterPrefab: {fileID: 3540037088386899945, guid: 63fa7ba162816a24487a84b0731886d4, type: 3}
   nexusPrefab: {fileID: 5579736234828561980, guid: 3676912a60de2d545b8011699416ec8d, type: 3}
   enemyBasePrefab: {fileID: 4021903022380138013, guid: 760c013012080ba468e41a030186c9b4, type: 3}
   goldPickupPrefab: {fileID: 8285741258449009015, guid: 5f1905539d50fc14a91e5ff699dab977, type: 3}

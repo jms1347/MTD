@@ -8,8 +8,14 @@ public static class CwslMonsterVisualBuilder
     private static readonly Color KuSkin = new(0.92f, 0.78f, 0.66f);
     private static readonly Color KuHair = new(0.12f, 0.1f, 0.1f);
     private static readonly Color KuCleat = new(0.14f, 0.14f, 0.16f);
+    private static readonly Color BombTopRed = new(0.92f, 0.12f, 0.18f);
+    private static readonly Color BombBottomWhite = new(0.94f, 0.94f, 0.96f);
+    private static readonly Color TimerRed = new(0.92f, 0.12f, 0.1f);
     private static readonly Color BombFuseBrown = new(0.34f, 0.24f, 0.14f);
     private static readonly Color BombMetalBand = new(0.42f, 0.4f, 0.38f);
+    private static readonly Color MineBodyOlive = new(0.42f, 0.48f, 0.32f);
+    private static readonly Color MineBodyDark = new(0.32f, 0.36f, 0.26f);
+    private static readonly Color HazardYellow = new(0.95f, 0.82f, 0.12f);
     private static readonly Color PhoneScreen = new(0.08f, 0.1f, 0.14f);
 
     public static void Build(Transform root, CwslMonsterType type)
@@ -22,11 +28,35 @@ public static class CwslMonsterVisualBuilder
             return;
         }
 
+        if (type is CwslMonsterType.BossHongmyeongbo or CwslMonsterType.MidBoss or CwslMonsterType.SeniorCoach)
+        {
+            var visualRoot = new GameObject("Visual");
+            visualRoot.transform.SetParent(root, false);
+            BuildKoreaUniversitySoldier(visualRoot.transform);
+            return;
+        }
+
         if (type == CwslMonsterType.StickySuicide)
         {
             var visualRoot = new GameObject("Visual");
             visualRoot.transform.SetParent(root, false);
             BuildStickySuicideBomber(visualRoot.transform, CwslMonsterVisualPalette.GetPalette(type));
+            return;
+        }
+
+        if (type is CwslMonsterType.Melee or CwslMonsterType.NexusMelee)
+        {
+            var visualRoot = new GameObject("Visual");
+            visualRoot.transform.SetParent(root, false);
+            CwslSlimeMeleeVisualBuilder.Build(visualRoot.transform, type);
+            return;
+        }
+
+        if (type is CwslMonsterType.InkSniper or CwslMonsterType.NexusInkSniper)
+        {
+            var visualRoot = new GameObject("Visual");
+            visualRoot.transform.SetParent(root, false);
+            CwslInkOctopusVisualBuilder.Build(visualRoot.transform, CwslMonsterVisualPalette.GetPalette(type));
             return;
         }
 
@@ -64,8 +94,10 @@ public static class CwslMonsterVisualBuilder
         return type switch
         {
             CwslMonsterType.Ranged or CwslMonsterType.NexusRanged => MonsterSilhouette.Tank,
+            CwslMonsterType.InkSniper or CwslMonsterType.NexusInkSniper => MonsterSilhouette.Robot,
             CwslMonsterType.Suicide or CwslMonsterType.NexusSuicide => MonsterSilhouette.Bomb,
             CwslMonsterType.Melee or CwslMonsterType.NexusMelee => MonsterSilhouette.Juggler,
+            CwslMonsterType.MidBoss or CwslMonsterType.SeniorCoach => MonsterSilhouette.Juggler,
             _ => MonsterSilhouette.Robot
         };
     }
@@ -126,45 +158,318 @@ public static class CwslMonsterVisualBuilder
     {
         AddMonsterWalkLegs(root, palette.Metal, null, CwslMaterialStyle.Rubber);
 
-        var body = CreateKuPrimitive(PrimitiveType.Sphere, root, new Vector3(0f, 0.58f, 0f),
-            Vector3.one * 0.72f, palette.Primary, CwslMaterialStyle.BombShell);
-        var band = CreateKuPrimitive(PrimitiveType.Cylinder, root, new Vector3(0f, 0.58f, 0f),
-            new Vector3(0.78f, 0.045f, 0.78f), BombMetalBand, CwslMaterialStyle.Metal);
-        band.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-        var highlight = CreateKuPrimitive(PrimitiveType.Sphere, root, new Vector3(-0.18f, 0.68f, 0.2f),
-            Vector3.one * 0.12f, Color.Lerp(palette.Primary, Color.white, 0.55f), CwslMaterialStyle.Glossy);
-        var fuse = CreateKuPrimitive(PrimitiveType.Cylinder, root, new Vector3(0f, 1.02f, 0f),
-            new Vector3(0.045f, 0.1f, 0.045f), BombFuseBrown, CwslMaterialStyle.FuseRope);
+        const float diameter = 0.72f;
+        const float centerY = 0.58f;
+        BuildHalfSphereBombBody(root, centerY, diameter, BombTopRed, BombBottomWhite, out var fuseBaseY);
+        BuildElectrodeFace(root, centerY, diameter * 0.5f);
+
+        var fuse = CreateKuPrimitive(
+            PrimitiveType.Cylinder,
+            root,
+            new Vector3(0f, fuseBaseY + 0.05f, 0f),
+            new Vector3(0.045f, 0.1f, 0.045f),
+            BombFuseBrown,
+            CwslMaterialStyle.FuseRope);
 
         var fuseTip = new GameObject("FuseTip");
         fuseTip.transform.SetParent(root, false);
-        fuseTip.transform.localPosition = new Vector3(0f, 1.14f, 0f);
+        fuseTip.transform.localPosition = new Vector3(0f, fuseBaseY + 0.17f, 0f);
         CwslSuicideFuseVisual.Ensure(fuseTip.transform, 0.18f);
 
         EnsureMonsterWalkVisual(root);
-        RemoveColliders(body, band, highlight, fuse);
+        RemoveColliders(fuse);
+    }
+
+    private static void BuildElectrodeFace(Transform ballRoot, float centerY, float radius)
+    {
+        var faceZ = radius * 0.94f;
+
+        var eyeL = CreateKuPrimitive(
+            PrimitiveType.Sphere,
+            ballRoot,
+            new Vector3(-0.11f, centerY + 0.14f, faceZ),
+            new Vector3(0.055f, 0.09f, 0.04f),
+            KuBlack,
+            CwslMaterialStyle.Matte);
+        var eyeR = CreateKuPrimitive(
+            PrimitiveType.Sphere,
+            ballRoot,
+            new Vector3(0.11f, centerY + 0.14f, faceZ),
+            new Vector3(0.055f, 0.09f, 0.04f),
+            KuBlack,
+            CwslMaterialStyle.Matte);
+
+        var browL = CreateKuPrimitive(
+            PrimitiveType.Cube,
+            ballRoot,
+            new Vector3(-0.11f, centerY + 0.24f, faceZ - 0.01f),
+            new Vector3(0.12f, 0.035f, 0.03f),
+            KuBlack,
+            CwslMaterialStyle.Matte);
+        browL.transform.localRotation = Quaternion.Euler(0f, 0f, 24f);
+        var browR = CreateKuPrimitive(
+            PrimitiveType.Cube,
+            ballRoot,
+            new Vector3(0.11f, centerY + 0.24f, faceZ - 0.01f),
+            new Vector3(0.12f, 0.035f, 0.03f),
+            KuBlack,
+            CwslMaterialStyle.Matte);
+        browR.transform.localRotation = Quaternion.Euler(0f, 0f, -24f);
+
+        var mouth = CreateKuPrimitive(
+            PrimitiveType.Cube,
+            ballRoot,
+            new Vector3(0f, centerY - 0.1f, faceZ),
+            new Vector3(0.28f, 0.05f, 0.03f),
+            KuBlack,
+            CwslMaterialStyle.Matte);
+        mouth.transform.localRotation = Quaternion.Euler(8f, 0f, 0f);
+
+        var teeth = CreateKuPrimitive(
+            PrimitiveType.Cube,
+            ballRoot,
+            new Vector3(0f, centerY - 0.08f, faceZ + 0.01f),
+            new Vector3(0.24f, 0.035f, 0.025f),
+            KuWhite,
+            CwslMaterialStyle.Glossy);
+
+        RemoveColliders(eyeL, eyeR, browL, browR, mouth, teeth);
+    }
+
+    private static void BuildHalfSphereBombBody(
+        Transform root,
+        float centerY,
+        float diameter,
+        Color topColor,
+        Color bottomColor,
+        out float fuseBaseY)
+    {
+        var halfHeight = diameter * 0.5f;
+        var lowerCenterY = centerY - halfHeight * 0.5f;
+        var upperCenterY = centerY + halfHeight * 0.5f;
+        var halfScale = new Vector3(diameter, halfHeight, diameter);
+        fuseBaseY = centerY + halfHeight;
+
+        var lower = CreateKuPrimitive(
+            PrimitiveType.Sphere,
+            root,
+            new Vector3(0f, lowerCenterY, 0f),
+            halfScale,
+            bottomColor,
+            CwslMaterialStyle.BombShell);
+        var upper = CreateKuPrimitive(
+            PrimitiveType.Sphere,
+            root,
+            new Vector3(0f, upperCenterY, 0f),
+            halfScale,
+            topColor,
+            CwslMaterialStyle.BombShell);
+
+        var band = CreateKuPrimitive(
+            PrimitiveType.Cylinder,
+            root,
+            new Vector3(0f, centerY, 0f),
+            new Vector3(diameter * 1.04f, 0.02f, diameter * 1.04f),
+            KuBlack,
+            CwslMaterialStyle.Matte);
+        band.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+
+        var highlight = CreateKuPrimitive(
+            PrimitiveType.Sphere,
+            root,
+            new Vector3(-0.14f, upperCenterY + 0.05f, 0.14f),
+            Vector3.one * 0.1f,
+            Color.Lerp(topColor, Color.white, 0.65f),
+            CwslMaterialStyle.Glossy);
+
+        RemoveColliders(lower, upper, band, highlight);
+
+        var explosionAnchor = new GameObject("ExplosionAnchor");
+        explosionAnchor.transform.SetParent(root, false);
+        explosionAnchor.transform.localPosition = new Vector3(0f, centerY, 0f);
     }
 
     private static void BuildStickySuicideBomber(Transform root, CwslMonsterPalette palette)
     {
-        AddMonsterWalkLegs(root, palette.Metal, null, CwslMaterialStyle.Rubber);
+        BuildMineBotLegs(root, palette.Metal);
 
-        var body = CreateKuPrimitive(PrimitiveType.Cube, root, new Vector3(0f, 0.54f, 0f),
-            new Vector3(0.2f, 0.4f, 0.11f), palette.Primary, CwslMaterialStyle.Glossy);
-        var bezel = CreateKuPrimitive(PrimitiveType.Cube, root, new Vector3(0f, 0.54f, 0f),
-            new Vector3(0.215f, 0.415f, 0.115f), BombMetalBand, CwslMaterialStyle.Metal);
-        var screen = CreateKuPrimitive(PrimitiveType.Cube, body.transform, new Vector3(0f, 0f, 0.52f),
-            new Vector3(0.82f, 0.86f, 0.12f), PhoneScreen, CwslMaterialStyle.Glass);
-        var fuse = CreateKuPrimitive(PrimitiveType.Cylinder, root, new Vector3(0f, 0.84f, 0f),
-            new Vector3(0.035f, 0.07f, 0.035f), BombFuseBrown, CwslMaterialStyle.FuseRope);
+        const float bodyY = 0.5f;
+        const float bodyWidth = 0.48f;
+        const float bodyHeight = 0.2f;
+        const float bodyDepth = 0.4f;
+        const float halfHeight = bodyHeight * 0.5f;
+        const float fuseBaseY = bodyY + halfHeight;
+
+        var body = CreateKuPrimitive(
+            PrimitiveType.Cube,
+            root,
+            new Vector3(0f, bodyY, 0f),
+            new Vector3(bodyWidth, bodyHeight, bodyDepth),
+            MineBodyOlive,
+            CwslMaterialStyle.Matte);
+        var bodyFrame = CreateKuPrimitive(
+            PrimitiveType.Cube,
+            root,
+            new Vector3(0f, bodyY, 0f),
+            new Vector3(bodyWidth + 0.02f, bodyHeight + 0.02f, bodyDepth + 0.02f),
+            MineBodyDark,
+            CwslMaterialStyle.Metal);
+
+        AddHazardStripe(root, new Vector3(0f, bodyY + halfHeight + 0.01f, 0f), new Vector3(bodyWidth + 0.01f, 0.035f, bodyDepth + 0.01f));
+        AddHazardStripe(root, new Vector3(0f, bodyY + halfHeight + 0.01f, bodyDepth * 0.48f), new Vector3(bodyWidth * 0.88f, 0.03f, 0.04f));
+
+        var sensor = CreateKuPrimitive(
+            PrimitiveType.Cube,
+            root,
+            new Vector3(0f, bodyY + 0.02f, bodyDepth * 0.5f + 0.01f),
+            new Vector3(0.14f, 0.09f, 0.03f),
+            palette.Accent,
+            CwslMaterialStyle.Glossy);
+        CwslThreatLight.Ensure(sensor.transform, palette.Accent, 2.2f, 1.4f, Vector3.zero);
+
+        var pressureRing = CreateKuPrimitive(
+            PrimitiveType.Cylinder,
+            root,
+            new Vector3(0f, bodyY + halfHeight + 0.012f, bodyDepth * 0.18f),
+            new Vector3(0.1f, 0.008f, 0.1f),
+            BombMetalBand,
+            CwslMaterialStyle.Metal);
+        pressureRing.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+
+        var timerPanel = CreateKuPrimitive(
+            PrimitiveType.Cube,
+            root,
+            new Vector3(bodyWidth * 0.5f + 0.01f, bodyY + 0.02f, 0f),
+            new Vector3(0.03f, 0.11f, 0.08f),
+            TimerRed,
+            CwslMaterialStyle.Glossy);
+        timerPanel.name = "TimerPanel";
+        timerPanel.SetActive(false);
+
+        var labelPlate = CreateKuPrimitive(
+            PrimitiveType.Cube,
+            root,
+            new Vector3(-bodyWidth * 0.34f, bodyY, bodyDepth * 0.5f + 0.01f),
+            new Vector3(0.1f, 0.12f, 0.02f),
+            KuWhite,
+            CwslMaterialStyle.Matte);
+        CreateKuPrimitive(
+            PrimitiveType.Cube,
+            labelPlate.transform,
+            new Vector3(0f, 0.04f, 0.52f),
+            new Vector3(0.75f, 0.14f, 0.2f),
+            HazardYellow,
+            CwslMaterialStyle.Matte);
+
+        var antenna = CreateKuPrimitive(
+            PrimitiveType.Cylinder,
+            root,
+            new Vector3(-bodyWidth * 0.32f, bodyY + halfHeight + 0.08f, -bodyDepth * 0.28f),
+            new Vector3(0.018f, 0.1f, 0.018f),
+            palette.Metal,
+            CwslMaterialStyle.Metal);
+
+        var fuseRope = CreateKuPrimitive(
+            PrimitiveType.Cylinder,
+            root,
+            new Vector3(0f, fuseBaseY + 0.1f, -bodyDepth * 0.08f),
+            new Vector3(0.028f, 0.18f, 0.028f),
+            BombFuseBrown,
+            CwslMaterialStyle.FuseRope);
+        fuseRope.name = "FuseRope";
+
+        var fuseBurnRoot = new GameObject("FuseBurnRoot");
+        fuseBurnRoot.transform.SetParent(root, false);
+        fuseBurnRoot.transform.localPosition = Vector3.zero;
+
+        var fuseTop = new GameObject("FuseTop");
+        fuseTop.transform.SetParent(fuseBurnRoot.transform, false);
+        fuseTop.transform.localPosition = new Vector3(0f, fuseBaseY + 0.19f, -bodyDepth * 0.08f);
+
+        var fuseBottom = new GameObject("FuseBottom");
+        fuseBottom.transform.SetParent(fuseBurnRoot.transform, false);
+        fuseBottom.transform.localPosition = new Vector3(0f, fuseBaseY + 0.02f, -bodyDepth * 0.08f);
 
         var fuseTip = new GameObject("FuseTip");
-        fuseTip.transform.SetParent(root, false);
-        fuseTip.transform.localPosition = new Vector3(0f, 0.94f, 0f);
-        CwslSuicideFuseVisual.Ensure(fuseTip.transform, 0.15f);
+        fuseTip.transform.SetParent(fuseBurnRoot.transform, false);
+        fuseTip.transform.localPosition = fuseTop.transform.localPosition;
+        CwslSuicideFuseVisual.Ensure(fuseTip.transform, 0.14f);
+        fuseTip.GetComponent<CwslSuicideFuseVisual>()?.SetBurningActive(false);
+
+        var fuseBurn = fuseBurnRoot.AddComponent<CwslStickyMineFuseBurnVisual>();
+        fuseBurn.Configure(fuseTop.transform, fuseBottom.transform, fuseTip.transform, timerPanel.transform);
+
+        var explosionAnchor = new GameObject("ExplosionAnchor");
+        explosionAnchor.transform.SetParent(root, false);
+        explosionAnchor.transform.localPosition = new Vector3(0f, bodyY, 0f);
 
         EnsureMonsterWalkVisual(root);
-        RemoveColliders(body, bezel, screen, fuse);
+        RemoveColliders(body, bodyFrame, sensor, pressureRing, timerPanel, labelPlate, antenna, fuseRope);
+    }
+
+    private static void AddHazardStripe(Transform root, Vector3 localPosition, Vector3 localScale)
+    {
+        const int stripeCount = 5;
+        var stripeWidth = localScale.x / stripeCount;
+
+        for (var i = 0; i < stripeCount; i++)
+        {
+            var x = -localScale.x * 0.5f + stripeWidth * (i + 0.5f);
+            var stripe = CreateKuPrimitive(
+                PrimitiveType.Cube,
+                root,
+                localPosition + new Vector3(x, 0f, 0f),
+                new Vector3(stripeWidth * 0.92f, localScale.y, localScale.z),
+                i % 2 == 0 ? HazardYellow : KuBlack,
+                CwslMaterialStyle.Matte);
+            RemoveCollider(stripe);
+        }
+    }
+
+    private static void BuildMineBotLegs(Transform root, Color metalColor)
+    {
+        BuildMineLeg(root, "LegL", new Vector3(-0.16f, 0.24f, 0.12f), metalColor);
+        BuildMineLeg(root, "LegR", new Vector3(0.16f, 0.24f, 0.12f), metalColor);
+        BuildMineLeg(root, "LegBL", new Vector3(-0.16f, 0.24f, -0.12f), metalColor);
+        BuildMineLeg(root, "LegBR", new Vector3(0.16f, 0.24f, -0.12f), metalColor);
+    }
+
+    private static void BuildMineLeg(Transform root, string legName, Vector3 localPosition, Color metalColor)
+    {
+        var legPivot = new GameObject(legName);
+        legPivot.transform.SetParent(root, false);
+        legPivot.transform.localPosition = localPosition;
+
+        var upper = CreateKuPrimitive(
+            PrimitiveType.Cube,
+            legPivot.transform,
+            new Vector3(0f, -0.08f, 0f),
+            new Vector3(0.08f, 0.14f, 0.08f),
+            metalColor,
+            CwslMaterialStyle.Metal);
+        var knee = CreateKuPrimitive(
+            PrimitiveType.Sphere,
+            legPivot.transform,
+            new Vector3(0f, -0.16f, 0f),
+            Vector3.one * 0.06f,
+            Color.Lerp(metalColor, KuBlack, 0.25f),
+            CwslMaterialStyle.Metal);
+        var lower = CreateKuPrimitive(
+            PrimitiveType.Cube,
+            legPivot.transform,
+            new Vector3(0f, -0.24f, 0f),
+            new Vector3(0.07f, 0.12f, 0.07f),
+            metalColor,
+            CwslMaterialStyle.Metal);
+        var tread = CreateKuPrimitive(
+            PrimitiveType.Cube,
+            legPivot.transform,
+            new Vector3(0f, -0.31f, 0.03f),
+            new Vector3(0.1f, 0.05f, 0.14f),
+            KuBlack,
+            CwslMaterialStyle.Rubber);
+
+        RemoveColliders(upper, knee, lower, tread);
     }
 
     private static void AddMonsterWalkLegs(
@@ -291,6 +596,11 @@ public static class CwslMonsterVisualBuilder
         muzzle.transform.localPosition = new Vector3(0f, 0f, 0.52f);
 
         RemoveColliders(treadL, treadR, hull, skirt, turret, barrel);
+    }
+
+    public static void BuildJugglerFallback(Transform root, CwslMonsterPalette palette)
+    {
+        BuildJuggler(root, palette);
     }
 
     private static void BuildJuggler(Transform root, CwslMonsterPalette palette)
@@ -423,6 +733,8 @@ public static class CwslMonsterVisualBuilder
         visualRoot.AddComponent<CwslPlayerLegWalkVisual>();
         visualRoot.AddComponent<CwslPlayerShieldWalkVisual>();
         visualRoot.AddComponent<CwslPlayerShieldBashVisual>();
+        visualRoot.AddComponent<CwslTankShieldSkillVisual>();
+        visualRoot.AddComponent<CwslTankShieldDashWaveVisual>();
     }
 
     public static void BuildMissileTankPlayer(Transform root, Color accentColor)
@@ -430,6 +742,7 @@ public static class CwslMonsterVisualBuilder
         var visualRoot = new GameObject("Visual");
         visualRoot.transform.SetParent(root, false);
         visualRoot.AddComponent<CwslPlayerGunShootVisual>();
+        visualRoot.AddComponent<CwslMissileTankAmmoHudVisual>();
 
         var armorColor = Color.Lerp(accentColor, new Color(0.22f, 0.28f, 0.18f), 0.35f);
         var trimColor = Color.Lerp(armorColor, Color.black, 0.32f);
@@ -839,4 +1152,14 @@ public static class CwslMonsterVisualBuilder
         else
             Object.DestroyImmediate(collider);
     }
+
+    public static GameObject CreatePrimitivePublic(
+        PrimitiveType type,
+        Transform parent,
+        Vector3 localPosition,
+        Vector3 localScale,
+        Color color) =>
+        CreatePrimitive(type, parent, localPosition, localScale, color);
+
+    public static void RemoveCollidersPublic(params GameObject[] objects) => RemoveColliders(objects);
 }

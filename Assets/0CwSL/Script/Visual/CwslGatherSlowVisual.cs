@@ -33,17 +33,7 @@ public static class CwslGatherSlowVisual
 
     private static void TrackMonsters(Vector3 center, float radiusSqr, HashSet<int> activeIds)
     {
-        var monsters = Object.FindObjectsByType<CwslMonsterHealth>(FindObjectsSortMode.None);
-        foreach (var monster in monsters)
-        {
-            if (monster == null || !monster.IsAlive)
-                continue;
-
-            if (!IsInsideFlatRadius(center, monster.transform.position, radiusSqr))
-                continue;
-
-            EnsureVfx(monster.transform, activeIds);
-        }
+        // 몬스터 동상 VFX는 CwslMonsterStatusVfx(네트워크 동기화)가 담당.
     }
 
     private static void TrackProjectiles<T>(Vector3 center, float radiusSqr, HashSet<int> activeIds)

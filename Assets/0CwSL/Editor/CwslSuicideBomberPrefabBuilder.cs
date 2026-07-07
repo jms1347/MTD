@@ -47,6 +47,10 @@ public static class CwslSuicideBomberPrefabBuilder
             assets.stickySuicideMonsterPrefab = sticky;
             if (assets.bombFuseVfx == null)
                 assets.bombFuseVfx = AssetDatabase.LoadAssetAtPath<GameObject>(CwslVfxPaths.BombFuse);
+            if (assets.suicideExplosionVfx == null)
+                assets.suicideExplosionVfx = AssetDatabase.LoadAssetAtPath<GameObject>(CwslVfxPaths.SuicideExplosion);
+            if (assets.suicideBomberDeathVfx == null)
+                assets.suicideBomberDeathVfx = AssetDatabase.LoadAssetAtPath<GameObject>(CwslVfxPaths.SuicideBomberDeath);
             EditorUtility.SetDirty(assets);
         }
 

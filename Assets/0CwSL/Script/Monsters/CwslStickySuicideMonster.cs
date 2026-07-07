@@ -1,7 +1,7 @@
 using Unity.Netcode;
 using UnityEngine;
 
-/// <summary>가장 가까운 아군 몬스터에 부착 후 3초 뒤 폭발.</summary>
+/// <summary>가장 가까운 플레이어에 부착 후 심지가 아래로 타며 3초 뒤 폭발.</summary>
 public class CwslStickySuicideMonster : CwslSuicideMonster
 {
     private const float AttachFuseSeconds = 3f;
@@ -11,7 +11,7 @@ public class CwslStickySuicideMonster : CwslSuicideMonster
     private bool attached;
     private float fuseTimer;
     private Transform attachHost;
-    private float allySearchTimer;
+    private float playerSearchTimer;
 
     public override void Initialize(CwslMonsterType type)
     {
@@ -26,10 +26,14 @@ public class CwslStickySuicideMonster : CwslSuicideMonster
 
     private void ResetStickyState()
     {
+        if (attached)
+            SyncAttachStateClientRpc(default, 0f, false);
+
         attached = false;
         fuseTimer = 0f;
         attachHost = null;
-        allySearchTimer = 0f;
+        playerSearchTimer = 0f;
+
         var collider = GetComponent<CapsuleCollider>();
         if (collider != null)
             collider.enabled = true;
@@ -46,20 +50,20 @@ public class CwslStickySuicideMonster : CwslSuicideMonster
             return;
         }
 
-        allySearchTimer -= Time.deltaTime;
-        if (allySearchTimer <= 0f || !IsValidAllyTarget(currentTarget))
+        playerSearchTimer -= Time.deltaTime;
+        if (playerSearchTimer <= 0f || !IsValidPlayerTarget(currentTarget))
         {
-            allySearchTimer = AttachSearchInterval;
-            RefreshAllyTarget();
+            playerSearchTimer = AttachSearchInterval;
+            RefreshPlayerTarget();
         }
 
-        if (!IsValidAllyTarget(currentTarget))
+        if (!IsValidPlayerTarget(currentTarget))
             return;
 
         MoveToward(currentTarget.transform.position, RushSpeedMultiplier);
 
         if (GetFlatDistanceTo(currentTarget) <= 0.95f)
-            TryAttachToAlly(currentTarget.transform);
+            TryAttachToPlayer(currentTarget.transform);
     }
 
     private void TickAttached()
@@ -70,69 +74,67 @@ public class CwslStickySuicideMonster : CwslSuicideMonster
             return;
         }
 
-        transform.position = attachHost.position + Vector3.up * AttachOffset.y;
+        transform.position = attachHost.position + AttachOffset;
         fuseTimer -= Time.deltaTime;
         if (fuseTimer <= 0f)
             DetonateServer();
     }
 
-    private void RefreshAllyTarget()
+    private void RefreshPlayerTarget()
     {
         NetworkObject nearest = null;
         var bestDistance = float.MaxValue;
         var position = transform.position;
 
-        foreach (var allyHealth in Object.FindObjectsByType<CwslMonsterHealth>(FindObjectsSortMode.None))
+        foreach (var playerHealth in Object.FindObjectsByType<CwslPlayerHealth>(FindObjectsSortMode.None))
         {
-            if (allyHealth == null || allyHealth == health || !allyHealth.IsAlive)
+            if (playerHealth == null || !playerHealth.IsAlive)
                 continue;
 
-            if (allyHealth.MonsterType is CwslMonsterType.StickySuicide
-                or CwslMonsterType.Suicide
-                or CwslMonsterType.NexusSuicide
-                or CwslMonsterType.BossHongmyeongbo
-                or CwslMonsterType.DefenseBoss
-                or CwslMonsterType.MidBoss)
+            var playerObject = playerHealth.GetComponent<NetworkObject>();
+            if (playerObject == null || !playerObject.IsSpawned)
                 continue;
 
-            var allyObject = allyHealth.GetComponent<NetworkObject>();
-            if (allyObject == null || !allyObject.IsSpawned)
-                continue;
-
-            var flat = allyHealth.transform.position - position;
+            var flat = playerHealth.transform.position - position;
             flat.y = 0f;
             var distance = flat.sqrMagnitude;
             if (distance >= bestDistance)
                 continue;
 
             bestDistance = distance;
-            nearest = allyObject;
+            nearest = playerObject;
         }
 
         currentTarget = nearest;
     }
 
-    private static bool IsValidAllyTarget(NetworkObject target)
+    private static bool IsValidPlayerTarget(NetworkObject target)
     {
         if (target == null || !target.IsSpawned)
             return false;
 
-        var allyHealth = target.GetComponent<CwslMonsterHealth>();
-        return allyHealth != null && allyHealth.IsAlive;
+        var playerHealth = target.GetComponent<CwslPlayerHealth>();
+        return playerHealth != null && playerHealth.IsAlive;
     }
 
-    private void TryAttachToAlly(Transform allyTransform)
+    private void TryAttachToPlayer(Transform playerTransform)
     {
-        if (attached || allyTransform == null)
+        if (attached || playerTransform == null)
             return;
 
         attached = true;
-        attachHost = allyTransform;
+        attachHost = playerTransform;
         fuseTimer = AttachFuseSeconds;
 
         var collider = GetComponent<CapsuleCollider>();
         if (collider != null)
             collider.enabled = false;
+
+        var hostObject = playerTransform.GetComponent<NetworkObject>();
+        SyncAttachStateClientRpc(
+            hostObject != null ? new NetworkObjectReference(hostObject) : default,
+            AttachFuseSeconds,
+            true);
     }
 
     private void OnTriggerEnter(Collider other)
@@ -140,19 +142,39 @@ public class CwslStickySuicideMonster : CwslSuicideMonster
         if (!IsServer || detonated || attached)
             return;
 
-        var allyHealth = other.GetComponentInParent<CwslMonsterHealth>();
-        if (allyHealth == null || allyHealth == health || !allyHealth.IsAlive)
+        var nexus = other.GetComponentInParent<CwslNexus>();
+        if (nexus != null && nexus.IsAlive)
+        {
+            currentTarget = nexus.GetComponent<NetworkObject>();
+            DetonateServer();
+            return;
+        }
+
+        var playerHealth = other.GetComponentInParent<CwslPlayerHealth>();
+        if (playerHealth == null || !playerHealth.IsAlive)
             return;
 
-        if (allyHealth.MonsterType is CwslMonsterType.StickySuicide
-            or CwslMonsterType.Suicide
-            or CwslMonsterType.NexusSuicide
-            or CwslMonsterType.BossHongmyeongbo
-            or CwslMonsterType.DefenseBoss
-            or CwslMonsterType.MidBoss)
+        currentTarget = playerHealth.GetComponent<NetworkObject>();
+        TryAttachToPlayer(playerHealth.transform);
+    }
+
+    [ClientRpc]
+    private void SyncAttachStateClientRpc(NetworkObjectReference hostRef, float fuseSeconds, bool isAttached)
+    {
+        var fuseBurn = GetComponentInChildren<CwslStickyMineFuseBurnVisual>(true);
+        if (fuseBurn == null)
             return;
 
-        currentTarget = allyHealth.GetComponent<NetworkObject>();
-        TryAttachToAlly(allyHealth.transform);
+        if (!isAttached)
+        {
+            fuseBurn.StopBurn();
+            return;
+        }
+
+        Transform hostTransform = null;
+        if (hostRef.TryGet(out var hostObject))
+            hostTransform = hostObject.transform;
+
+        fuseBurn.BeginAttach(hostTransform, fuseSeconds);
     }
 }

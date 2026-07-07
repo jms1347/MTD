@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>월드 스페이스 HP 바 — 넥서스·적 기지 등 구조물용.</summary>
@@ -7,6 +8,8 @@ public class CwslWorldHealthBar : MonoBehaviour
     private Transform fillTransform;
     private Renderer fillRenderer;
     private Renderer backRenderer;
+    private readonly List<Transform> segmentDividers = new();
+    private float lastSegmentMaxHealth = -1f;
 
     private float barWidth = 2.4f;
     private float barHeight = 0.14f;
@@ -27,11 +30,14 @@ public class CwslWorldHealthBar : MonoBehaviour
         Refresh(1f);
     }
 
-    public void Refresh(float ratio)
+    public void Refresh(float ratio, float maxHealth = -1f)
     {
         EnsureVisual();
         if (fillTransform == null)
             return;
+
+        if (maxHealth > 0f)
+            EnsureSegments(maxHealth);
 
         ratio = Mathf.Clamp01(ratio);
         fillTransform.localScale = new Vector3(barWidth * ratio, barHeight, 0.1f);
@@ -85,5 +91,19 @@ public class CwslWorldHealthBar : MonoBehaviour
         fillRenderer = fill.GetComponent<Renderer>();
         CwslMaterialUtil.ApplyColor(fillRenderer, fillColor);
         fillTransform = fill.transform;
+    }
+
+    private void EnsureSegments(float maxHealth)
+    {
+        if (barRoot == null || Mathf.Approximately(lastSegmentMaxHealth, maxHealth))
+            return;
+
+        CwslHealthBarSegments.BuildWorldDividers(
+            barRoot,
+            barWidth,
+            barHeight,
+            maxHealth,
+            segmentDividers);
+        lastSegmentMaxHealth = maxHealth;
     }
 }

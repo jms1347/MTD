@@ -35,6 +35,11 @@ public class CwslPlayerCombat : NetworkBehaviour
         if (!IsServer)
             return;
 
+        destination = CwslPlayerBossDebuff.ApplyReverseControlIfNeeded(
+            destination,
+            transform,
+            GetComponent<CwslPlayerBossDebuff>());
+
         CancelAttackOrdersServer();
         pureMoveMode = true;
         movement?.RequestMoveTo(destination);

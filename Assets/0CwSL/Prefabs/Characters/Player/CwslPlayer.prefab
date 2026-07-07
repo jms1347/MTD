@@ -30,7 +30,12 @@ GameObject:
   - component: {fileID: 3314770673784297336}
   - component: {fileID: 7674935213541368040}
   - component: {fileID: 502652676472628478}
+  - component: {fileID: 1934211898151481218}
+  - component: {fileID: 9000841569246256969}
+  - component: {fileID: 6455126682411128843}
   - component: {fileID: 8372615235669053322}
+  - component: {fileID: 7084628157354698897}
+  - component: {fileID: 2018258705124117138}
   - component: {fileID: 9123456789012345678}
   - component: {fileID: 8347261593847561029}
   - component: {fileID: 9081726354455667788}
@@ -46,6 +51,8 @@ GameObject:
   - component: {fileID: 4593583061325025850}
   - component: {fileID: 8109921022641968171}
   - component: {fileID: 2137970541318135095}
+  - component: {fileID: 1687203830056257566}
+  - component: {fileID: 5199750005612557894}
   - component: {fileID: 6900640426439151141}
   - component: {fileID: 2292752666815930913}
   - component: {fileID: 1188787143753519188}
@@ -129,7 +136,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 1499072218
+  GlobalObjectIdHash: 4178332131
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -409,6 +416,45 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CwslMissileTankSkill
   ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &1934211898151481218
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6360497807503343767}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4cf883d3e6cf0394bb4c00496f021419, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CwslMissileTankAmmoController
+  ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &9000841569246256969
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6360497807503343767}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e05c846451019ee43a71cdb6467b6c29, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CwslMissileTankPowerBoostSkill
+  ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &6455126682411128843
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6360497807503343767}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e593b5ce7b0d5d44daac5579637d3581, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CwslMissileTankSmokeDashSkill
+  ShowTopMostFoldoutHeaderGroup: 1
 --- !u!114 &8372615235669053322
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -421,6 +467,32 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e66079ab44f48f74d8937d937e4ae243, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CwslRedMageMeteorSkill
+  ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &7084628157354698897
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6360497807503343767}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b779527e01263642a8d3e29060887a0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CwslRedMageLightningOrbSkill
+  ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &2018258705124117138
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6360497807503343767}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 257cb875e82c76d4ca872c969ee4ab2b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CwslRedMageTeleportSkill
   ShowTopMostFoldoutHeaderGroup: 1
 --- !u!114 &9123456789012345678
 MonoBehaviour:
@@ -614,6 +686,31 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 687a1c48aa763394189fd96bb5c7b958, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CwslPlayerVisionDebuff
+  ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &1687203830056257566
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6360497807503343767}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 99943278dd47cc249915782e3c883878, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CwslPlayerInkBlindVisual
+--- !u!114 &5199750005612557894
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6360497807503343767}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6c8c2c6f8e7715746b18ed423bb7be29, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CwslPlayerBossDebuff
   ShowTopMostFoldoutHeaderGroup: 1
 --- !u!114 &6900640426439151141
 MonoBehaviour:

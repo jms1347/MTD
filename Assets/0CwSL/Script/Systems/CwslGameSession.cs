@@ -263,8 +263,16 @@ public class CwslGameSession : NetworkBehaviour
         return type switch
         {
             CwslMonsterType.Ranged or CwslMonsterType.NexusRanged => assets.rangedMonsterPrefab,
+            CwslMonsterType.InkSniper or CwslMonsterType.NexusInkSniper =>
+                assets.inkSniperMonsterPrefab != null
+                    ? assets.inkSniperMonsterPrefab
+                    : assets.rangedMonsterPrefab,
             CwslMonsterType.Suicide or CwslMonsterType.NexusSuicide => assets.suicideMonsterPrefab,
-            CwslMonsterType.Melee or CwslMonsterType.NexusMelee => assets.meleeMonsterPrefab,
+            CwslMonsterType.Melee => assets.meleeMonsterPrefab,
+            CwslMonsterType.NexusMelee =>
+                assets.nexusMeleeMonsterPrefab != null
+                    ? assets.nexusMeleeMonsterPrefab
+                    : assets.meleeMonsterPrefab,
             CwslMonsterType.KoreaUniversitySoldier =>
                 assets.koreaUniversitySoldierPrefab != null
                     ? assets.koreaUniversitySoldierPrefab
@@ -275,6 +283,10 @@ public class CwslGameSession : NetworkBehaviour
                     : assets.suicideMonsterPrefab,
             CwslMonsterType.MidBoss => assets.midBossMonsterPrefab != null ? assets.midBossMonsterPrefab : assets.meleeMonsterPrefab,
             CwslMonsterType.DefenseBoss => assets.defenseBossMonsterPrefab != null ? assets.defenseBossMonsterPrefab : assets.meleeMonsterPrefab,
+            CwslMonsterType.SeniorCoach =>
+                assets.seniorCoachMonsterPrefab != null
+                    ? assets.seniorCoachMonsterPrefab
+                    : assets.midBossMonsterPrefab,
             CwslMonsterType.BossHongmyeongbo => assets.bossPrefab,
             _ => null
         };

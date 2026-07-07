@@ -8,14 +8,13 @@ public class CwslPlayerSkills : NetworkBehaviour
     private const float MeteorDamage = 1f;
     private const float MeteorRadius = 4.8f;
     private const float MeteorFallDuration = 0.55f;
-    private const float MeteorCooldown = 0.85f;
 
     private readonly List<CwslPlayerSkillBase> skills = new();
     private CwslPlayerSkillBase chargedSkill;
     private CwslCrowdGatherSkill crowdGatherSkill;
     private CwslPlayerCharacter playerCharacter;
     private CwslPlayerStamina playerStamina;
-    private float nextMeteorTime;
+    private CwslPlayerSkillCooldowns skillCooldowns;
 
     public override void OnNetworkSpawn()
     {
@@ -23,6 +22,11 @@ public class CwslPlayerSkills : NetworkBehaviour
         playerStamina = GetComponent<CwslPlayerStamina>();
         if (playerStamina == null)
             playerStamina = gameObject.AddComponent<CwslPlayerStamina>();
+        if (GetComponent<CwslPlayerSkillCooldowns>() == null)
+            gameObject.AddComponent<CwslPlayerSkillCooldowns>();
+        if (GetComponent<CwslPlayerBossDebuff>() == null)
+            gameObject.AddComponent<CwslPlayerBossDebuff>();
+        skillCooldowns = GetComponent<CwslPlayerSkillCooldowns>();
         skills.Clear();
         skills.AddRange(GetComponents<CwslPlayerSkillBase>());
         EnsureTankDashSkill();
@@ -118,6 +122,9 @@ public class CwslPlayerSkills : NetworkBehaviour
             return;
 
         if (slotIndex <= 0 || slotIndex >= CwslCharacterSkillCatalog.SkillCount)
+            return;
+
+        if (skillCooldowns != null && !skillCooldowns.IsReady(slotIndex))
             return;
 
         var characterId = playerCharacter != null
@@ -228,7 +235,7 @@ public class CwslPlayerSkills : NetworkBehaviour
 
     private void TryCastMeteor(ulong senderClientId, Vector3 worldPoint)
     {
-        if (Time.time < nextMeteorTime)
+        if (skillCooldowns != null && !skillCooldowns.IsReady(0))
             return;
 
         if (!TrySpendStaminaForSlot(0))
@@ -243,7 +250,7 @@ public class CwslPlayerSkills : NetworkBehaviour
         if (!TrySpendSkillCost(CwslGameConstants.MeteorGoldCost))
             return;
 
-        nextMeteorTime = Time.time + MeteorCooldown;
+        skillCooldowns?.BeginCooldown(0);
         var impactPoint = worldPoint;
         impactPoint.y = 0f;
 
@@ -269,6 +276,10 @@ public class CwslPlayerSkills : NetworkBehaviour
                 continue;
 
             monster.DamageFromPlayer(attackerClientId, MeteorDamage);
+            CwslMonsterStatusController.Ensure(monster)?.ApplyBurnServer(
+                attackerClientId,
+                CwslGameConstants.MonsterBurnDuration,
+                CwslGameConstants.MonsterBurnTotalDamage);
         }
     }
 

@@ -18,10 +18,12 @@ public static class CwslPrefabPaths
     {
         public const string MeleeFolder = Root + "/Monsters/Melee";
         public const string Melee = MeleeFolder + "/CwslMonster_Melee.prefab";
+        public const string NexusMelee = MeleeFolder + "/CwslMonster_NexusMelee.prefab";
         public const string KoreaUniversitySoldier = MeleeFolder + "/CwslMonster_KoreaUniversitySoldier.prefab";
 
         public const string RangedFolder = Root + "/Monsters/Ranged";
         public const string Ranged = RangedFolder + "/CwslMonster_Ranged.prefab";
+        public const string InkSniper = RangedFolder + "/CwslMonster_InkSniper.prefab";
 
         public const string SuicideFolder = Root + "/Monsters/Suicide";
         public const string SuicideRush = SuicideFolder + "/CwslMonster_Suicide.prefab";
@@ -30,13 +32,16 @@ public static class CwslPrefabPaths
         public const string EliteFolder = Root + "/Monsters/Elite";
         public const string MidBoss = EliteFolder + "/CwslMonster_MidBoss.prefab";
         public const string DefenseBoss = EliteFolder + "/CwslMonster_DefenseBoss.prefab";
+        public const string SeniorCoach = EliteFolder + "/CwslMonster_SeniorCoach.prefab";
     }
 
     public static class Projectiles
     {
         public const string Folder = Root + "/Projectiles";
         public const string Monster = Folder + "/CwslProjectile.prefab";
+        public const string BossSkill = Folder + "/CwslBossSkillProjectile.prefab";
         public const string PlayerMissile = Folder + "/CwslPlayerMissile.prefab";
+        public const string FrozenOrb = Folder + "/CwslFrozenOrb.prefab";
     }
 
     public static class Pickups
@@ -63,13 +68,16 @@ public static class CwslPrefabPaths
     {
         return type switch
         {
-            CwslMonsterType.Melee or CwslMonsterType.NexusMelee => Monsters.Melee,
+            CwslMonsterType.Melee => Monsters.Melee,
+            CwslMonsterType.NexusMelee => Monsters.NexusMelee,
             CwslMonsterType.Ranged or CwslMonsterType.NexusRanged => Monsters.Ranged,
+            CwslMonsterType.InkSniper or CwslMonsterType.NexusInkSniper => Monsters.InkSniper,
             CwslMonsterType.Suicide or CwslMonsterType.NexusSuicide => Monsters.SuicideRush,
             CwslMonsterType.StickySuicide => Monsters.SuicideSticky,
             CwslMonsterType.KoreaUniversitySoldier => Monsters.KoreaUniversitySoldier,
             CwslMonsterType.MidBoss => Monsters.MidBoss,
             CwslMonsterType.DefenseBoss => Monsters.DefenseBoss,
+            CwslMonsterType.SeniorCoach => Monsters.SeniorCoach,
             _ => Root + "/Monsters/_Generated/CwslMonster_" + type + ".prefab"
         };
     }

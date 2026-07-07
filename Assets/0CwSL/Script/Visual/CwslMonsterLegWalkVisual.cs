@@ -10,6 +10,9 @@ public class CwslMonsterLegWalkVisual : MonoBehaviour
 
     private Transform legL;
     private Transform legR;
+    private Transform legBL;
+    private Transform legBR;
+    private bool quadruped;
     private CwslMonsterBase monster;
     private Vector3 lastTrackPosition;
     private Vector3 baseLocalPosition;
@@ -57,6 +60,13 @@ public class CwslMonsterLegWalkVisual : MonoBehaviour
         legL.localRotation = Quaternion.Euler(swing, 0f, 0f);
         legR.localRotation = Quaternion.Euler(-swing, 0f, 0f);
 
+        if (quadruped)
+        {
+            var backSwing = Mathf.Sin(walkPhase + Mathf.PI) * stride * MaxLegSwing;
+            legBL.localRotation = Quaternion.Euler(backSwing, 0f, 0f);
+            legBR.localRotation = Quaternion.Euler(-backSwing, 0f, 0f);
+        }
+
         var bob = Mathf.Abs(Mathf.Sin(walkPhase)) * stride * BodyBobAmount;
         transform.localPosition = baseLocalPosition + Vector3.up * bob;
     }
@@ -65,6 +75,9 @@ public class CwslMonsterLegWalkVisual : MonoBehaviour
     {
         legL = transform.Find("LegL");
         legR = transform.Find("LegR");
+        legBL = transform.Find("LegBL");
+        legBR = transform.Find("LegBR");
+        quadruped = legBL != null && legBR != null;
         if (monster == null)
             monster = GetComponentInParent<CwslMonsterBase>();
     }
@@ -95,6 +108,10 @@ public class CwslMonsterLegWalkVisual : MonoBehaviour
             legL.localRotation = Quaternion.identity;
         if (legR != null)
             legR.localRotation = Quaternion.identity;
+        if (legBL != null)
+            legBL.localRotation = Quaternion.identity;
+        if (legBR != null)
+            legBR.localRotation = Quaternion.identity;
         transform.localPosition = baseLocalPosition;
     }
 }

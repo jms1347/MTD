@@ -13,25 +13,45 @@ public class CwslMonsterProjectile : NetworkBehaviour, ICwslPooledNetworkObject
     private float spawnTime;
     private float damage = 10f;
     private bool configured;
+    private CwslMonsterProjectileKind projectileKind = CwslMonsterProjectileKind.InkBolt;
+
+    private readonly NetworkVariable<byte> syncedKind = new(
+        (byte)CwslMonsterProjectileKind.InkBolt,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server);
 
     public bool IsActiveProjectile => configured && IsSpawned;
+    public CwslMonsterProjectileKind ProjectileKind =>
+        IsSpawned ? (CwslMonsterProjectileKind)syncedKind.Value : projectileKind;
 
-    public void Configure(Vector3 fireDirection, float projectileSpeed, float maxLifetime, float projectileDamage = 10f)
+    public void Configure(
+        Vector3 fireDirection,
+        float projectileSpeed,
+        float maxLifetime,
+        float projectileDamage = 10f,
+        CwslMonsterProjectileKind kind = CwslMonsterProjectileKind.InkBolt)
     {
         direction = fireDirection.sqrMagnitude < 0.0001f ? Vector3.forward : fireDirection.normalized;
 
         speed = projectileSpeed;
         lifetime = maxLifetime;
         damage = projectileDamage;
+        projectileKind = kind;
+        if (IsServer)
+            syncedKind.Value = (byte)kind;
         spawnTime = Time.time;
         configured = true;
         transform.rotation = Quaternion.LookRotation(direction, Vector3.up);
+        GetComponent<CwslProjectileVisual>()?.RefreshVisual();
     }
 
     public void OnSpawnedFromPool()
     {
         configured = false;
         spawnTime = 0f;
+        projectileKind = CwslMonsterProjectileKind.InkBolt;
+        if (IsServer)
+            syncedKind.Value = (byte)CwslMonsterProjectileKind.InkBolt;
     }
 
     public void OnReturnedToPool()
@@ -79,7 +99,6 @@ public class CwslMonsterProjectile : NetworkBehaviour, ICwslPooledNetworkObject
             mask,
             QueryTriggerInteraction.Collide);
 
-        // 방패 버블을 몸통보다 먼저 처리
         foreach (var hit in hits)
         {
             if (!configured)
@@ -161,7 +180,7 @@ public class CwslMonsterProjectile : NetworkBehaviour, ICwslPooledNetworkObject
             if (flat.sqrMagnitude > hitReach * hitReach)
                 continue;
 
-            playerHealth.TryReceiveProjectileHitServer(damage, transform.position);
+            ApplyPlayerHitServer(playerHealth, transform.position);
             DespawnWithHitFx(transform.position);
             return;
         }
@@ -188,8 +207,18 @@ public class CwslMonsterProjectile : NetworkBehaviour, ICwslPooledNetworkObject
         if (playerHealth == null || !playerHealth.IsAlive)
             return;
 
-        playerHealth.TryReceiveProjectileHitServer(damage, transform.position);
+        ApplyPlayerHitServer(playerHealth, transform.position);
         DespawnWithHitFx(transform.position);
+    }
+
+    private void ApplyPlayerHitServer(CwslPlayerHealth playerHealth, Vector3 hitPosition)
+    {
+        playerHealth.TryReceiveProjectileHitServer(damage, hitPosition);
+        if (projectileKind != CwslMonsterProjectileKind.InkBolt)
+            return;
+
+        playerHealth.GetComponent<CwslPlayerVisionDebuff>()
+            ?.ApplyInkBlindServer(CwslGameConstants.InkBlindDurationSeconds, hitPosition);
     }
 
     private void DespawnWithHitFx(Vector3 hitPosition)
@@ -198,7 +227,7 @@ public class CwslMonsterProjectile : NetworkBehaviour, ICwslPooledNetworkObject
             return;
 
         configured = false;
-        PlayHitFxClientRpc(hitPosition, direction);
+        PlayHitFxClientRpc(hitPosition, direction, (byte)projectileKind);
         DespawnSelf();
     }
 
@@ -209,8 +238,12 @@ public class CwslMonsterProjectile : NetworkBehaviour, ICwslPooledNetworkObject
     }
 
     [ClientRpc]
-    private void PlayHitFxClientRpc(Vector3 hitPosition, Vector3 fireDirection)
+    private void PlayHitFxClientRpc(Vector3 hitPosition, Vector3 fireDirection, byte kindRaw)
     {
-        CwslVfxSpawner.SpawnShadowProjectileHit(hitPosition, fireDirection);
+        var kind = (CwslMonsterProjectileKind)kindRaw;
+        if (kind == CwslMonsterProjectileKind.TankBullet)
+            CwslVfxSpawner.SpawnRangedTankProjectileHit(hitPosition, fireDirection);
+        else
+            CwslVfxSpawner.SpawnShadowProjectileHit(hitPosition, fireDirection);
     }
 }

@@ -5,7 +5,7 @@ public class CwslRangedMonster : CwslMonsterBase
 {
     private const float PreferredRange = 11f;
     private const float MinRange = 8f;
-    private const float FireCooldown = 2.1f;
+    private const float DefaultFireCooldown = 2.1f;
     private const float AimHeight = 1.05f;
 
     private float fireTimer;
@@ -54,17 +54,26 @@ public class CwslRangedMonster : CwslMonsterBase
         if (fireTimer > 0f)
             return;
 
-        fireTimer = FireCooldown;
+        fireTimer = GetFireCooldown();
         FireProjectileServer(aimPoint);
+    }
+
+    protected virtual float GetFireCooldown() => DefaultFireCooldown;
+
+    protected virtual CwslMonsterProjectileKind GetProjectileKind() => CwslMonsterProjectileKind.TankBullet;
+
+    protected virtual void PlayFireFx(Vector3 muzzlePosition, Vector3 fireDirection)
+    {
+        var rotation = fireDirection.sqrMagnitude > 0.0001f
+            ? Quaternion.LookRotation(fireDirection.normalized, Vector3.up)
+            : transform.rotation;
+        CwslVfxSpawner.SpawnRangedTankMuzzleFlash(muzzlePosition, rotation);
     }
 
     [ClientRpc]
     private void PlayFireFxClientRpc(Vector3 muzzlePosition, Vector3 fireDirection)
     {
-        var rotation = fireDirection.sqrMagnitude > 0.0001f
-            ? Quaternion.LookRotation(fireDirection.normalized, Vector3.up)
-            : transform.rotation;
-        CwslVfxSpawner.SpawnShadowMuzzleFlash(muzzlePosition, rotation);
+        PlayFireFx(muzzlePosition, fireDirection);
     }
 
     private void EnsureCannonAim()
@@ -119,7 +128,7 @@ public class CwslRangedMonster : CwslMonsterBase
 
         var projectile = networkObject.GetComponent<CwslMonsterProjectile>();
         var damage = GetScaledDamage(CwslMonsterStatCatalog.RangedProjectileDamage);
-        projectile?.Configure(fireDirection, 14f, 8f, damage);
+        projectile?.Configure(fireDirection, 14f, 8f, damage, GetProjectileKind());
         PlayFireFxClientRpc(muzzle, fireDirection);
     }
 }

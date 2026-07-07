@@ -1,0 +1,135 @@
+using System.Collections;
+using Unity.Netcode;
+using UnityEngine;
+
+/// <summary>미사일 탱커 W — 10초 강화: 관통5, 이동속도 2배, 연사 50% 감소.</summary>
+public class CwslMissileTankPowerBoostSkill : CwslPlayerSkillBase
+{
+    public const int BoundSlotIndex = 3;
+
+    private CwslPlayerSkillCooldowns skillCooldowns;
+    private CwslPlayerHealth playerHealth;
+    private CwslPlayerStun playerStun;
+    private CwslMissileTankSmokeDashSkill smokeDashSkill;
+    private Coroutine activeRoutine;
+    private GameObject attachedGlow;
+
+    public bool IsActive { get; private set; }
+
+    public override CwslSkillActivationType ActivationType => CwslSkillActivationType.Instant;
+
+    public override bool IsActiveForCharacter(CwslCharacterId characterId) =>
+        characterId == CwslCharacterId.MissileTank;
+
+    public override int SkillSlotIndex => BoundSlotIndex;
+
+    public override void OnNetworkSpawn()
+    {
+        skillCooldowns = GetComponent<CwslPlayerSkillCooldowns>();
+        playerHealth = GetComponent<CwslPlayerHealth>();
+        playerStun = GetComponent<CwslPlayerStun>();
+        smokeDashSkill = GetComponent<CwslMissileTankSmokeDashSkill>();
+    }
+
+    public override bool CanUseSkillSlotServer(ulong senderClientId, int slotIndex, Vector3 worldPoint) =>
+        slotIndex == BoundSlotIndex && CanCastServer(senderClientId);
+
+    public override bool TryUseSkillSlotServer(ulong senderClientId, int slotIndex, Vector3 worldPoint)
+    {
+        if (!IsServer || slotIndex != BoundSlotIndex)
+            return false;
+
+        return TryActivateServer(senderClientId);
+    }
+
+    public bool TryActivateServer(ulong senderClientId)
+    {
+        if (!CanCastServer(senderClientId))
+            return false;
+
+        if (activeRoutine != null)
+            StopCoroutine(activeRoutine);
+
+        activeRoutine = StartCoroutine(ActiveRoutine());
+        return true;
+    }
+
+    public bool CanCastServer(ulong senderClientId)
+    {
+        if (!IsServer || senderClientId != OwnerClientId)
+            return false;
+
+        if (IsActive)
+            return false;
+
+        if (skillCooldowns != null && !skillCooldowns.IsReady(BoundSlotIndex))
+            return false;
+
+        if (playerHealth != null && !playerHealth.IsAlive)
+            return false;
+
+        if (playerStun != null && playerStun.IsStunned)
+            return false;
+
+        if (smokeDashSkill != null && smokeDashSkill.IsDashing)
+            return false;
+
+        return true;
+    }
+
+    private IEnumerator ActiveRoutine()
+    {
+        IsActive = true;
+        skillCooldowns?.BeginCooldown(BoundSlotIndex);
+
+        CwslMoveSpeedBuff.Ensure(this)?.ApplyBuff(
+            CwslGameConstants.MissileTankPowerBoostSpeedMultiplier,
+            CwslGameConstants.MissileTankPowerBoostDuration);
+
+        PlayBoostClientRpc(true);
+        yield return new WaitForSeconds(CwslGameConstants.MissileTankPowerBoostDuration);
+
+        IsActive = false;
+        CwslMoveSpeedBuff.Ensure(this)?.ClearBuff();
+        PlayBoostClientRpc(false);
+        activeRoutine = null;
+    }
+
+    [ClientRpc]
+    private void PlayBoostClientRpc(bool active)
+    {
+        if (attachedGlow != null)
+        {
+            Destroy(attachedGlow);
+            attachedGlow = null;
+        }
+
+        if (!active)
+            return;
+
+        var visual = transform.Find("Visual");
+        if (visual == null)
+            return;
+
+        var prefab = CwslGameSession.Instance?.Assets?.missileTankPowerBoostVfx;
+        if (prefab == null)
+            return;
+
+        attachedGlow = CwslVfxSpawner.TryInstantiate(prefab, visual.position, Quaternion.identity);
+        if (attachedGlow == null)
+            return;
+
+        attachedGlow.transform.SetParent(visual, false);
+        attachedGlow.transform.localPosition = Vector3.up * 0.9f;
+        attachedGlow.transform.localRotation = Quaternion.identity;
+    }
+
+    private void OnDisable()
+    {
+        if (attachedGlow != null)
+        {
+            Destroy(attachedGlow);
+            attachedGlow = null;
+        }
+    }
+}

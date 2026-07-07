@@ -30,8 +30,11 @@ public class CwslPartyPanel : MonoBehaviour
         public Image Accent;
         public TextMeshProUGUI NameLabel;
         public TextMeshProUGUI InfoLabel;
+        public RectTransform HpBackRect;
         public Image HpFill;
         public TextMeshProUGUI HpLabel;
+        public readonly List<GameObject> SegmentDividers = new();
+        public float LastSegmentMaxHealth = -1f;
     }
 
     private void Awake()
@@ -206,11 +209,21 @@ public class CwslPartyPanel : MonoBehaviour
         }
 
         var maxHealth = player.MaxHealth > 0f ? player.MaxHealth : CwslGameConstants.PlayerMaxHealth;
+        EnsureRowSegments(row, maxHealth);
         var ratio = Mathf.Clamp01(player.CurrentHealth / maxHealth);
         row.HpFill.fillAmount = ratio;
         row.HpFill.color = Color.Lerp(new Color(0.95f, 0.25f, 0.25f), new Color(0.3f, 0.92f, 0.45f), ratio);
         row.HpLabel.text = $"{Mathf.CeilToInt(player.CurrentHealth)} / {maxHealth:0}";
         row.HpLabel.color = MutedTextColor;
+    }
+
+    private static void EnsureRowSegments(PartyRowView row, float maxHealth)
+    {
+        if (row.HpBackRect == null || Mathf.Approximately(row.LastSegmentMaxHealth, maxHealth))
+            return;
+
+        CwslHealthBarSegments.BuildUiDividers(row.HpBackRect, maxHealth, row.SegmentDividers);
+        row.LastSegmentMaxHealth = maxHealth;
     }
 
     private PartyRowView GetOrCreateRow(int index)
@@ -283,11 +296,7 @@ public class CwslPartyPanel : MonoBehaviour
         hpFillRect.offsetMin = Vector2.zero;
         hpFillRect.offsetMax = Vector2.zero;
         var hpFill = hpFillObject.GetComponent<Image>();
-        hpFill.color = new Color(0.3f, 0.92f, 0.45f, 1f);
-        hpFill.type = Image.Type.Filled;
-        hpFill.fillMethod = Image.FillMethod.Horizontal;
-        hpFill.fillOrigin = (int)Image.OriginHorizontal.Left;
-        hpFill.raycastTarget = false;
+        CwslUiSpriteUtil.ConfigureHorizontalFill(hpFill, new Color(0.3f, 0.92f, 0.45f, 1f));
 
         var hpLabel = CreateLabel(
             rowObject.transform,
@@ -303,6 +312,7 @@ public class CwslPartyPanel : MonoBehaviour
             Accent = accent,
             NameLabel = nameLabel,
             InfoLabel = infoLabel,
+            HpBackRect = hpBackRect,
             HpFill = hpFill,
             HpLabel = hpLabel
         };

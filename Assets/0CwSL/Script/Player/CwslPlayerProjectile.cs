@@ -9,6 +9,10 @@ public class CwslPlayerProjectile : NetworkBehaviour, ICwslPooledNetworkObject
 
     private readonly HashSet<ulong> hitMonsterIds = new();
     private readonly HashSet<ulong> hitPlayerIds = new();
+    private readonly NetworkVariable<byte> networkVisualKind = new(
+        0,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server);
 
     private Vector3 direction;
     private Vector3 spawnOrigin;
@@ -20,9 +24,12 @@ public class CwslPlayerProjectile : NetworkBehaviour, ICwslPooledNetworkObject
     private float damage;
     private bool configured;
     private bool pierce;
+    private int piercesRemaining;
+    private CwslMissileTankAmmoKind ammoKind = CwslMissileTankAmmoKind.Basic;
+    private bool smokeBomb;
     private CwslMonsterHealth homingTarget;
 
-    public bool IsActiveProjectile => configured && IsSpawned;
+    public byte VisualKind => networkVisualKind.Value;
 
     public void Configure(
         Vector3 fireDirection,
@@ -34,6 +41,31 @@ public class CwslPlayerProjectile : NetworkBehaviour, ICwslPooledNetworkObject
         NetworkObject owner = null,
         CwslMonsterHealth target = null)
     {
+        ConfigureAdvanced(
+            fireDirection,
+            projectileSpeed,
+            maxLifetime,
+            attackerClientId,
+            projectileDamage,
+            owner,
+            target,
+            CwslMissileTankAmmoKind.Basic,
+            piercing ? int.MaxValue / 4 : 0,
+            false);
+    }
+
+    public void ConfigureAdvanced(
+        Vector3 fireDirection,
+        float projectileSpeed,
+        float maxLifetime,
+        ulong attackerClientId,
+        float projectileDamage,
+        NetworkObject owner,
+        CwslMonsterHealth target,
+        CwslMissileTankAmmoKind kind,
+        int maxPierceHits,
+        bool spawnSmokeZone)
+    {
         direction = fireDirection.sqrMagnitude < 0.0001f ? Vector3.forward : fireDirection.normalized;
         speed = projectileSpeed;
         lifetime = maxLifetime;
@@ -42,18 +74,36 @@ public class CwslPlayerProjectile : NetworkBehaviour, ICwslPooledNetworkObject
         ownerClientId = attackerClientId;
         ownerNetworkObject = owner;
         damage = projectileDamage;
-        pierce = piercing;
+        ammoKind = kind;
+        smokeBomb = spawnSmokeZone;
+        piercesRemaining = Mathf.Max(0, maxPierceHits);
+        pierce = piercesRemaining > 0;
         homingTarget = target;
         configured = true;
         hitMonsterIds.Clear();
         hitPlayerIds.Clear();
+        networkVisualKind.Value = ResolveVisualKind(kind, spawnSmokeZone);
         transform.rotation = Quaternion.LookRotation(direction, Vector3.up);
     }
+
+    private static byte ResolveVisualKind(CwslMissileTankAmmoKind kind, bool spawnSmokeZone)
+    {
+        if (spawnSmokeZone)
+            return 4;
+
+        return (byte)kind;
+    }
+
+    public bool IsActiveProjectile => configured && IsSpawned;
 
     public void OnSpawnedFromPool()
     {
         configured = false;
         pierce = false;
+        piercesRemaining = 0;
+        smokeBomb = false;
+        ammoKind = CwslMissileTankAmmoKind.Basic;
+        networkVisualKind.Value = 0;
         homingTarget = null;
         spawnTime = 0f;
         ownerNetworkObject = null;
@@ -65,6 +115,10 @@ public class CwslPlayerProjectile : NetworkBehaviour, ICwslPooledNetworkObject
     {
         configured = false;
         pierce = false;
+        piercesRemaining = 0;
+        smokeBomb = false;
+        ammoKind = CwslMissileTankAmmoKind.Basic;
+        networkVisualKind.Value = 0;
         homingTarget = null;
         ownerNetworkObject = null;
         hitMonsterIds.Clear();
@@ -159,6 +213,7 @@ public class CwslPlayerProjectile : NetworkBehaviour, ICwslPooledNetworkObject
         if (monsterLayerMask < 0)
             monsterLayerMask = LayerMask.GetMask(CwslGameConstants.LayerMonster);
 
+        var monsterMask = monsterLayerMask != 0 ? monsterLayerMask : ~0;
         var delta = to - from;
         var distance = delta.magnitude;
         if (distance > 0.0001f)
@@ -168,7 +223,7 @@ public class CwslPlayerProjectile : NetworkBehaviour, ICwslPooledNetworkObject
                 CwslGameConstants.PlayerBulletHitRadius,
                 delta.normalized,
                 distance,
-                monsterLayerMask,
+                monsterMask,
                 QueryTriggerInteraction.Collide);
 
             System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
@@ -237,10 +292,11 @@ public class CwslPlayerProjectile : NetworkBehaviour, ICwslPooledNetworkObject
         if (monsterLayerMask < 0)
             monsterLayerMask = LayerMask.GetMask(CwslGameConstants.LayerMonster);
 
+        var monsterMask = monsterLayerMask != 0 ? monsterLayerMask : ~0;
         var hits = Physics.OverlapSphere(
             position,
             CwslGameConstants.PlayerBulletHitRadius,
-            monsterLayerMask,
+            monsterMask,
             QueryTriggerInteraction.Collide);
 
         foreach (var hit in hits)
@@ -556,10 +612,75 @@ public class CwslPlayerProjectile : NetworkBehaviour, ICwslPooledNetworkObject
 
         monsterHealth.DamageFromPlayer(ownerClientId, damage);
 
+        if (smokeBomb)
+        {
+            var hitPoint = monsterHealth.GetFlatHitPoint();
+            var ownerSkill = ownerNetworkObject != null
+                ? ownerNetworkObject.GetComponent<CwslMissileTankSkill>()
+                : null;
+            CwslMissileTankSmokeZone.SpawnServer(
+                hitPoint,
+                CwslGameConstants.MissileTankSmokeZoneRadius,
+                CwslGameConstants.MissileTankSmokeZoneDuration,
+                ownerSkill);
+            configured = false;
+            DespawnSelf();
+            return;
+        }
+
+        TryApplyProjectileStatusEffects(monsterHealth);
+
+        if (piercesRemaining > 0)
+        {
+            piercesRemaining--;
+            if (piercesRemaining <= 0)
+            {
+                configured = false;
+                DespawnSelf();
+            }
+
+            return;
+        }
+
         if (!pierce)
         {
             configured = false;
             DespawnSelf();
+        }
+    }
+
+    private void TryApplyProjectileStatusEffects(CwslMonsterHealth monsterHealth)
+    {
+        if (!IsServer || monsterHealth == null)
+            return;
+
+        var owner = ownerNetworkObject;
+        var character = owner != null ? owner.GetComponent<CwslPlayerCharacter>() : null;
+        if (character == null || character.CharacterId != CwslCharacterId.MissileTank)
+            return;
+
+        var status = CwslMonsterStatusController.Ensure(monsterHealth);
+        if (status == null)
+            return;
+
+        switch (ammoKind)
+        {
+            case CwslMissileTankAmmoKind.Fire:
+                status.ApplyBurnServer(
+                    ownerClientId,
+                    CwslGameConstants.MonsterBurnDuration,
+                    CwslGameConstants.MonsterBurnTotalDamage);
+                break;
+            case CwslMissileTankAmmoKind.Poison:
+                status.ApplyPoisonServer(
+                    ownerClientId,
+                    CwslGameConstants.MonsterPoisonDuration,
+                    CwslGameConstants.MonsterPoisonTickDamage,
+                    CwslGameConstants.MonsterPoisonArmorPerStack);
+                break;
+            case CwslMissileTankAmmoKind.Lightning:
+                status.ApplyShockServer(CwslGameConstants.MonsterShockDuration);
+                break;
         }
     }
 

@@ -42,6 +42,7 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
     private bool momentumActive;
     private float wingSpreadStartTime;
     private float nextGoldSpendTime;
+    private CwslPlayerSkillCooldowns skillCooldowns;
 
     public float CurrentSpeed => syncedSpeed.Value;
     public bool IsMomentumActive => momentumActive;
@@ -63,6 +64,7 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
         playerGold = GetComponent<CwslPlayerGold>();
         pillBuff = GetComponent<CwslPlayerPillBuff>();
         bodyCollider = GetComponent<CwslPlayerBodyCollider>();
+        skillCooldowns = GetComponent<CwslPlayerSkillCooldowns>();
         moveDirection = transform.forward.sqrMagnitude > 0.0001f ? transform.forward : Vector3.forward;
         moveDirection.y = 0f;
         moveDirection.Normalize();
@@ -139,6 +141,7 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
                (playerHealth == null || playerHealth.IsAlive) &&
                !IsStunned &&
                !isWingSpreadActive.Value &&
+               (skillCooldowns == null || skillCooldowns.IsReady(0)) &&
                CanAffordSkillGold(CwslGameConstants.RammerWingSpreadStartGoldCost);
     }
 
@@ -149,6 +152,9 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
             playerCharacter.CharacterId != CwslCharacterId.MomentumRammer ||
             IsStunned ||
             isWingSpreadActive.Value)
+            return;
+
+        if (skillCooldowns != null && !skillCooldowns.IsReady(0))
             return;
 
         if (!TrySpendSkillGold(CwslGameConstants.RammerWingSpreadStartGoldCost, playSpendEffect: false))
@@ -221,6 +227,7 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
 
         isWingSpreadActive.Value = false;
         syncedBladeScale.Value = 1f;
+        skillCooldowns?.BeginCooldown(0);
     }
 
     public void SetDestinationServer(Vector3 worldPoint)

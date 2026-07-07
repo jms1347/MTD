@@ -142,7 +142,7 @@ public class CwslNexus : NetworkBehaviour
             return;
 
         var ratio = MaxHealth > 0f ? health.Value / MaxHealth : 0f;
-        worldBar.Refresh(ratio);
+        worldBar.Refresh(ratio, MaxHealth);
         worldBar.SetVisible(IsAlive);
     }
 

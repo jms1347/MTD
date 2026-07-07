@@ -30,6 +30,7 @@ public static class CwslPrefabFolderMigration
         new("CwslMonster_DefenseBoss.prefab", "Monsters/Elite"),
         new("CwslProjectile.prefab", "Projectiles"),
         new("CwslPlayerMissile.prefab", "Projectiles"),
+        new("CwslFrozenOrb.prefab", "Projectiles"),
         new("CwslGoldPickup.prefab", "Pickups"),
         new("CwslPillPickup.prefab", "Pickups"),
         new("CwslNexus.prefab", "Defense"),

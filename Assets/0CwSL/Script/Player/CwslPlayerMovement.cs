@@ -169,6 +169,11 @@ public class CwslPlayerMovement : NetworkBehaviour
         if (!IsServer || agent == null)
             return;
 
+        worldPoint = CwslPlayerBossDebuff.ApplyReverseControlIfNeeded(
+            worldPoint,
+            transform,
+            GetComponent<CwslPlayerBossDebuff>());
+
         if (CwslDefensePrepUtility.IsPrepBoundaryActive())
         {
             var bodyRadius = GetComponent<CwslPlayerBodyCollider>()?.Radius
@@ -227,6 +232,11 @@ public class CwslPlayerMovement : NetworkBehaviour
     {
         if (!IsServer || rammerSkill == null || !rammerSkill.IsActiveForCharacter(GetCharacterId()))
             return;
+
+        worldPoint = CwslPlayerBossDebuff.ApplyReverseControlIfNeeded(
+            worldPoint,
+            transform,
+            GetComponent<CwslPlayerBossDebuff>());
 
         GetComponent<CwslBlackHoleEscape>()?.TryRegisterMoveAwayClickServer(worldPoint);
 

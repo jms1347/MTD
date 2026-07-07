@@ -23,6 +23,7 @@ public class CwslTankFortifySkill : CwslPlayerSkillBase
     private CwslPlayerVisualScale visualScale;
     private CwslPlayerShieldFortifyVisual shieldFortifyVisual;
     private CwslPlayerPillBuff pillBuff;
+    private CwslPlayerSkillCooldowns skillCooldowns;
 
     public bool IsFortifying => isFortifying.Value;
     public bool IsShieldActive => isShieldActive.Value;
@@ -40,6 +41,7 @@ public class CwslTankFortifySkill : CwslPlayerSkillBase
         visualScale = GetComponent<CwslPlayerVisualScale>();
         shieldFortifyVisual = GetComponent<CwslPlayerShieldFortifyVisual>();
         pillBuff = GetComponent<CwslPlayerPillBuff>();
+        skillCooldowns = GetComponent<CwslPlayerSkillCooldowns>();
         if (GetComponent<CwslPlayerShieldBubble>() == null)
             gameObject.AddComponent<CwslPlayerShieldBubble>();
 
@@ -56,6 +58,9 @@ public class CwslTankFortifySkill : CwslPlayerSkillBase
     public override void OnSkillPressedServer(ulong senderClientId)
     {
         if (!IsServer)
+            return;
+
+        if (skillCooldowns != null && !skillCooldowns.IsReady(0))
             return;
 
         isFortifying.Value = true;
@@ -75,6 +80,7 @@ public class CwslTankFortifySkill : CwslPlayerSkillBase
         visualScale?.SetScaleServer(1f);
         if (movement != null)
             movement.SpeedMultiplier = 1f;
+        skillCooldowns?.BeginCooldown(0);
     }
 
     public override void TickChargedServer()

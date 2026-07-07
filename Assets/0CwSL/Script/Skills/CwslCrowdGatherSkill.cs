@@ -34,8 +34,8 @@ public class CwslCrowdGatherSkill : CwslPlayerSkillBase
     private CwslPlayerGold playerGold;
     private CwslPlayerPillBuff pillBuff;
     private CwslPlayerMovement movement;
+    private CwslPlayerSkillCooldowns skillCooldowns;
     private float chargeStartTime;
-    private float nextGatherTime;
     private float nextSlowGoldTick;
     private bool maxReadyNotified;
     private Coroutine pullRoutine;
@@ -57,6 +57,7 @@ public class CwslCrowdGatherSkill : CwslPlayerSkillBase
         playerGold = GetComponent<CwslPlayerGold>();
         pillBuff = GetComponent<CwslPlayerPillBuff>();
         movement = GetComponent<CwslPlayerMovement>();
+        skillCooldowns = GetComponent<CwslPlayerSkillCooldowns>();
         if (playerCharacter != null)
             playerCharacter.OnCharacterChanged += HandleCharacterChanged;
         if (playerHealth != null)
@@ -104,7 +105,7 @@ public class CwslCrowdGatherSkill : CwslPlayerSkillBase
                playerCharacter.CharacterId == CwslCharacterId.CrowdGatherer &&
                (playerHealth == null || playerHealth.IsAlive) &&
                !isCharging.Value &&
-               Time.time >= nextGatherTime &&
+               (skillCooldowns == null || skillCooldowns.IsReady(0)) &&
                CanAffordSkillGold(CwslGameConstants.GatherStartGoldCost);
     }
 
@@ -219,8 +220,19 @@ public class CwslCrowdGatherSkill : CwslPlayerSkillBase
 
     private void ApplySlowInZoneServer(Vector3 center, float radius)
     {
+        var attackerId = NetworkObject != null ? NetworkObject.OwnerClientId : 0ul;
         foreach (var target in CollectZoneTargets(center, radius))
         {
+            var monsterHealth = target.GetComponent<CwslMonsterHealth>();
+            if (monsterHealth != null)
+            {
+                CwslMonsterStatusController.Ensure(monsterHealth)?.ApplyFrostServer(
+                    attackerId,
+                    CwslGameConstants.GatherSlowRefreshSeconds,
+                    1);
+                continue;
+            }
+
             var modifier = CwslSlowModifier.Ensure(target);
             modifier?.ApplySlow(
                 CwslGameConstants.GatherSlowMultiplier,
@@ -232,6 +244,9 @@ public class CwslCrowdGatherSkill : CwslPlayerSkillBase
     {
         foreach (var target in CollectZoneTargets(center, radius))
         {
+            target.GetComponent<CwslMonsterHealth>()
+                ?.GetComponent<CwslMonsterStatusController>()
+                ?.ClearFrostServer();
             target.GetComponent<CwslSlowModifier>()?.ClearSlow();
         }
     }
@@ -243,7 +258,7 @@ public class CwslCrowdGatherSkill : CwslPlayerSkillBase
 
         isCharging.Value = false;
         syncedAtMaxCharge.Value = false;
-        nextGatherTime = Time.time + CwslGameConstants.GatherCooldown;
+        skillCooldowns?.BeginCooldown(0);
         ClearZoneSlowServer(center, radius);
         EndChargeVisualClientRpc(center);
         PlayPullFxClientRpc(center, radius);

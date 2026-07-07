@@ -17,7 +17,7 @@ public class CwslTankShieldDashSkill : CwslPlayerSkillBase
     private CwslTankShieldWhirlwindSkill whirlwindSkill;
     private NavMeshAgent agent;
     private Coroutine dashRoutine;
-    private float nextDashTime;
+    private CwslPlayerSkillCooldowns skillCooldowns;
 
     public bool IsDashing => dashRoutine != null;
 
@@ -38,6 +38,7 @@ public class CwslTankShieldDashSkill : CwslPlayerSkillBase
         slamSkill = GetComponent<CwslTankShieldSlamSkill>();
         whirlwindSkill = GetComponent<CwslTankShieldWhirlwindSkill>();
         agent = GetComponent<NavMeshAgent>();
+        skillCooldowns = GetComponent<CwslPlayerSkillCooldowns>();
     }
 
     public override bool CanUseSkillSlotServer(ulong senderClientId, int slotIndex, Vector3 worldPoint)
@@ -61,7 +62,10 @@ public class CwslTankShieldDashSkill : CwslPlayerSkillBase
         if (!IsServer || senderClientId != OwnerClientId)
             return false;
 
-        if (dashRoutine != null || Time.time < nextDashTime)
+        if (dashRoutine != null)
+            return false;
+
+        if (skillCooldowns != null && !skillCooldowns.IsReady(BoundSlotIndex))
             return false;
 
         if (playerHealth != null && !playerHealth.IsAlive)
@@ -88,7 +92,7 @@ public class CwslTankShieldDashSkill : CwslPlayerSkillBase
             return false;
 
         var direction = ResolveDashDirection(worldPoint);
-        nextDashTime = Time.time + CwslGameConstants.TankShieldDashCooldown;
+        skillCooldowns?.BeginCooldown(BoundSlotIndex);
         dashRoutine = StartCoroutine(DashRoutine(direction));
         return true;
     }
@@ -252,6 +256,12 @@ public class CwslTankShieldDashSkill : CwslPlayerSkillBase
 
         var target = transform.position + direction * CwslGameConstants.TankShieldDashDistance;
         bash.PlayWindup(target);
+
+        var waveVisual = visual.GetComponent<CwslTankShieldDashWaveVisual>();
+        if (waveVisual == null)
+            waveVisual = visual.gameObject.AddComponent<CwslTankShieldDashWaveVisual>();
+        waveVisual.PlayDashWave(direction, empowered, CwslGameConstants.TankShieldDashDuration);
+
         if (empowered)
             CwslVfxSpawner.SpawnFortifyBlock(transform.position + Vector3.up * 0.9f);
     }

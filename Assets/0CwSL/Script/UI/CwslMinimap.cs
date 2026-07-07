@@ -257,7 +257,7 @@ public class CwslMinimap : MonoBehaviour
             CwslMonsterType.Suicide => (new Color(1f, 0.55f, 0.2f), 7f),
             CwslMonsterType.Melee => (new Color(0.9f, 0.35f, 0.4f), 7f),
             CwslMonsterType.KoreaUniversitySoldier => (new Color(0.92f, 0.2f, 0.24f), 8f),
-            CwslMonsterType.StickySuicide => (new Color(0.98f, 0.42f, 0.18f), 8f),
+            CwslMonsterType.StickySuicide => (new Color(0.55f, 0.62f, 0.28f), 8f),
             CwslMonsterType.BossHongmyeongbo => (new Color(1f, 0.15f, 0.15f), 42f),
             _ => (new Color(0.9f, 0.9f, 0.9f), 6f)
         };

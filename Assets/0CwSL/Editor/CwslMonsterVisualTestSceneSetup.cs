@@ -21,10 +21,11 @@ public static class CwslMonsterVisualTestSceneSetup
         AssetDatabase.SaveAssets();
 
         if (EditorUtility.DisplayDialog(
-                "몬스터 비주얼 테스트 씬",
+                "전투 비주얼 테스트 씬",
                 "씬이 생성되었습니다.\n\n" +
-                "• 에디터: 타입 변경 후 Inspector에서 Rebuild Preview\n" +
-                "• 플레이: 좌측 HUD로 타입·걷기·이펙트 테스트",
+                "• 좌측 HUD: 몬스터 타입·걷기·이펙트\n" +
+                "• 우측 HUD: 캐릭터·WASD·QWER 스킬·스턴\n" +
+                "• 플레이 모드에서 테스트",
                 "씬 열기",
                 "닫기"))
         {
@@ -58,21 +59,38 @@ public static class CwslMonsterVisualTestSceneSetup
         var camera = cameraGo.AddComponent<Camera>();
         camera.clearFlags = CameraClearFlags.SolidColor;
         camera.backgroundColor = new Color(0.12f, 0.14f, 0.18f);
-        cameraGo.transform.position = new Vector3(0f, 3.8f, -7.5f);
-        cameraGo.transform.rotation = Quaternion.Euler(18f, 0f, 0f);
+        cameraGo.transform.position = new Vector3(0f, 4.2f, -9f);
+        cameraGo.transform.rotation = Quaternion.Euler(16f, 0f, 0f);
         cameraGo.AddComponent<AudioListener>();
 
-        var rig = new GameObject("MonsterVisualTestRig");
-        rig.transform.position = Vector3.zero;
-        var controller = rig.AddComponent<CwslMonsterVisualTestController>();
-
         var assets = AssetDatabase.LoadAssetAtPath<CwslGameAssets>(AssetsPath);
-        var serialized = new SerializedObject(controller);
-        serialized.FindProperty("assets").objectReferenceValue = assets;
-        serialized.FindProperty("previewType").enumValueIndex = (int)CwslMonsterType.Suicide;
-        serialized.FindProperty("autoWalkInPlayMode").boolValue = true;
-        serialized.FindProperty("showHudInPlayMode").boolValue = true;
-        serialized.ApplyModifiedPropertiesWithoutUndo();
+
+        var bootstrap = new GameObject("VisualTestBootstrap");
+        var bootstrapComponent = bootstrap.AddComponent<CwslVisualTestAssetsBootstrap>();
+        var bootstrapSerialized = new SerializedObject(bootstrapComponent);
+        bootstrapSerialized.FindProperty("assets").objectReferenceValue = assets;
+        bootstrapSerialized.ApplyModifiedPropertiesWithoutUndo();
+
+        var monsterRig = new GameObject("MonsterVisualTestRig");
+        monsterRig.transform.position = Vector3.zero;
+        var monsterController = monsterRig.AddComponent<CwslMonsterVisualTestController>();
+        var monsterSerialized = new SerializedObject(monsterController);
+        monsterSerialized.FindProperty("assets").objectReferenceValue = assets;
+        monsterSerialized.FindProperty("previewType").enumValueIndex = (int)CwslMonsterType.Melee;
+        monsterSerialized.FindProperty("autoWalkInPlayMode").boolValue = true;
+        monsterSerialized.FindProperty("showHudInPlayMode").boolValue = true;
+        monsterSerialized.FindProperty("spawnOffset").vector3Value = new Vector3(4f, 0f, 0f);
+        monsterSerialized.ApplyModifiedPropertiesWithoutUndo();
+
+        var playerRig = new GameObject("PlayerVisualTestRig");
+        playerRig.transform.position = Vector3.zero;
+        var playerController = playerRig.AddComponent<CwslPlayerVisualTestController>();
+        var playerSerialized = new SerializedObject(playerController);
+        playerSerialized.FindProperty("assets").objectReferenceValue = assets;
+        playerSerialized.FindProperty("previewCharacter").enumValueIndex = (int)CwslCharacterId.Tank;
+        playerSerialized.FindProperty("showHudInPlayMode").boolValue = true;
+        playerSerialized.FindProperty("spawnOffset").vector3Value = new Vector3(-4f, 0f, 0f);
+        playerSerialized.ApplyModifiedPropertiesWithoutUndo();
 
         return scene;
     }

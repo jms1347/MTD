@@ -3,6 +3,18 @@ public static class CwslVfxPaths
     public const string RangedProjectileVisual =
         "Assets/Epic Toon FX/Prefabs/Combat/Missiles/Shadow/ShadowMissile.prefab";
 
+    public const string RangedTankProjectileVisual =
+        "Assets/Epic Toon FX/Prefabs/Combat/Missiles/Bullet/BulletSmallPink.prefab";
+
+    public const string RangedTankMuzzleFlash =
+        "Assets/Epic Toon FX/Prefabs/Combat/Muzzleflash/BulletMuzzle/BulletMuzzlePink.prefab";
+
+    public const string RangedTankProjectileHit =
+        "Assets/Epic Toon FX/Prefabs/Combat/Explosions/BulletExplosion/BulletExplosionPink.prefab";
+
+    public const string InkBlindAura =
+        "Assets/Epic Toon FX/Prefabs/Environment/Fog/Black/FogCalmBlack.prefab";
+
     public const string ShadowProjectileHit =
         "Assets/Epic Toon FX/Prefabs/Combat/Explosions/ShadowExplosion/ShadowExplosion.prefab";
 
@@ -12,11 +24,37 @@ public static class CwslVfxPaths
     public const string PlayerMissileVisual =
         "Assets/Epic Toon FX/Prefabs/Combat/Missiles/Bullet/BulletSmallBlue.prefab";
 
+    public const string MissileTankPowerBoostGlow =
+        "Assets/Epic Toon FX/Prefabs/Interactive/Powerups/PowerupGlow/PowerupGlow3.prefab";
+
+    public const string MissileTankSmokeDashTrail =
+        "Assets/Epic Toon FX/Prefabs/Environment/Smoke/White/SmokeWhiteSoftTrail.prefab";
+
+    public const string MissileTankSmokeBomb =
+        "Assets/Epic Toon FX/Prefabs/Combat/Missiles/FatBullet/BulletFatGreen.prefab";
+
+    public const string MissileTankSmokeZone =
+        "Assets/Epic Toon FX/Prefabs/Environment/Fog/Black/FogHeavyBlack.prefab";
+
+    public const string MissileTankFireAmmo =
+        "Assets/Epic Toon FX/Prefabs/Combat/Missiles/Fireball/FireballMissileFire.prefab";
+
+    public const string MissileTankPoisonAmmo =
+        "Assets/Epic Toon FX/Prefabs/Combat/Missiles/Gas/GasMissileGreen.prefab";
+
+    public const string MissileTankLightningAmmo =
+        "Assets/Epic Toon FX/Prefabs/Combat/Missiles/Lightning/LightningMissileYellow.prefab";
+
     public const string GunMuzzleFlash =
         "Assets/Epic Toon FX/Prefabs/Combat/Muzzleflash/- Misc/GunFire/GunFireYellow.prefab";
 
     public const string SuicideExplosion =
-        "Assets/Epic Toon FX/Prefabs/Combat/Explosions/NukeExplosion/NukeExplosionFire.prefab";
+        "Assets/Epic Toon FX/Prefabs/Combat/Explosions/RoundExplosion/ExplosionRoundFire.prefab";
+
+    public const string MonsterDeath =
+        "Assets/Epic Toon FX/Prefabs/Combat/Death/Souls/SoulEvilDeath.prefab";
+
+    public const string SuicideBomberDeath = MonsterDeath;
 
     public const string BombFuse =
         "Assets/Epic Toon FX/Prefabs/Combat/BombFuse/BombFuse.prefab";
@@ -24,11 +62,9 @@ public static class CwslVfxPaths
     public const string MeleeHit =
         "Assets/Epic Toon FX/Prefabs/Combat/Sword/Hit/SwordHitMini/SwordHitMiniRed.prefab";
 
-    public const string EnemyDeath =
-        "Assets/Epic Toon FX/Prefabs/Combat/Blood/Green/GreenBloodExplosion.prefab";
+    public const string EnemyDeath = MonsterDeath;
 
-    public const string BossDeath =
-        "Assets/Epic Toon FX/Prefabs/Combat/Death/Souls/SoulSuperEvilDeath.prefab";
+    public const string BossDeath = MonsterDeath;
 
     public const string PlayerDeath =
         "Assets/Epic Toon FX/Prefabs/Combat/Death/Souls/SoulMysticDeath.prefab";
@@ -87,6 +123,30 @@ public static class CwslVfxPaths
     public const string FortifyBlock =
         "Assets/Epic Toon FX/Prefabs/Combat/Sword/Hit/SwordHitMini/SwordHitMiniBlue.prefab";
 
+    public const string ShieldDashWave =
+        "Assets/Epic Toon FX/Prefabs/Combat/Sword/Wave/SwordWaveBlue.prefab";
+
+    public const string ShieldWhirlwind =
+        "Assets/Epic Toon FX/Prefabs/Combat/Sword/Whirlwind/SwordWhirlwindBlue.prefab";
+
+    public const string ShieldSlamSoft =
+        "Assets/Epic Toon FX/Prefabs/Combat/Brawling/Soft/SoftBodySlam.prefab";
+
+    public const string ShieldSlamCartoony =
+        "Assets/Epic Toon FX/Prefabs/Combat/Brawling/Cartoony/CartoonyBodySlam.prefab";
+
+    public const string MonsterBurnStatus =
+        "Assets/JMO Assets/Cartoon FX/CFX3 Prefabs/Fire/CFX3_Fireball_B 1.prefab";
+
+    public const string MonsterSlowStatus =
+        "Assets/JMO Assets/Cartoon FX/CFX3 Prefabs/Magic Dark/CFX3_DarkMagicAura_A.prefab";
+
+    public const string MonsterShockStatus =
+        "Assets/Epic Toon FX/Prefabs/Combat/Brawling/Stun/StunnedCirclingStarsSimple.prefab";
+
+    public const string MonsterPoisonStatus =
+        "Assets/Epic Toon FX/Prefabs/Combat/Explosions/- Misc/SkullPoison.prefab";
+
     public const string MeteorFall =
         "Assets/Epic Toon FX/Prefabs/Combat/Missiles/Nuke/NukeMissileFire.prefab";
 
@@ -95,6 +155,15 @@ public static class CwslVfxPaths
 
     public const string MeteorBurn =
         "Assets/Epic Toon FX/Prefabs/Combat/Decals/Explosion Decal/ExplosionDecalFire.prefab";
+
+    public const string MeteorGroundFireSoftAb =
+        "Assets/Epic Toon FX/Prefabs/Environment/Fire/Soft/SoftFireAB/SoftFireABYellow.prefab";
+
+    public const string MeteorGroundFireSoftBig =
+        "Assets/Epic Toon FX/Prefabs/Environment/Fire/Soft/SoftFireBig/SoftFireBigYellow.prefab";
+
+    public const string MeteorGroundFireAdditive =
+        "Assets/Epic Toon FX/Prefabs/Environment/Fire/Soft/SoftFireADD/SoftFireAdditiveRed.prefab";
 
     public const string RammerStunExplosion =
         "Assets/Epic Toon FX/Prefabs/Combat/Explosions/- Misc/StunExplosion.prefab";
@@ -234,6 +303,15 @@ public static class CwslVfxPaths
 
     public const string LightningZoneAura =
         "Assets/Epic Toon FX/Prefabs/Combat/Nova/Lightning/NovaLightningYellow.prefab";
+
+    public const string RedMageLightningOrb =
+        "Assets/Epic Toon FX/Prefabs/Environment/Lightning/Sharp/LightningOrbSharpBlue.prefab";
+
+    public const string RedMageLightningExplosion =
+        "Assets/Epic Toon FX/Prefabs/Combat/Explosions/LightningExplosion/LightningExplosionBlue.prefab";
+
+    public const string RedMageTeleportPortal =
+        "Assets/Epic Toon FX/Prefabs/Interactive/Portals/SpinPortal/SpinPortalGold.prefab";
 
     public const string OffsideHornSound =
         "Assets/Game/0Sound/boss-phase-shift.mp3";

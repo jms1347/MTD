@@ -181,6 +181,9 @@ public class CwslBossHongmyeongbo : CwslMonsterBase
 
     private void TickExtraAttacksServer(float interval)
     {
+        if (GetComponent<BossController>()?.IsCasting == true)
+            return;
+
         if (Time.time < nextAttackTime)
             return;
 
@@ -190,6 +193,10 @@ public class CwslBossHongmyeongbo : CwslMonsterBase
 
     private void ExecuteRotatingAttackServer()
     {
+        var controller = GetComponent<BossController>();
+        if (controller != null && controller.TryCastNextSkillServer())
+            return;
+
         var pool = GetAttackPoolForPhase();
         if (pool == null || pool.Length == 0)
             return;

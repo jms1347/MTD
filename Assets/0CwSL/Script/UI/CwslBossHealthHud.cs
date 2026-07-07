@@ -9,7 +9,10 @@ public class CwslBossHealthHud : MonoBehaviour
 
     private RectTransform panelRect;
     private Image fillImage;
+    private RectTransform barBackgroundRect;
     private TextMeshProUGUI label;
+    private readonly System.Collections.Generic.List<GameObject> segmentDividers = new();
+    private float lastSegmentMaxHealth = -1f;
 
     public static void Ensure(Transform canvasTransform)
     {
@@ -63,7 +66,7 @@ public class CwslBossHealthHud : MonoBehaviour
 
         var barBackground = new GameObject("BarBackground", typeof(RectTransform), typeof(Image));
         barBackground.transform.SetParent(panel, false);
-        var barBackgroundRect = barBackground.GetComponent<RectTransform>();
+        barBackgroundRect = barBackground.GetComponent<RectTransform>();
         barBackgroundRect.anchorMin = new Vector2(0f, 0f);
         barBackgroundRect.anchorMax = new Vector2(1f, 0f);
         barBackgroundRect.pivot = new Vector2(0.5f, 0f);
@@ -80,11 +83,7 @@ public class CwslBossHealthHud : MonoBehaviour
         fillRect.offsetMin = Vector2.zero;
         fillRect.offsetMax = Vector2.zero;
         fillImage = fillObject.GetComponent<Image>();
-        fillImage.type = Image.Type.Filled;
-        fillImage.fillMethod = Image.FillMethod.Horizontal;
-        fillImage.fillOrigin = (int)Image.OriginHorizontal.Left;
-        fillImage.color = new Color(0.95f, 0.2f, 0.12f, 1f);
-        fillImage.raycastTarget = false;
+        CwslUiSpriteUtil.ConfigureHorizontalFill(fillImage, new Color(0.95f, 0.2f, 0.12f, 1f));
     }
 
     private void Refresh()
@@ -110,9 +109,19 @@ public class CwslBossHealthHud : MonoBehaviour
 
         var maxHealth = Mathf.Max(1f, health.MaxHealth);
         var ratio = Mathf.Clamp01(health.CurrentHealth / maxHealth);
+        EnsureSegments(maxHealth);
         fillImage.fillAmount = ratio;
 
         label.text = $"홍명보  HP {health.CurrentHealth:0} / {maxHealth:0}";
+    }
+
+    private void EnsureSegments(float maxHealth)
+    {
+        if (barBackgroundRect == null || Mathf.Approximately(lastSegmentMaxHealth, maxHealth))
+            return;
+
+        CwslHealthBarSegments.BuildUiDividers(barBackgroundRect, maxHealth, segmentDividers);
+        lastSegmentMaxHealth = maxHealth;
     }
 
     private static TextMeshProUGUI CreateLabel(

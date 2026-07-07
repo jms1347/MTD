@@ -25,6 +25,9 @@ public static class CwslMonsterStatCatalog
     public const float MidBossAttackPower = 40f;
     public const float MidBossMoveSpeed = 2.2f;
 
+    public const float SeniorCoachHealth = 1800f;
+    public const float SeniorCoachMoveSpeed = 2.8f;
+
     public const float DefenseBossHealth = 3000f;
     public const float DefenseBossMoveSpeed = 1.85f;
     public const float DefenseBossSlamDamage = 80f;
@@ -40,10 +43,13 @@ public static class CwslMonsterStatCatalog
         return type switch
         {
             CwslMonsterType.Ranged => RangedBaseHealth,
+            CwslMonsterType.InkSniper or CwslMonsterType.NexusInkSniper => RangedBaseHealth,
             CwslMonsterType.Suicide => SuicideBaseHealth,
             CwslMonsterType.StickySuicide => SuicideBaseHealth,
-            CwslMonsterType.NexusMelee or CwslMonsterType.NexusRanged or CwslMonsterType.NexusSuicide => NexusVariantHealth,
+            CwslMonsterType.NexusMelee or CwslMonsterType.NexusRanged or CwslMonsterType.NexusSuicide
+                or CwslMonsterType.NexusInkSniper => NexusVariantHealth,
             CwslMonsterType.MidBoss => MidBossHealth,
+            CwslMonsterType.SeniorCoach => SeniorCoachHealth,
             CwslMonsterType.DefenseBoss => DefenseBossHealth,
             CwslMonsterType.BossHongmyeongbo => BossHongmyeongboHealth,
             _ => MeleeBaseHealth
@@ -55,13 +61,16 @@ public static class CwslMonsterStatCatalog
         return type switch
         {
             CwslMonsterType.Ranged => RangedMoveSpeed,
+            CwslMonsterType.InkSniper => RangedMoveSpeed,
             CwslMonsterType.NexusRanged => RangedMoveSpeed * nexusSpeedMultiplier,
+            CwslMonsterType.NexusInkSniper => RangedMoveSpeed * nexusSpeedMultiplier,
             CwslMonsterType.Suicide => SuicideMoveSpeed,
             CwslMonsterType.NexusSuicide => SuicideMoveSpeed * nexusSpeedMultiplier,
             CwslMonsterType.NexusMelee => MeleeMoveSpeed * nexusSpeedMultiplier,
             CwslMonsterType.KoreaUniversitySoldier => MeleeMoveSpeed,
             CwslMonsterType.StickySuicide => SuicideMoveSpeed,
             CwslMonsterType.MidBoss => MeleeMoveSpeed * midBossSpeedMultiplier,
+            CwslMonsterType.SeniorCoach => SeniorCoachMoveSpeed,
             CwslMonsterType.DefenseBoss => DefenseBossMoveSpeed,
             CwslMonsterType.BossHongmyeongbo => BossHongmyeongboMoveSpeed,
             _ => MeleeMoveSpeed

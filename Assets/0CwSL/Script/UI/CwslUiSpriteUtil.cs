@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 public static class CwslUiSpriteUtil
 {
@@ -38,5 +39,26 @@ public static class CwslUiSpriteUtil
             whiteSprite.hideFlags = HideFlags.HideAndDontSave;
             return whiteSprite;
         }
+    }
+
+    public static void ConfigureHorizontalFill(Image image, Color color)
+    {
+        image.sprite = WhiteSprite;
+        image.type = Image.Type.Filled;
+        image.fillMethod = Image.FillMethod.Horizontal;
+        image.fillOrigin = (int)Image.OriginHorizontal.Left;
+        image.color = color;
+        image.raycastTarget = false;
+    }
+
+    public static void ConfigureRadial360Fill(Image image, Color color)
+    {
+        image.sprite = WhiteSprite;
+        image.type = Image.Type.Filled;
+        image.fillMethod = Image.FillMethod.Radial360;
+        image.fillOrigin = (int)Image.Origin360.Top;
+        image.fillClockwise = true;
+        image.color = color;
+        image.raycastTarget = false;
     }
 }

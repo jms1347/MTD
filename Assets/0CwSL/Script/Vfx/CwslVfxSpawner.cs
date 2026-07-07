@@ -12,7 +12,7 @@ public static class CwslVfxSpawner
             instance.transform.localScale = Vector3.one * scale;
 
         if (lifetime > 0f)
-            Object.Destroy(instance, lifetime);
+            CwslVfxPool.ScheduleRelease(instance, lifetime);
         return instance;
     }
 
@@ -34,12 +34,14 @@ public static class CwslVfxSpawner
             CwslGameConstants.SuicideExplosionScale);
         if (spawned == null)
             CwslSimpleVfx.SpawnBurst(position, new Color(1f, 0.45f, 0.1f), 1.2f, 0.45f);
+        else
+            PrepareEffect(spawned);
         return spawned;
     }
 
     public static GameObject SpawnMeleeHit(Vector3 position, Quaternion rotation)
     {
-        var spawned = Spawn(CwslGameSession.Instance?.Assets?.meleeHitVfx, position, rotation, 1.5f);
+        var spawned = Spawn(ResolveAssets()?.meleeHitVfx, position, rotation, 1.5f);
         if (spawned == null)
             CwslSimpleVfx.SpawnBurst(position, new Color(0.2f, 0.9f, 0.35f), 0.8f, 0.3f);
         return spawned;
@@ -47,14 +49,16 @@ public static class CwslVfxSpawner
 
     public static GameObject SpawnEnemyDeath(Vector3 position, CwslMonsterType monsterType)
     {
-        var assets = CwslGameSession.Instance?.Assets;
-        var prefab = monsterType == CwslMonsterType.BossHongmyeongbo
-            ? assets?.bossDeathVfx ?? assets?.enemyDeathVfx
-            : assets?.enemyDeathVfx;
+        var assets = ResolveAssets();
+        var prefab = assets?.enemyDeathVfx
+                     ?? assets?.bossDeathVfx
+                     ?? assets?.suicideBomberDeathVfx;
 
         var spawned = Spawn(prefab, position + Vector3.up * 0.5f, Quaternion.identity, 4f);
         if (spawned == null)
             CwslSimpleVfx.SpawnBurst(position, new Color(0.2f, 0.9f, 0.35f), 1f, 0.4f);
+        else
+            PrepareEffect(spawned);
         return spawned;
     }
 
@@ -88,13 +92,67 @@ public static class CwslVfxSpawner
     public static GameObject SpawnFortifyBlock(Vector3 position)
     {
         var spawned = Spawn(
-            CwslGameSession.Instance?.Assets?.fortifyBlockVfx,
+            ResolveAssets()?.fortifyBlockVfx,
             position,
             Quaternion.identity,
             1.2f,
             0.9f);
         if (spawned == null)
             CwslSimpleVfx.SpawnBurst(position, new Color(0.45f, 0.75f, 1f), 0.55f, 0.25f);
+        return spawned;
+    }
+
+    public static GameObject SpawnRangedTankMuzzleFlash(Vector3 position, Quaternion rotation)
+    {
+        var spawned = Spawn(
+            ResolveAssets()?.rangedTankMuzzleVfx,
+            position,
+            rotation,
+            0.45f,
+            0.65f);
+        if (spawned == null)
+            CwslSimpleVfx.SpawnBurst(position, new Color(1f, 0.55f, 0.78f), 0.35f, 0.2f);
+        else
+            PrepareEffect(spawned);
+        return spawned;
+    }
+
+    public static GameObject SpawnRangedTankProjectileHit(Vector3 position, Vector3 fireDirection)
+    {
+        var rotation = fireDirection.sqrMagnitude > 0.0001f
+            ? Quaternion.LookRotation(fireDirection.normalized, Vector3.up)
+            : Quaternion.identity;
+        var spawned = Spawn(
+            ResolveAssets()?.rangedTankProjectileHitVfx,
+            position + Vector3.up * 0.2f,
+            rotation,
+            2f,
+            0.85f);
+        if (spawned == null)
+            CwslSimpleVfx.SpawnBurst(position, new Color(1f, 0.45f, 0.72f), 0.55f, 0.3f);
+        else
+            PrepareEffect(spawned);
+        return spawned;
+    }
+
+    public static GameObject AttachInkBlindAura(Transform anchor)
+    {
+        if (anchor == null)
+            return null;
+
+        var spawned = Spawn(
+            ResolveAssets()?.inkBlindAuraVfx ?? ResolveAssets()?.fogZoneLocalVfx,
+            anchor.position,
+            Quaternion.identity,
+            0f,
+            1.35f);
+        if (spawned == null)
+            return null;
+
+        spawned.transform.SetParent(anchor, false);
+        spawned.transform.localPosition = Vector3.zero;
+        spawned.transform.localRotation = Quaternion.identity;
+        PrepareEffect(spawned);
         return spawned;
     }
 
@@ -114,7 +172,7 @@ public static class CwslVfxSpawner
     public static GameObject SpawnRammerStunExplosion(Vector3 position)
     {
         var spawned = Spawn(
-            CwslGameSession.Instance?.Assets?.rammerStunExplosionVfx,
+            ResolveAssets()?.rammerStunExplosionVfx,
             position + Vector3.up * 0.35f,
             Quaternion.identity,
             3f,
@@ -133,7 +191,7 @@ public static class CwslVfxSpawner
             return null;
 
         var spawned = Spawn(
-            CwslGameSession.Instance?.Assets?.rammerStunStarsVfx,
+            ResolveAssets()?.rammerStunStarsVfx,
             anchor.position,
             Quaternion.identity,
             0f,
@@ -692,7 +750,12 @@ public static class CwslVfxSpawner
             return null;
         }
 
-        return Object.Instantiate(prefab, position, rotation);
+        return CwslVfxPool.Acquire(prefab, position, rotation);
+    }
+
+    public static void PrepareReusedEffect(GameObject root)
+    {
+        PrepareEffect(root);
     }
 
     public static GameObject SpawnFakeGoldExplosion(Vector3 position)
@@ -1044,4 +1107,89 @@ public static class CwslVfxSpawner
     {
         return AttachGroundLoop(prefab, parent, diameter / 6.2f);
     }
+
+    public static GameObject SpawnShieldSlamGroundHit(
+        Vector3 position,
+        Quaternion rotation,
+        float scale,
+        bool empowered)
+    {
+        var assets = ResolveAssets();
+        var prefab = empowered ? assets?.shieldSlamCartoonyVfx : assets?.shieldSlamSoftVfx;
+        var lifetime = empowered ? 2.8f : 2.2f;
+        var spawned = Spawn(prefab, position, rotation, lifetime, scale);
+        if (spawned == null)
+            CwslSimpleVfx.SpawnBurst(position, new Color(0.75f, 0.68f, 0.35f), scale * 0.9f, 0.35f);
+        else
+            PrepareEffect(spawned);
+
+        return spawned;
+    }
+
+    public static GameObject AttachShieldDashWave(Transform shield, float scale)
+    {
+        if (shield == null)
+            return null;
+
+        var spawned = Spawn(
+            ResolveAssets()?.shieldDashWaveVfx,
+            shield.position,
+            shield.rotation,
+            0f,
+            scale);
+        if (spawned == null)
+            return null;
+
+        spawned.transform.SetParent(shield, false);
+        spawned.transform.localPosition = CwslTankShieldVfxUtil.GetDashWaveLocalOffset(scale);
+        spawned.transform.localRotation = CwslTankShieldVfxUtil.GetShieldAttachLocalRotation();
+        PrepareEffect(spawned);
+        return spawned;
+    }
+
+    public static GameObject AttachShieldWhirlwind(Transform shield, float scale, float lifetime)
+    {
+        if (shield == null)
+            return null;
+
+        var spawned = Spawn(
+            ResolveAssets()?.shieldWhirlwindVfx,
+            shield.position,
+            shield.rotation,
+            lifetime > 0f ? lifetime : 0f,
+            scale);
+        if (spawned == null)
+            return null;
+
+        spawned.transform.SetParent(shield, false);
+        spawned.transform.localPosition = Vector3.zero;
+        spawned.transform.localRotation = CwslTankShieldVfxUtil.GetShieldWhirlwindAttachLocalRotation();
+        PrepareEffect(spawned);
+        return spawned;
+    }
+
+    public static GameObject AttachMonsterStatusEffect(
+        GameObject prefab,
+        Transform parent,
+        Vector3 localPosition,
+        float scale)
+    {
+        if (prefab == null || parent == null)
+            return null;
+
+        var spawned = Spawn(prefab, parent.position, Quaternion.identity, 0f, scale <= 0f ? 1f : scale);
+        if (spawned == null)
+            return null;
+
+        spawned.transform.SetParent(parent, false);
+        spawned.transform.localPosition = localPosition;
+        spawned.transform.localRotation = Quaternion.identity;
+        PrepareEffect(spawned);
+        return spawned;
+    }
+
+    public static CwslGameAssets GetAssets() => ResolveAssets();
+
+    private static CwslGameAssets ResolveAssets() =>
+        CwslGameSession.Instance?.Assets ?? CwslVisualTestAssetsContext.Assets;
 }

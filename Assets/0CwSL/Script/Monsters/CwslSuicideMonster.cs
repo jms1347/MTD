@@ -53,13 +53,28 @@ public class CwslSuicideMonster : CwslMonsterBase, ICwslPooledNetworkObject
             DetonateServer();
     }
 
+    protected Vector3 ResolveExplosionPosition()
+    {
+        var visual = transform.Find("Visual");
+        if (visual != null)
+        {
+            var anchor = visual.Find("ExplosionAnchor");
+            if (anchor != null)
+                return anchor.position;
+
+            return visual.TransformPoint(new Vector3(0f, 0.58f, 0f));
+        }
+
+        return transform.position + Vector3.up * 0.58f;
+    }
+
     protected void DetonateServer()
     {
         if (detonated)
             return;
 
         detonated = true;
-        var position = transform.position;
+        var position = ResolveExplosionPosition();
         PlayExplosionClientRpc(position);
 
         var damage = GetScaledDamage(ExplosionDamage);

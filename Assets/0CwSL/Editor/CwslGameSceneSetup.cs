@@ -29,17 +29,22 @@ public static class CwslGameSceneSetup
         var assets = EnsureGameAssets();
         var playerPrefab = BuildPlayerPrefab();
         var rangedPrefab = BuildMonsterPrefab(CwslMonsterType.Ranged, typeof(CwslRangedMonster), 0.55f);
+        var inkSniperPrefab = BuildMonsterPrefab(CwslMonsterType.InkSniper, typeof(CwslInkSniperMonster), 0.52f);
         var suicidePrefab = BuildMonsterPrefab(CwslMonsterType.Suicide, typeof(CwslSuicideMonster), 0.5f);
         var meleePrefab = BuildMonsterPrefab(CwslMonsterType.Melee, typeof(CwslMeleeMonster), 0.6f);
+        var nexusMeleePrefab = BuildMonsterPrefab(CwslMonsterType.NexusMelee, typeof(CwslMeleeMonster), 1.45f);
         var koreaSoldierPrefab = BuildMonsterPrefab(
             CwslMonsterType.KoreaUniversitySoldier, typeof(CwslMeleeMonster), 0.6f);
         var stickySuicidePrefab = BuildMonsterPrefab(
             CwslMonsterType.StickySuicide, typeof(CwslStickySuicideMonster), 0.45f);
         var midBossPrefab = BuildMonsterPrefab(CwslMonsterType.MidBoss, typeof(CwslDefenseMidBoss), 0.85f);
         var defenseBossPrefab = BuildMonsterPrefab(CwslMonsterType.DefenseBoss, typeof(CwslDefenseBoss), 1.1f);
+        var seniorCoachPrefab = BuildMonsterPrefab(CwslMonsterType.SeniorCoach, typeof(CwslSeniorCoachMonster), 0.78f);
         var bossPrefab = BuildBossPrefab();
         var projectilePrefab = BuildProjectilePrefab();
+        var bossSkillProjectilePrefab = BuildBossSkillProjectilePrefab();
         var playerMissilePrefab = BuildPlayerMissilePrefab();
+        var frozenOrbPrefab = BuildFrozenOrbPrefab();
         var goldPickupPrefab = BuildGoldPickupPrefab();
         var pillPickupPrefab = BuildPillPickupPrefab();
         var graveVisualPrefab = BuildGraveVisualPrefab();
@@ -48,30 +53,60 @@ public static class CwslGameSceneSetup
 
         assets.playerPrefab = playerPrefab;
         assets.rangedMonsterPrefab = rangedPrefab;
+        assets.inkSniperMonsterPrefab = inkSniperPrefab;
         assets.suicideMonsterPrefab = suicidePrefab;
         assets.meleeMonsterPrefab = meleePrefab;
+        assets.nexusMeleeMonsterPrefab = nexusMeleePrefab;
+        assets.slimeMeleeModelPrefab = LoadPrefab(CwslSlimeAssetPaths.Slime01);
+        assets.slimeNexusMeleeModelPrefab = LoadPrefab(CwslSlimeAssetPaths.SlimeViking);
+        assets.slimeAnimatorController = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(CwslSlimeAssetPaths.AnimatorController);
         assets.koreaUniversitySoldierPrefab = koreaSoldierPrefab;
         assets.stickySuicideMonsterPrefab = stickySuicidePrefab;
         assets.midBossMonsterPrefab = midBossPrefab;
         assets.defenseBossMonsterPrefab = defenseBossPrefab;
+        assets.seniorCoachMonsterPrefab = seniorCoachPrefab;
         assets.bossPrefab = bossPrefab;
         assets.projectilePrefab = projectilePrefab;
+        assets.bossSkillProjectilePrefab = bossSkillProjectilePrefab;
         assets.playerMissilePrefab = playerMissilePrefab;
+        assets.frozenOrbPrefab = frozenOrbPrefab;
         assets.goldPickupPrefab = goldPickupPrefab;
         assets.pillPickupPrefab = pillPickupPrefab;
         assets.graveVisualPrefab = graveVisualPrefab;
         assets.nexusPrefab = nexusPrefab;
         assets.enemyBasePrefab = enemyBasePrefab;
         assets.darkMissileVfx = LoadPrefab(CwslVfxPaths.RangedProjectileVisual);
+        assets.rangedTankProjectileVfx = LoadPrefab(CwslVfxPaths.RangedTankProjectileVisual);
+        assets.rangedTankMuzzleVfx = LoadPrefab(CwslVfxPaths.RangedTankMuzzleFlash);
+        assets.rangedTankProjectileHitVfx = LoadPrefab(CwslVfxPaths.RangedTankProjectileHit);
+        assets.inkBlindAuraVfx = LoadPrefab(CwslVfxPaths.InkBlindAura);
         assets.shadowProjectileHitVfx = LoadPrefab(CwslVfxPaths.ShadowProjectileHit);
         assets.shadowMuzzleVfx = LoadPrefab(CwslVfxPaths.ShadowMuzzleFlash);
         assets.playerMissileVfx = LoadPrefab(CwslVfxPaths.PlayerMissileVisual);
+        assets.missileTankPowerBoostVfx = LoadPrefab(CwslVfxPaths.MissileTankPowerBoostGlow);
+        assets.missileTankSmokeDashTrailVfx = LoadPrefab(CwslVfxPaths.MissileTankSmokeDashTrail);
+        assets.missileTankSmokeBombVfx = LoadPrefab(CwslVfxPaths.MissileTankSmokeBomb);
+        assets.missileTankSmokeZoneVfx = LoadPrefab(CwslVfxPaths.MissileTankSmokeZone);
+        assets.missileTankFireAmmoVfx = LoadPrefab(CwslVfxPaths.MissileTankFireAmmo);
+        assets.missileTankPoisonAmmoVfx = LoadPrefab(CwslVfxPaths.MissileTankPoisonAmmo);
+        assets.missileTankLightningAmmoVfx = LoadPrefab(CwslVfxPaths.MissileTankLightningAmmo);
         assets.gunMuzzleVfx = LoadPrefab(CwslVfxPaths.GunMuzzleFlash);
         assets.fortifyAuraVfx = LoadPrefab(CwslVfxPaths.FortifyAura);
         assets.fortifyBlockVfx = LoadPrefab(CwslVfxPaths.FortifyBlock);
+        assets.shieldDashWaveVfx = LoadPrefab(CwslVfxPaths.ShieldDashWave);
+        assets.shieldWhirlwindVfx = LoadPrefab(CwslVfxPaths.ShieldWhirlwind);
+        assets.shieldSlamSoftVfx = LoadPrefab(CwslVfxPaths.ShieldSlamSoft);
+        assets.shieldSlamCartoonyVfx = LoadPrefab(CwslVfxPaths.ShieldSlamCartoony);
+        assets.monsterBurnStatusVfx = LoadPrefab(CwslVfxPaths.MonsterBurnStatus);
+        assets.monsterSlowStatusVfx = LoadPrefab(CwslVfxPaths.MonsterSlowStatus);
+        assets.monsterShockStatusVfx = LoadPrefab(CwslVfxPaths.MonsterShockStatus);
+        assets.monsterPoisonStatusVfx = LoadPrefab(CwslVfxPaths.MonsterPoisonStatus);
         assets.meteorFallVfx = LoadPrefab(CwslVfxPaths.MeteorFall);
         assets.meteorImpactVfx = LoadPrefab(CwslVfxPaths.MeteorImpact);
         assets.meteorBurnVfx = LoadPrefab(CwslVfxPaths.MeteorBurn);
+        assets.meteorGroundFireSoftAbVfx = LoadPrefab(CwslVfxPaths.MeteorGroundFireSoftAb);
+        assets.meteorGroundFireSoftBigVfx = LoadPrefab(CwslVfxPaths.MeteorGroundFireSoftBig);
+        assets.meteorGroundFireAdditiveVfx = LoadPrefab(CwslVfxPaths.MeteorGroundFireAdditive);
         assets.rammerStunExplosionVfx = LoadPrefab(CwslVfxPaths.RammerStunExplosion);
         assets.rammerStunStarsVfx = LoadPrefab(CwslVfxPaths.RammerStunStars);
         assets.gatherChargeCircleVfx = LoadPrefab(CwslVfxPaths.GatherChargeCircle);
@@ -118,6 +153,9 @@ public static class CwslGameSceneSetup
         assets.lightningStunExplosionVfx = LoadPrefab(CwslVfxPaths.LightningStunExplosion);
         assets.lightningStunStrikeVfx = LoadPrefab(CwslVfxPaths.LightningStunStrike);
         assets.lightningZoneAuraVfx = LoadPrefab(CwslVfxPaths.LightningZoneAura);
+        assets.redMageLightningOrbVfx = LoadPrefab(CwslVfxPaths.RedMageLightningOrb);
+        assets.redMageLightningExplosionVfx = LoadPrefab(CwslVfxPaths.RedMageLightningExplosion);
+        assets.redMageTeleportPortalVfx = LoadPrefab(CwslVfxPaths.RedMageTeleportPortal);
         assets.hazardAcidPadVfx = LoadPrefab(CwslVfxPaths.HazardAcidPad);
         assets.hazardLavaPadVfx = LoadPrefab(CwslVfxPaths.HazardLavaPad);
         assets.hazardWaterPadVfx = LoadPrefab(CwslVfxPaths.HazardWaterPad);
@@ -127,6 +165,7 @@ public static class CwslGameSceneSetup
         assets.pillSphereBlueVfx = LoadPrefab(CwslVfxPaths.PillSphereBlue);
         assets.pillSphereYellowVfx = LoadPrefab(CwslVfxPaths.PillSphereYellow);
         assets.suicideExplosionVfx = LoadPrefab(CwslVfxPaths.SuicideExplosion);
+        assets.suicideBomberDeathVfx = LoadPrefab(CwslVfxPaths.SuicideBomberDeath);
         assets.bombFuseVfx = LoadPrefab(CwslVfxPaths.BombFuse);
         assets.meleeHitVfx = LoadPrefab(CwslVfxPaths.MeleeHit);
         assets.enemyDeathVfx = LoadPrefab(CwslVfxPaths.EnemyDeath);
@@ -154,15 +193,20 @@ public static class CwslGameSceneSetup
         var networkPrefabs = EnsureNetworkPrefabsList();
         RegisterNetworkPrefab(networkPrefabs, playerPrefab);
         RegisterNetworkPrefab(networkPrefabs, rangedPrefab);
+        RegisterNetworkPrefab(networkPrefabs, inkSniperPrefab);
         RegisterNetworkPrefab(networkPrefabs, suicidePrefab);
         RegisterNetworkPrefab(networkPrefabs, meleePrefab);
+        RegisterNetworkPrefab(networkPrefabs, nexusMeleePrefab);
         RegisterNetworkPrefab(networkPrefabs, koreaSoldierPrefab);
         RegisterNetworkPrefab(networkPrefabs, stickySuicidePrefab);
         RegisterNetworkPrefab(networkPrefabs, midBossPrefab);
         RegisterNetworkPrefab(networkPrefabs, defenseBossPrefab);
+        RegisterNetworkPrefab(networkPrefabs, seniorCoachPrefab);
         RegisterNetworkPrefab(networkPrefabs, bossPrefab);
         RegisterNetworkPrefab(networkPrefabs, projectilePrefab);
+        RegisterNetworkPrefab(networkPrefabs, bossSkillProjectilePrefab);
         RegisterNetworkPrefab(networkPrefabs, playerMissilePrefab);
+        RegisterNetworkPrefab(networkPrefabs, frozenOrbPrefab);
         RegisterNetworkPrefab(networkPrefabs, goldPickupPrefab);
         RegisterNetworkPrefab(networkPrefabs, pillPickupPrefab);
         RegisterNetworkPrefab(networkPrefabs, nexusPrefab);
@@ -408,7 +452,13 @@ public static class CwslGameSceneSetup
         root.AddComponent<CwslTankShieldSlamSkill>();
         root.AddComponent<CwslTankShieldWhirlwindSkill>();
         root.AddComponent<CwslMissileTankSkill>();
+        root.AddComponent<CwslMissileTankAmmoController>();
+        root.AddComponent<CwslMissileTankPowerBoostSkill>();
+        root.AddComponent<CwslMissileTankSmokeDashSkill>();
         root.AddComponent<CwslRedMageMeteorSkill>();
+        root.AddComponent<CwslRedMageFrozenOrbSkill>();
+        root.AddComponent<CwslRedMageLightningOrbSkill>();
+        root.AddComponent<CwslRedMageTeleportSkill>();
         root.AddComponent<CwslMomentumRammerSkill>();
         root.AddComponent<CwslCrowdGatherSkill>();
         root.AddComponent<CwslPlayerStun>();
@@ -424,6 +474,8 @@ public static class CwslGameSceneSetup
         root.AddComponent<CwslPlayerSpawnOffset>();
         root.AddComponent<CwslPlayerVision>();
         root.AddComponent<CwslPlayerVisionDebuff>();
+        root.AddComponent<CwslPlayerInkBlindVisual>();
+        root.AddComponent<CwslPlayerBossDebuff>();
         root.AddComponent<CwslPlayerPillBuff>();
         root.AddComponent<CwslBlackHoleEscape>();
         root.AddComponent<CwslPlayerProfile>();
@@ -512,9 +564,18 @@ public static class CwslGameSceneSetup
         root.layer = LayerMask.NameToLayer(CwslGameConstants.LayerMonster);
 
         var collider = root.AddComponent<CapsuleCollider>();
-        collider.height = CwslGameConstants.MonsterHitHeight;
-        collider.radius = Mathf.Max(radius, CwslGameConstants.MonsterHitMinRadius);
-        collider.center = new Vector3(0f, CwslGameConstants.MonsterHitCenterY, 0f);
+        if (type == CwslMonsterType.NexusMelee)
+        {
+            collider.height = 4.6f;
+            collider.radius = Mathf.Max(radius, 1.45f);
+            collider.center = new Vector3(0f, 2.3f, 0f);
+        }
+        else
+        {
+            collider.height = CwslGameConstants.MonsterHitHeight;
+            collider.radius = Mathf.Max(radius, CwslGameConstants.MonsterHitMinRadius);
+            collider.center = new Vector3(0f, CwslGameConstants.MonsterHitCenterY, 0f);
+        }
         collider.isTrigger = true;
 
         if (type == CwslMonsterType.Suicide || type == CwslMonsterType.StickySuicide)
@@ -530,7 +591,7 @@ public static class CwslGameSceneSetup
         root.AddComponent<CwslMonsterKnockback>();
         root.AddComponent<CwslMonsterStun>();
         root.AddComponent(behaviourType);
-        if (type == CwslMonsterType.Ranged)
+        if (type == CwslMonsterType.Ranged || type == CwslMonsterType.InkSniper)
             root.AddComponent<CwslRangedCannonAim>();
 
         CwslMonsterVisualBuilder.Build(root.transform, type);
@@ -561,6 +622,7 @@ public static class CwslGameSceneSetup
         root.AddComponent<Unity.Netcode.Components.NetworkTransform>();
         root.AddComponent<CwslMonsterHealth>();
         root.AddComponent<CwslBossHongmyeongbo>();
+        root.AddComponent<BossController>();
         CwslMonsterVisualBuilder.Build(root.transform, CwslMonsterType.BossHongmyeongbo);
 
         return SavePrefab(root, CwslPrefabPaths.Boss.Hongmyeongbo);
@@ -592,6 +654,33 @@ public static class CwslGameSceneSetup
         root.AddComponent<CwslProjectileVisual>();
 
         return SavePrefab(root, CwslPrefabPaths.Projectiles.Monster);
+    }
+
+    private static GameObject BuildBossSkillProjectilePrefab()
+    {
+        var root = new GameObject("CwslBossSkillProjectile");
+        root.layer = LayerMask.NameToLayer(CwslGameConstants.LayerProjectile);
+
+        var collider = root.AddComponent<SphereCollider>();
+        collider.radius = 0.3f;
+        collider.isTrigger = true;
+
+        var rb = root.AddComponent<Rigidbody>();
+        rb.isKinematic = true;
+        rb.useGravity = false;
+
+        var visual = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        visual.name = "HitProxy";
+        visual.transform.SetParent(root.transform, false);
+        visual.transform.localScale = Vector3.one * 0.25f;
+        Object.DestroyImmediate(visual.GetComponent<Collider>());
+        visual.GetComponent<Renderer>().enabled = false;
+
+        root.AddComponent<NetworkObject>();
+        root.AddComponent<Unity.Netcode.Components.NetworkTransform>();
+        root.AddComponent<CwslBossSkillProjectile>();
+
+        return SavePrefab(root, CwslPrefabPaths.Projectiles.BossSkill);
     }
 
     private static GameObject BuildPlayerMissilePrefab()
@@ -636,6 +725,25 @@ public static class CwslGameSceneSetup
         root.AddComponent<CwslPlayerProjectileVisual>();
 
         return SavePrefab(root, CwslPrefabPaths.Projectiles.PlayerMissile);
+    }
+
+    private static GameObject BuildFrozenOrbPrefab()
+    {
+        var root = new GameObject("CwslFrozenOrb");
+        root.layer = LayerMask.NameToLayer(CwslGameConstants.LayerPlayer);
+
+        var collider = root.AddComponent<SphereCollider>();
+        collider.isTrigger = true;
+        collider.radius = 0.42f;
+
+        root.AddComponent<CwslFrozenOrbEmitter>();
+
+        root.AddComponent<NetworkObject>();
+        root.AddComponent<Unity.Netcode.Components.NetworkTransform>();
+        root.AddComponent<CwslFrozenOrbProjectile>();
+        root.AddComponent<CwslFrozenOrbVisual>();
+
+        return SavePrefab(root, CwslPrefabPaths.Projectiles.FrozenOrb);
     }
 
     private static GameObject SavePrefab(GameObject root, string path)

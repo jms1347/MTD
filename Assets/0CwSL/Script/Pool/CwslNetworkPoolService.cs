@@ -43,7 +43,9 @@ public class CwslNetworkPoolService : MonoBehaviour
         var bossExpand = CwslGameConstants.PoolBossExpandSize;
 
         RegisterPool(assets.projectilePrefab, high, highExpand);
+        RegisterPool(assets.bossSkillProjectilePrefab, high, highExpand);
         RegisterPool(assets.playerMissilePrefab, high, highExpand);
+        RegisterPool(assets.frozenOrbPrefab, high, highExpand);
         RegisterPool(assets.rangedMonsterPrefab, high, highExpand);
         RegisterPool(assets.suicideMonsterPrefab, high, highExpand);
         RegisterPool(assets.meleeMonsterPrefab, high, highExpand);
@@ -51,6 +53,7 @@ public class CwslNetworkPoolService : MonoBehaviour
         RegisterPool(assets.stickySuicideMonsterPrefab, high, highExpand);
         RegisterPool(assets.midBossMonsterPrefab, high, highExpand);
         RegisterPool(assets.defenseBossMonsterPrefab, high, highExpand);
+        RegisterPool(assets.seniorCoachMonsterPrefab, boss, bossExpand);
         RegisterPool(assets.goldPickupPrefab, high, highExpand);
         RegisterPool(assets.pillPickupPrefab, high, highExpand);
         RegisterPool(assets.bossPrefab, boss, bossExpand);

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -11,6 +12,8 @@ public class CwslPlayerHealthBar : NetworkBehaviour
     private Transform barRoot;
     private Transform fillTransform;
     private Renderer fillRenderer;
+    private readonly List<Transform> segmentDividers = new();
+    private float lastSegmentMaxHealth = -1f;
 
     public override void OnNetworkSpawn()
     {
@@ -57,6 +60,7 @@ public class CwslPlayerHealthBar : NetworkBehaviour
         var current = currentHealth ?? (playerHealth != null ? playerHealth.CurrentHealth : CwslGameConstants.PlayerMaxHealth);
         var maxHealth = playerHealth != null ? playerHealth.MaxHealth : CwslGameConstants.PlayerMaxHealth;
         var ratio = maxHealth > 0f ? Mathf.Clamp01(current / maxHealth) : 0f;
+        EnsureSegments(maxHealth);
         fillTransform.localScale = new Vector3(BarWidth * ratio, BarHeight, 0.1f);
         fillTransform.localPosition = new Vector3(-BarWidth * 0.5f + (BarWidth * ratio * 0.5f), 0f, -0.01f);
 
@@ -92,5 +96,19 @@ public class CwslPlayerHealthBar : NetworkBehaviour
         fillRenderer = fill.GetComponent<Renderer>();
         CwslMaterialUtil.ApplyColor(fillRenderer, new Color(0.25f, 0.9f, 0.35f));
         fillTransform = fill.transform;
+    }
+
+    private void EnsureSegments(float maxHealth)
+    {
+        if (barRoot == null || Mathf.Approximately(lastSegmentMaxHealth, maxHealth))
+            return;
+
+        CwslHealthBarSegments.BuildWorldDividers(
+            barRoot,
+            BarWidth,
+            BarHeight,
+            maxHealth,
+            segmentDividers);
+        lastSegmentMaxHealth = maxHealth;
     }
 }

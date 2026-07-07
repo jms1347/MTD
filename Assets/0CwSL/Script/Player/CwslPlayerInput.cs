@@ -33,12 +33,18 @@ public class CwslPlayerInput : NetworkBehaviour
             playerCamera = Camera.main;
     }
 
-    // TODO(릴리즈): 테스트용 치트키(V/R/U) — 로비 설정으로 비활성 가능.
     private static bool ShouldBlockGameplayInput()
     {
         return CwslGameConstants.UseDefenseMode && CwslCharacterIntroPopup.IsVisible;
     }
 
+    private static bool IsLocalSkillSilenced()
+    {
+        return NetworkManager.Singleton != null
+               && CwslBossWatchState.BlocksSkills(NetworkManager.Singleton.LocalClientId);
+    }
+
+    // TODO(릴리즈): 테스트용 치트키(V/R/U) — 로비 설정으로 비활성 가능.
     private void Update()
     {
         if (!IsOwner || !IsSpawned)
@@ -75,6 +81,9 @@ public class CwslPlayerInput : NetworkBehaviour
 
     private void HandleExtraSkillSlots()
     {
+        if (IsLocalSkillSilenced())
+            return;
+
         var characterId = playerCharacter != null ? playerCharacter.CharacterId : CwslCharacterId.Tank;
 
         if (Input.GetKeyDown(KeyCode.W) && characterId == CwslCharacterId.Tank)
@@ -84,6 +93,22 @@ public class CwslPlayerInput : NetworkBehaviour
                 dashPoint = point;
 
             UseSkillSlotServerRpc(3, dashPoint);
+            return;
+        }
+
+        if (Input.GetKeyDown(KeyCode.W) && characterId == CwslCharacterId.MissileTank)
+        {
+            UseSkillSlotServerRpc(3);
+            return;
+        }
+
+        if (Input.GetKeyDown(KeyCode.W) && characterId == CwslCharacterId.RedMage)
+        {
+            var lightningPoint = transform.position + transform.forward * 5f;
+            if (playerCamera != null && CwslMouseGround.TryGetGroundPoint(playerCamera, out var point, out _))
+                lightningPoint = point;
+
+            UseSkillSlotServerRpc(3, lightningPoint);
             return;
         }
 
@@ -97,7 +122,7 @@ public class CwslPlayerInput : NetworkBehaviour
         }
         if (Input.GetKeyDown(KeyCode.R))
             UseSkillSlotServerRpc(2);
-        if (Input.GetKeyDown(KeyCode.F) && characterId != CwslCharacterId.Tank)
+        if (Input.GetKeyDown(KeyCode.F) && characterId != CwslCharacterId.Tank && characterId != CwslCharacterId.MissileTank && characterId != CwslCharacterId.RedMage)
             UseSkillSlotServerRpc(3);
     }
 
@@ -304,6 +329,9 @@ public class CwslPlayerInput : NetworkBehaviour
 
     private void HandleSkillInput()
     {
+        if (IsLocalSkillSilenced())
+            return;
+
         var characterId = playerCharacter != null ? playerCharacter.CharacterId : CwslCharacterId.Tank;
 
         if (characterId == CwslCharacterId.RedMage)
