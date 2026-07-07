@@ -41,6 +41,7 @@ public static class CwslMonsterStatCatalog
         {
             CwslMonsterType.Ranged => RangedBaseHealth,
             CwslMonsterType.Suicide => SuicideBaseHealth,
+            CwslMonsterType.StickySuicide => SuicideBaseHealth,
             CwslMonsterType.NexusMelee or CwslMonsterType.NexusRanged or CwslMonsterType.NexusSuicide => NexusVariantHealth,
             CwslMonsterType.MidBoss => MidBossHealth,
             CwslMonsterType.DefenseBoss => DefenseBossHealth,
@@ -58,6 +59,8 @@ public static class CwslMonsterStatCatalog
             CwslMonsterType.Suicide => SuicideMoveSpeed,
             CwslMonsterType.NexusSuicide => SuicideMoveSpeed * nexusSpeedMultiplier,
             CwslMonsterType.NexusMelee => MeleeMoveSpeed * nexusSpeedMultiplier,
+            CwslMonsterType.KoreaUniversitySoldier => MeleeMoveSpeed,
+            CwslMonsterType.StickySuicide => SuicideMoveSpeed,
             CwslMonsterType.MidBoss => MeleeMoveSpeed * midBossSpeedMultiplier,
             CwslMonsterType.DefenseBoss => DefenseBossMoveSpeed,
             CwslMonsterType.BossHongmyeongbo => BossHongmyeongboMoveSpeed,

@@ -170,13 +170,14 @@ public class CwslMonsterSpawner : NetworkBehaviour
 
     private static CwslMonsterType RollDefenseMinionType()
     {
-        return Random.Range(0, 6) switch
+        return Random.Range(0, 7) switch
         {
             0 => CwslMonsterType.Melee,
             1 => CwslMonsterType.Ranged,
             2 => CwslMonsterType.Suicide,
-            3 => CwslMonsterType.NexusMelee,
-            4 => CwslMonsterType.NexusRanged,
+            3 => CwslMonsterType.StickySuicide,
+            4 => CwslMonsterType.NexusMelee,
+            5 => CwslMonsterType.NexusRanged,
             _ => CwslMonsterType.NexusSuicide
         };
     }
@@ -186,11 +187,11 @@ public class CwslMonsterSpawner : NetworkBehaviour
         if (forcedType != CwslMonsterType.Melee)
             return forcedType;
 
-        var roll = Random.Range(0, 3);
-        return roll switch
+        return Random.Range(0, 4) switch
         {
             0 => CwslMonsterType.Ranged,
             1 => CwslMonsterType.Suicide,
+            2 => CwslMonsterType.StickySuicide,
             _ => CwslMonsterType.Melee
         };
     }

@@ -15,6 +15,7 @@ public abstract class CwslMonsterBase : NetworkBehaviour
 
     public CwslMonsterType MonsterType { get; protected set; }
     public CwslMonsterTargetingMode TargetingMode => targetingMode;
+    public float LastWalkSpeed { get; private set; }
 
     public virtual void Initialize(CwslMonsterType type)
     {
@@ -27,6 +28,7 @@ public abstract class CwslMonsterBase : NetworkBehaviour
         moveSpeed = ResolveMoveSpeed(type);
         CwslMonsterVisualRefresh.Refresh(transform, type);
         EnsureMeleeLungeVisual();
+        EnsureLegWalkVisual();
         EnsureThreatLight();
         ApplyScaleMultiplier();
     }
@@ -80,14 +82,27 @@ public abstract class CwslMonsterBase : NetworkBehaviour
         MonsterType = type;
         targetingMode = CwslMonsterTypeUtil.GetDefaultTargeting(type);
         EnsureMeleeLungeVisual();
+        EnsureLegWalkVisual();
         EnsureThreatLight();
         ApplyScaleMultiplier();
+    }
+
+    private void EnsureLegWalkVisual()
+    {
+        var visual = transform.Find("Visual");
+        if (visual == null || visual.Find("LegL") == null || visual.Find("LegR") == null)
+            return;
+
+        if (visual.GetComponent<CwslMonsterLegWalkVisual>() == null)
+            visual.gameObject.AddComponent<CwslMonsterLegWalkVisual>();
     }
 
     private void EnsureThreatLight()
     {
         var lightColor = CwslMonsterVisualPalette.GetThreatLightColor(MonsterType);
-        var isSuicide = MonsterType is CwslMonsterType.Suicide or CwslMonsterType.NexusSuicide;
+        var isSuicide = MonsterType is CwslMonsterType.Suicide
+            or CwslMonsterType.NexusSuicide
+            or CwslMonsterType.StickySuicide;
         var isRanged = MonsterType is CwslMonsterType.Ranged or CwslMonsterType.NexusRanged;
         var isNexus = CwslMonsterTypeUtil.IsNexusPriority(MonsterType);
 
@@ -102,7 +117,10 @@ public abstract class CwslMonsterBase : NetworkBehaviour
 
     private void EnsureMeleeLungeVisual()
     {
-        if (MonsterType != CwslMonsterType.Melee && MonsterType != CwslMonsterType.NexusMelee && MonsterType != CwslMonsterType.MidBoss)
+        if (MonsterType != CwslMonsterType.Melee &&
+            MonsterType != CwslMonsterType.NexusMelee &&
+            MonsterType != CwslMonsterType.MidBoss &&
+            MonsterType != CwslMonsterType.KoreaUniversitySoldier)
             return;
 
         var visual = transform.Find("Visual");
@@ -112,6 +130,8 @@ public abstract class CwslMonsterBase : NetworkBehaviour
 
     protected virtual void Update()
     {
+        LastWalkSpeed = 0f;
+
         if (!IsServer || !IsSpawned)
             return;
 
@@ -248,10 +268,12 @@ public abstract class CwslMonsterBase : NetworkBehaviour
 
         var runtime = GetComponent<CwslMonsterRuntimeStats>();
         var runtimeSpeed = runtime != null ? runtime.SpeedMultiplier : 1f;
-        var step = flat.normalized * (moveSpeed * speedMultiplier * localSpeedMultiplier * runtimeSpeed
+        LastWalkSpeed = moveSpeed * speedMultiplier * localSpeedMultiplier * runtimeSpeed
             * CwslMonsterStatCatalog.GlobalMoveSpeedMultiplier
             * CwslArenaZones.GetMonsterSpeedMultiplier(transform.position)
-            * (GetComponent<CwslSlowModifier>()?.SpeedMultiplier ?? 1f) * Time.deltaTime);
+            * (GetComponent<CwslSlowModifier>()?.SpeedMultiplier ?? 1f);
+
+        var step = flat.normalized * (LastWalkSpeed * Time.deltaTime);
         var next = transform.position + step;
         transform.position = CwslArenaUtility.ClampToPlayArea(next, GetMovementClampRadius());
         transform.rotation = Quaternion.Slerp(

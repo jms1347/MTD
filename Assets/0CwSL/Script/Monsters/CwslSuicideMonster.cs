@@ -3,25 +3,33 @@ using UnityEngine;
 
 public class CwslSuicideMonster : CwslMonsterBase, ICwslPooledNetworkObject
 {
-    private const float RushSpeedMultiplier = 1.05f;
-    private const float DetonateRadius = CwslMonsterStatCatalog.SuicideExplosionRadius;
-    private const float ExplosionDamage = CwslMonsterStatCatalog.SuicideExplosionDamage;
-    private bool detonated;
+    protected const float RushSpeedMultiplier = 1.12f;
+    protected const float DetonateRadius = CwslMonsterStatCatalog.SuicideExplosionRadius;
+    protected const float ExplosionDamage = CwslMonsterStatCatalog.SuicideExplosionDamage;
+
+    protected bool detonated;
 
     public override void Initialize(CwslMonsterType type)
     {
         base.Initialize(type);
+        targetingMode = CwslMonsterTargetingMode.Nearest;
         detonated = false;
     }
 
     public void OnSpawnedFromPool()
     {
         detonated = false;
+        ResetSuicideState();
     }
 
     public void OnReturnedToPool()
     {
         detonated = false;
+        ResetSuicideState();
+    }
+
+    protected virtual void ResetSuicideState()
+    {
     }
 
     protected override void TickServerAI()
@@ -29,13 +37,23 @@ public class CwslSuicideMonster : CwslMonsterBase, ICwslPooledNetworkObject
         if (detonated)
             return;
 
-        MoveToward(currentTarget.transform.position, RushSpeedMultiplier);
+        if (!IsValidTarget(currentTarget))
+        {
+            RefreshTarget();
+            if (!IsValidTarget(currentTarget))
+                return;
+        }
+
+        var destination = currentTarget.GetComponent<CwslNexus>() != null
+            ? GetTargetMovePosition()
+            : currentTarget.transform.position;
+        MoveToward(destination, RushSpeedMultiplier);
 
         if (GetFlatDistanceTo(currentTarget) <= DetonateRadius)
             DetonateServer();
     }
 
-    private void DetonateServer()
+    protected void DetonateServer()
     {
         if (detonated)
             return;
@@ -45,26 +63,35 @@ public class CwslSuicideMonster : CwslMonsterBase, ICwslPooledNetworkObject
         PlayExplosionClientRpc(position);
 
         var damage = GetScaledDamage(ExplosionDamage);
-        var nexus = currentTarget != null ? currentTarget.GetComponent<CwslNexus>() : null;
+        DamagePlayersInRadius(position, damage, DetonateRadius);
+
+        var nexus = CwslNexus.Instance;
         if (nexus != null && nexus.IsAlive)
         {
-            nexus.DamageServer(GetScaledDamage(CwslMonsterStatCatalog.SuicideNexusExplosionDamage));
-        }
-        else
-        {
-            var playerHealth = currentTarget != null
-                ? currentTarget.GetComponent<CwslPlayerHealth>()
-                : null;
-            if (playerHealth != null)
-            {
-                var hitPoint = currentTarget.transform.position + Vector3.up * 0.9f;
-                playerHealth.TryReceiveExplosionHitServer(damage, hitPoint);
-            }
+            var flat = nexus.transform.position - position;
+            flat.y = 0f;
+            if (flat.magnitude <= DetonateRadius + 1.2f)
+                nexus.DamageServer(GetScaledDamage(CwslMonsterStatCatalog.SuicideNexusExplosionDamage));
         }
 
-        // 발밑이 아니라 바깥에서 드롭해 플레이어에게 날아오는 연출이 보이게 함
         var goldPosition = ResolveGoldDropPosition(position);
         health?.ForceKillWithGoldAtServer(goldPosition);
+    }
+
+    protected static void DamagePlayersInRadius(Vector3 center, float damage, float radius)
+    {
+        foreach (var playerHealth in Object.FindObjectsByType<CwslPlayerHealth>(FindObjectsSortMode.None))
+        {
+            if (playerHealth == null || !playerHealth.IsAlive)
+                continue;
+
+            var flat = playerHealth.transform.position - center;
+            flat.y = 0f;
+            if (flat.magnitude > radius)
+                continue;
+
+            playerHealth.TryReceiveExplosionHitServer(damage, playerHealth.transform.position + Vector3.up * 0.9f);
+        }
     }
 
     private Vector3 ResolveGoldDropPosition(Vector3 explosionPosition)

@@ -8,7 +8,9 @@ public enum CwslMonsterType : byte
     NexusRanged = 5,
     NexusSuicide = 6,
     MidBoss = 7,
-    DefenseBoss = 8
+    DefenseBoss = 8,
+    KoreaUniversitySoldier = 9,
+    StickySuicide = 10
 }
 
 public static class CwslMonsterTypeUtil
@@ -30,6 +32,7 @@ public static class CwslMonsterTypeUtil
         return type switch
         {
             CwslMonsterType.NexusMelee or CwslMonsterType.MidBoss or CwslMonsterType.DefenseBoss => CwslMonsterType.Melee,
+            CwslMonsterType.KoreaUniversitySoldier => CwslMonsterType.Melee,
             CwslMonsterType.NexusRanged => CwslMonsterType.Ranged,
             CwslMonsterType.NexusSuicide => CwslMonsterType.Suicide,
             _ => type

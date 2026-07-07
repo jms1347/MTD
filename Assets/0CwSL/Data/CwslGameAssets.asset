@@ -16,6 +16,7 @@ MonoBehaviour:
   shadowProjectileHitVfx: {fileID: 133642, guid: 721ed883392764d42a3957861e7752c0, type: 3}
   shadowMuzzleVfx: {fileID: 150312, guid: da454a5cc69c9464aa8eae6b8492536e, type: 3}
   suicideExplosionVfx: {fileID: 130346, guid: 07bf9ced87963e24299c2c2a22bfeeb6, type: 3}
+  bombFuseVfx: {fileID: 196072, guid: 0b4ea991852d6984aab98759fa8d4ebb, type: 3}
   meleeHitVfx: {fileID: 1493123572548342, guid: 0b76d277096f4dc4fad0065918f5c9d3, type: 3}
   enemyDeathVfx: {fileID: 160684, guid: de85f8f81ea29ea479250adb36debd92, type: 3}
   bossDeathVfx: {fileID: 1390804924065176, guid: 72ae485445fce1144bab28ae2f6aadd4, type: 3}
@@ -104,6 +105,8 @@ MonoBehaviour:
   rangedMonsterPrefab: {fileID: 5648177666945189405, guid: 7c47dd5b69da58e46b0228723bfc6e50, type: 3}
   suicideMonsterPrefab: {fileID: 693524371213619005, guid: 89969a663620d644fbe8335b472026cd, type: 3}
   meleeMonsterPrefab: {fileID: 7465007812737386769, guid: 2ec1279b68738f04b991358d21d09a5d, type: 3}
+  koreaUniversitySoldierPrefab: {fileID: 8121496405248439786, guid: e749375458505d6438557d9527f56678, type: 3}
+  stickySuicideMonsterPrefab: {fileID: 7352492724226601143, guid: 96dbfc664993ac54598fb98cb23948f5, type: 3}
   projectilePrefab: {fileID: 7720487643500137776, guid: 047c5caa0a97ffa42b3ab283eda90562, type: 3}
   playerMissilePrefab: {fileID: 1119159180590963851, guid: 4146e1dbd4978cd4bbacf7eeaca4b646, type: 3}
   bossPrefab: {fileID: 4975743835310029067, guid: 947ba38eea4204749ba65b99196b3922, type: 3}

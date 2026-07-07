@@ -7,6 +7,7 @@ public class CwslGameAssets : ScriptableObject
     public GameObject shadowProjectileHitVfx;
     public GameObject shadowMuzzleVfx;
     public GameObject suicideExplosionVfx;
+    public GameObject bombFuseVfx;
     public GameObject meleeHitVfx;
     public GameObject enemyDeathVfx;
     public GameObject bossDeathVfx;
@@ -96,6 +97,8 @@ public class CwslGameAssets : ScriptableObject
     public GameObject rangedMonsterPrefab;
     public GameObject suicideMonsterPrefab;
     public GameObject meleeMonsterPrefab;
+    public GameObject koreaUniversitySoldierPrefab;
+    public GameObject stickySuicideMonsterPrefab;
     public GameObject projectilePrefab;
     public GameObject playerMissilePrefab;
     public GameObject bossPrefab;

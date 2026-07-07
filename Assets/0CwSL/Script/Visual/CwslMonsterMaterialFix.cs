@@ -13,6 +13,12 @@ public static class CwslMonsterMaterialFix
             if (renderer == null)
                 continue;
 
+            if (renderer.GetComponent<CwslColoredRenderer>() != null)
+                continue;
+
+            if (renderer.GetComponent<TMPro.TMP_Text>() != null)
+                continue;
+
             if (renderer.sharedMaterial != null && CwslMaterialUtil.IsMaterialValid(renderer.sharedMaterial))
                 continue;
 

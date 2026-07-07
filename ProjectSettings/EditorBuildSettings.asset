@@ -10,7 +10,7 @@ EditorBuildSettings:
     guid: d2a46f51734fab6a0718293a4b5c6d7e
   - enabled: 1
     path: Assets/0CwSL/Scenes/CwslGameScene.unity
-    guid: 00000000000000000000000000000000
+    guid: d30e87d23169ae64e8e6c4c7ab517fec
   - enabled: 0
     path: Assets/Game/0Scene/SplashScene.unity
     guid: 7dd5c618200f34245b962e51b3713afd
@@ -20,6 +20,9 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Game/0Scene/TestScene.unity
     guid: b95bad93c45157440b7055bbd75e42db
+  - enabled: 1
+    path: Assets/0CwSL/Scenes/CwslMonsterVisualTestScene.unity
+    guid: 4a86445ab8405b349b308543cf6f0937
   m_configObjects:
     com.unity.addressableassets: {fileID: 11400000, guid: 73047381a300fc940ba63b231b182eee, type: 2}
   m_UseUCBPForAssetBundles: 0

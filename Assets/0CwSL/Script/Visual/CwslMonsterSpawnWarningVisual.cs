@@ -53,7 +53,8 @@ public static class CwslMonsterSpawnWarningVisual
         return monsterType switch
         {
             CwslMonsterType.Ranged => "궁수",
-            CwslMonsterType.Suicide => "돌격",
+            CwslMonsterType.Suicide => "돌격 자폭",
+            CwslMonsterType.StickySuicide => "장착 자폭",
             CwslMonsterType.MidBoss or CwslMonsterType.DefenseBoss => "보스",
             _ => "적"
         };

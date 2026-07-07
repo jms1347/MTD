@@ -18,6 +18,9 @@ public static class CwslVfxPaths
     public const string SuicideExplosion =
         "Assets/Epic Toon FX/Prefabs/Combat/Explosions/NukeExplosion/NukeExplosionFire.prefab";
 
+    public const string BombFuse =
+        "Assets/Epic Toon FX/Prefabs/Combat/BombFuse/BombFuse.prefab";
+
     public const string MeleeHit =
         "Assets/Epic Toon FX/Prefabs/Combat/Sword/Hit/SwordHitMini/SwordHitMiniRed.prefab";
 

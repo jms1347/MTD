@@ -265,6 +265,14 @@ public class CwslGameSession : NetworkBehaviour
             CwslMonsterType.Ranged or CwslMonsterType.NexusRanged => assets.rangedMonsterPrefab,
             CwslMonsterType.Suicide or CwslMonsterType.NexusSuicide => assets.suicideMonsterPrefab,
             CwslMonsterType.Melee or CwslMonsterType.NexusMelee => assets.meleeMonsterPrefab,
+            CwslMonsterType.KoreaUniversitySoldier =>
+                assets.koreaUniversitySoldierPrefab != null
+                    ? assets.koreaUniversitySoldierPrefab
+                    : assets.meleeMonsterPrefab,
+            CwslMonsterType.StickySuicide =>
+                assets.stickySuicideMonsterPrefab != null
+                    ? assets.stickySuicideMonsterPrefab
+                    : assets.suicideMonsterPrefab,
             CwslMonsterType.MidBoss => assets.midBossMonsterPrefab != null ? assets.midBossMonsterPrefab : assets.meleeMonsterPrefab,
             CwslMonsterType.DefenseBoss => assets.defenseBossMonsterPrefab != null ? assets.defenseBossMonsterPrefab : assets.meleeMonsterPrefab,
             CwslMonsterType.BossHongmyeongbo => assets.bossPrefab,

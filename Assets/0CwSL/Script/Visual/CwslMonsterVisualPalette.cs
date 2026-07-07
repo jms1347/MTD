@@ -48,6 +48,12 @@ public static class CwslMonsterVisualPalette
         new Color(0.95f, 0.22f, 0.18f),
         new Color(0.72f, 0.76f, 0.82f));
 
+    private static readonly CwslMonsterPalette KoreaUniversity = new(
+        new Color(0.79f, 0.09f, 0.15f),
+        Color.white,
+        new Color(0.06f, 0.06f, 0.08f),
+        new Color(0.92f, 0.78f, 0.66f));
+
     public static CwslMonsterPalette GetPalette(CwslMonsterType type)
     {
         if (CwslMonsterTypeUtil.IsNexusPriority(type))
@@ -58,6 +64,8 @@ public static class CwslMonsterVisualPalette
             CwslMonsterType.Melee or CwslMonsterType.MidBoss => MeleeRed,
             CwslMonsterType.Ranged => RangedNavy,
             CwslMonsterType.Suicide => SuicideOrange,
+            CwslMonsterType.StickySuicide => SuicideOrange,
+            CwslMonsterType.KoreaUniversitySoldier => KoreaUniversity,
             CwslMonsterType.DefenseBoss or CwslMonsterType.BossHongmyeongbo => BossRobot,
             _ => MeleeRed
         };
@@ -72,6 +80,8 @@ public static class CwslMonsterVisualPalette
         {
             CwslMonsterType.Ranged or CwslMonsterType.NexusRanged => new Color(0.45f, 0.55f, 1f),
             CwslMonsterType.Suicide or CwslMonsterType.NexusSuicide => new Color(1f, 0.35f, 0.1f),
+            CwslMonsterType.StickySuicide => new Color(1f, 0.35f, 0.1f),
+            CwslMonsterType.KoreaUniversitySoldier => new Color(0.95f, 0.18f, 0.22f),
             CwslMonsterType.DefenseBoss or CwslMonsterType.MidBoss or CwslMonsterType.BossHongmyeongbo =>
                 new Color(1f, 0.3f, 0.22f),
             _ => new Color(1f, 0.25f, 0.2f)

@@ -341,10 +341,7 @@ public class CwslBossHongmyeongbo : CwslMonsterBase
         var minRadius = CwslGameConstants.BossSummonMinRadius;
         var maxRadius = minRadius + CwslGameConstants.BossSummonSpread;
 
-        if (currentPhase == CwslBossPhase.WhiteTeamBall || currentPhase == CwslBossPhase.GoldFinal)
-            spawner.SpawnMonstersInRingServer(center, count, minRadius, maxRadius, CwslMonsterType.Suicide);
-        else
-            spawner.SpawnMonstersInRingServer(center, count, minRadius, maxRadius, CwslMonsterType.Melee);
+        spawner.SpawnMonstersInRingServer(center, count, minRadius, maxRadius, CwslMonsterType.KoreaUniversitySoldier);
 
         PlaySummonAddsClientRpc(center);
     }

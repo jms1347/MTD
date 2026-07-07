@@ -13,7 +13,6 @@ using UnityEngine.SceneManagement;
 public static class CwslGameSceneSetup
 {
     private const string RootFolder = "Assets/0CwSL";
-    private const string PrefabFolder = RootFolder + "/Prefabs";
     private const string ScenePath = RootFolder + "/Scenes/CwslGameScene.unity";
     private const string AssetsPath = RootFolder + "/Data/CwslGameAssets.asset";
     private const string NetworkPrefabsPath = RootFolder + "/Data/CwslNetworkPrefabs.asset";
@@ -32,6 +31,10 @@ public static class CwslGameSceneSetup
         var rangedPrefab = BuildMonsterPrefab(CwslMonsterType.Ranged, typeof(CwslRangedMonster), 0.55f);
         var suicidePrefab = BuildMonsterPrefab(CwslMonsterType.Suicide, typeof(CwslSuicideMonster), 0.5f);
         var meleePrefab = BuildMonsterPrefab(CwslMonsterType.Melee, typeof(CwslMeleeMonster), 0.6f);
+        var koreaSoldierPrefab = BuildMonsterPrefab(
+            CwslMonsterType.KoreaUniversitySoldier, typeof(CwslMeleeMonster), 0.6f);
+        var stickySuicidePrefab = BuildMonsterPrefab(
+            CwslMonsterType.StickySuicide, typeof(CwslStickySuicideMonster), 0.45f);
         var midBossPrefab = BuildMonsterPrefab(CwslMonsterType.MidBoss, typeof(CwslDefenseMidBoss), 0.85f);
         var defenseBossPrefab = BuildMonsterPrefab(CwslMonsterType.DefenseBoss, typeof(CwslDefenseBoss), 1.1f);
         var bossPrefab = BuildBossPrefab();
@@ -47,6 +50,8 @@ public static class CwslGameSceneSetup
         assets.rangedMonsterPrefab = rangedPrefab;
         assets.suicideMonsterPrefab = suicidePrefab;
         assets.meleeMonsterPrefab = meleePrefab;
+        assets.koreaUniversitySoldierPrefab = koreaSoldierPrefab;
+        assets.stickySuicideMonsterPrefab = stickySuicidePrefab;
         assets.midBossMonsterPrefab = midBossPrefab;
         assets.defenseBossMonsterPrefab = defenseBossPrefab;
         assets.bossPrefab = bossPrefab;
@@ -122,6 +127,7 @@ public static class CwslGameSceneSetup
         assets.pillSphereBlueVfx = LoadPrefab(CwslVfxPaths.PillSphereBlue);
         assets.pillSphereYellowVfx = LoadPrefab(CwslVfxPaths.PillSphereYellow);
         assets.suicideExplosionVfx = LoadPrefab(CwslVfxPaths.SuicideExplosion);
+        assets.bombFuseVfx = LoadPrefab(CwslVfxPaths.BombFuse);
         assets.meleeHitVfx = LoadPrefab(CwslVfxPaths.MeleeHit);
         assets.enemyDeathVfx = LoadPrefab(CwslVfxPaths.EnemyDeath);
         assets.bossDeathVfx = LoadPrefab(CwslVfxPaths.BossDeath);
@@ -146,19 +152,21 @@ public static class CwslGameSceneSetup
         EditorUtility.SetDirty(assets);
 
         var networkPrefabs = EnsureNetworkPrefabsList();
-        RegisterPrefab(networkPrefabs, playerPrefab);
-        RegisterPrefab(networkPrefabs, rangedPrefab);
-        RegisterPrefab(networkPrefabs, suicidePrefab);
-        RegisterPrefab(networkPrefabs, meleePrefab);
-        RegisterPrefab(networkPrefabs, midBossPrefab);
-        RegisterPrefab(networkPrefabs, defenseBossPrefab);
-        RegisterPrefab(networkPrefabs, bossPrefab);
-        RegisterPrefab(networkPrefabs, projectilePrefab);
-        RegisterPrefab(networkPrefabs, playerMissilePrefab);
-        RegisterPrefab(networkPrefabs, goldPickupPrefab);
-        RegisterPrefab(networkPrefabs, pillPickupPrefab);
-        RegisterPrefab(networkPrefabs, nexusPrefab);
-        RegisterPrefab(networkPrefabs, enemyBasePrefab);
+        RegisterNetworkPrefab(networkPrefabs, playerPrefab);
+        RegisterNetworkPrefab(networkPrefabs, rangedPrefab);
+        RegisterNetworkPrefab(networkPrefabs, suicidePrefab);
+        RegisterNetworkPrefab(networkPrefabs, meleePrefab);
+        RegisterNetworkPrefab(networkPrefabs, koreaSoldierPrefab);
+        RegisterNetworkPrefab(networkPrefabs, stickySuicidePrefab);
+        RegisterNetworkPrefab(networkPrefabs, midBossPrefab);
+        RegisterNetworkPrefab(networkPrefabs, defenseBossPrefab);
+        RegisterNetworkPrefab(networkPrefabs, bossPrefab);
+        RegisterNetworkPrefab(networkPrefabs, projectilePrefab);
+        RegisterNetworkPrefab(networkPrefabs, playerMissilePrefab);
+        RegisterNetworkPrefab(networkPrefabs, goldPickupPrefab);
+        RegisterNetworkPrefab(networkPrefabs, pillPickupPrefab);
+        RegisterNetworkPrefab(networkPrefabs, nexusPrefab);
+        RegisterNetworkPrefab(networkPrefabs, enemyBasePrefab);
         EditorUtility.SetDirty(networkPrefabs);
 
         BuildScene(assets, networkPrefabs);
@@ -172,7 +180,8 @@ public static class CwslGameSceneSetup
 
     private static void EnsureFolders()
     {
-        Directory.CreateDirectory(PrefabFolder);
+        Directory.CreateDirectory(RootFolder + "/Prefabs");
+        CwslPrefabPaths.EnsureFoldersExist();
         Directory.CreateDirectory(Path.GetDirectoryName(ScenePath)!);
         Directory.CreateDirectory(Path.GetDirectoryName(AssetsPath)!);
         Directory.CreateDirectory($"{RootFolder}/Resources/CwslGold");
@@ -348,7 +357,7 @@ public static class CwslGameSceneSetup
         return list;
     }
 
-    private static void RegisterPrefab(NetworkPrefabsList list, GameObject prefab)
+    public static void RegisterNetworkPrefab(NetworkPrefabsList list, GameObject prefab)
     {
         if (prefab == null)
             return;
@@ -420,7 +429,7 @@ public static class CwslGameSceneSetup
         root.AddComponent<CwslPlayerProfile>();
         root.AddComponent<CwslLocalPlayerHud>();
 
-        return SavePrefab(root, $"{PrefabFolder}/CwslPlayer.prefab");
+        return SavePrefab(root, CwslPrefabPaths.Characters.Player);
     }
 
     private static GameObject BuildGoldPickupPrefab()
@@ -455,7 +464,7 @@ public static class CwslGameSceneSetup
         root.AddComponent<Unity.Netcode.Components.NetworkTransform>();
         root.AddComponent<CwslGoldPickup>();
 
-        return SavePrefab(root, $"{PrefabFolder}/CwslGoldPickup.prefab");
+        return SavePrefab(root, CwslPrefabPaths.Pickups.Gold);
     }
 
     private static GameObject BuildPillPickupPrefab()
@@ -486,18 +495,19 @@ public static class CwslGameSceneSetup
         root.AddComponent<Unity.Netcode.Components.NetworkTransform>();
         root.AddComponent<CwslPillPickup>();
 
-        return SavePrefab(root, $"{PrefabFolder}/CwslPillPickup.prefab");
+        return SavePrefab(root, CwslPrefabPaths.Pickups.Pill);
     }
 
     private static GameObject BuildGraveVisualPrefab()
     {
         var root = new GameObject("CwslGraveVisual");
         CwslGraveVisualBuilder.Build(root.transform);
-        return SavePrefab(root, $"{PrefabFolder}/CwslGraveVisual.prefab");
+        return SavePrefab(root, CwslPrefabPaths.Visuals.Grave);
     }
 
     private static GameObject BuildMonsterPrefab(CwslMonsterType type, System.Type behaviourType, float radius)
     {
+        CwslSurfaceTextureAssetBuilder.EnsureGenerated();
         var root = new GameObject($"CwslMonster_{type}");
         root.layer = LayerMask.NameToLayer(CwslGameConstants.LayerMonster);
 
@@ -507,7 +517,7 @@ public static class CwslGameSceneSetup
         collider.center = new Vector3(0f, CwslGameConstants.MonsterHitCenterY, 0f);
         collider.isTrigger = true;
 
-        if (type == CwslMonsterType.Suicide)
+        if (type == CwslMonsterType.Suicide || type == CwslMonsterType.StickySuicide)
         {
             var rb = root.AddComponent<Rigidbody>();
             rb.isKinematic = true;
@@ -527,8 +537,14 @@ public static class CwslGameSceneSetup
         var monster = root.GetComponent<CwslMonsterBase>();
         monster?.Initialize(type);
 
-        return SavePrefab(root, $"{PrefabFolder}/CwslMonster_{type}.prefab");
+        return SavePrefab(root, CwslPrefabPaths.GetMonsterPrefabPath(type));
     }
+
+    public static GameObject BuildMonsterPrefabForEditor(
+        CwslMonsterType type,
+        System.Type behaviourType,
+        float radius) =>
+        BuildMonsterPrefab(type, behaviourType, radius);
 
     private static GameObject BuildBossPrefab()
     {
@@ -547,7 +563,7 @@ public static class CwslGameSceneSetup
         root.AddComponent<CwslBossHongmyeongbo>();
         CwslMonsterVisualBuilder.Build(root.transform, CwslMonsterType.BossHongmyeongbo);
 
-        return SavePrefab(root, $"{PrefabFolder}/CwslBoss_Hongmyeongbo.prefab");
+        return SavePrefab(root, CwslPrefabPaths.Boss.Hongmyeongbo);
     }
 
     private static GameObject BuildProjectilePrefab()
@@ -575,7 +591,7 @@ public static class CwslGameSceneSetup
         root.AddComponent<CwslMonsterProjectile>();
         root.AddComponent<CwslProjectileVisual>();
 
-        return SavePrefab(root, $"{PrefabFolder}/CwslProjectile.prefab");
+        return SavePrefab(root, CwslPrefabPaths.Projectiles.Monster);
     }
 
     private static GameObject BuildPlayerMissilePrefab()
@@ -619,14 +635,17 @@ public static class CwslGameSceneSetup
         root.AddComponent<CwslPlayerProjectile>();
         root.AddComponent<CwslPlayerProjectileVisual>();
 
-        return SavePrefab(root, $"{PrefabFolder}/CwslPlayerMissile.prefab");
+        return SavePrefab(root, CwslPrefabPaths.Projectiles.PlayerMissile);
     }
 
     private static GameObject SavePrefab(GameObject root, string path)
     {
-        var prefab = PrefabUtility.SaveAsPrefabAsset(root, path);
+        CwslMonsterVisualMaterialBake.Bake(root);
+        PrefabUtility.SaveAsPrefabAsset(root, path);
         Object.DestroyImmediate(root);
-        return prefab;
+
+        CwslMonsterVisualMaterialBake.EmbedIntoSavedPrefab(path);
+        return AssetDatabase.LoadAssetAtPath<GameObject>(path);
     }
 
     private static void BuildScene(CwslGameAssets assets, NetworkPrefabsList networkPrefabs)
@@ -724,7 +743,7 @@ public static class CwslGameSceneSetup
         root.AddComponent<CwslNexus>();
         root.AddComponent<CwslNexusVisual>();
 
-        return SavePrefab(root, $"{PrefabFolder}/CwslNexus.prefab");
+        return SavePrefab(root, CwslPrefabPaths.Defense.Nexus);
     }
 
     private static GameObject BuildEnemyBasePrefab()
@@ -743,7 +762,7 @@ public static class CwslGameSceneSetup
         root.AddComponent<NetworkObject>();
         root.AddComponent<CwslEnemyBase>();
 
-        return SavePrefab(root, $"{PrefabFolder}/CwslEnemyBase.prefab");
+        return SavePrefab(root, CwslPrefabPaths.Defense.EnemyBase);
     }
 
     private static void UpdateBuildSettings()
