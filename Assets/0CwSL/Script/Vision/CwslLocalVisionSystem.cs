@@ -3,7 +3,7 @@ using UnityEngine;
 
 /// <summary>
 /// 시야 경계를 smoothstep으로 부드럽게 페이드.
-/// 시야 없는 캐릭터는 적/미사일이 거의 자기 발밑까지 와야 보임.
+/// 아군 플레이어·넥서스 시야를 합집합으로 적용.
 /// </summary>
 public class CwslLocalVisionSystem : MonoBehaviour
 {
@@ -32,19 +32,22 @@ public class CwslLocalVisionSystem : MonoBehaviour
 
     private void RefreshVisibility()
     {
-        var origin = playerVision.VisionOrigin;
-        var radius = playerVision.EffectiveVisionRadius;
-        var blind = playerVision.VisionRadius <= 0.01f;
-        var absoluteBlind = playerVision.IsAbsoluteBlindVision;
-
-        RefreshMonsters(origin, radius, blind, absoluteBlind);
-        RefreshGold(origin, radius, blind, absoluteBlind);
-        RefreshPills(origin, radius, blind, absoluteBlind);
-        RefreshOtherPlayers(origin, radius, blind, absoluteBlind);
-        RefreshProjectiles(origin, radius, blind, absoluteBlind);
+        RefreshAlliedStructures();
+        RefreshMonsters();
+        RefreshGold();
+        RefreshPills();
+        RefreshOtherPlayers();
+        RefreshProjectiles();
     }
 
-    private void RefreshMonsters(Vector3 origin, float radius, bool blind, bool absoluteBlind)
+    private void RefreshAlliedStructures()
+    {
+        var nexus = CwslNexus.Instance;
+        if (nexus != null && nexus.IsAlive)
+            SetOccludeeVisibility(nexus.gameObject, 1f);
+    }
+
+    private void RefreshMonsters()
     {
         var monsters = FindObjectsByType<CwslMonsterBase>(FindObjectsSortMode.None);
         foreach (var monster in monsters)
@@ -59,12 +62,12 @@ public class CwslLocalVisionSystem : MonoBehaviour
                 continue;
             }
 
-            var visibility = EvaluateCombinedVisibility(origin, monster.transform.position, radius, blind, absoluteBlind, isProjectile: false);
+            var visibility = CwslTeamVision.EvaluateTeamVisibility(monster.transform.position, isProjectile: false);
             SetOccludeeVisibility(monster.gameObject, visibility);
         }
     }
 
-    private void RefreshGold(Vector3 origin, float radius, bool blind, bool absoluteBlind)
+    private void RefreshGold()
     {
         var pickups = FindObjectsByType<CwslGoldPickup>(FindObjectsSortMode.None);
         foreach (var pickup in pickups)
@@ -72,12 +75,12 @@ public class CwslLocalVisionSystem : MonoBehaviour
             if (pickup == null)
                 continue;
 
-            var visibility = EvaluateCombinedVisibility(origin, pickup.transform.position, radius, blind, absoluteBlind, isProjectile: false);
+            var visibility = CwslTeamVision.EvaluateTeamVisibility(pickup.transform.position, isProjectile: false);
             SetOccludeeVisibility(pickup.gameObject, visibility);
         }
     }
 
-    private void RefreshPills(Vector3 origin, float radius, bool blind, bool absoluteBlind)
+    private void RefreshPills()
     {
         var pickups = FindObjectsByType<CwslPillPickup>(FindObjectsSortMode.None);
         foreach (var pickup in pickups)
@@ -85,12 +88,12 @@ public class CwslLocalVisionSystem : MonoBehaviour
             if (pickup == null)
                 continue;
 
-            var visibility = EvaluateCombinedVisibility(origin, pickup.transform.position, radius, blind, absoluteBlind, isProjectile: false);
+            var visibility = CwslTeamVision.EvaluateTeamVisibility(pickup.transform.position, isProjectile: false);
             SetOccludeeVisibility(pickup.gameObject, visibility);
         }
     }
 
-    private void RefreshOtherPlayers(Vector3 origin, float radius, bool blind, bool absoluteBlind)
+    private void RefreshOtherPlayers()
     {
         var players = FindObjectsByType<CwslPlayerHealth>(FindObjectsSortMode.None);
         foreach (var health in players)
@@ -98,50 +101,21 @@ public class CwslLocalVisionSystem : MonoBehaviour
             if (health == null || health.transform == transform)
                 continue;
 
-            if (absoluteBlind)
-            {
-                SetOccludeeVisibility(health.gameObject, 0f);
-                continue;
-            }
-
-            // 팀원(다른 플레이어)은 시야와 무관하게 항상 표시
             SetOccludeeVisibility(health.gameObject, 1f);
         }
     }
 
-    private void RefreshProjectiles(Vector3 origin, float radius, bool blind, bool absoluteBlind)
+    private void RefreshProjectiles()
     {
-        // 적 미사일: 시야 밖/경계에서는 거의 안 보여서 피격 원인을 알기 어렵게
         var projectiles = FindObjectsByType<CwslMonsterProjectile>(FindObjectsSortMode.None);
         foreach (var projectile in projectiles)
         {
             if (projectile == null)
                 continue;
 
-            var visibility = EvaluateCombinedVisibility(origin, projectile.transform.position, radius, blind, absoluteBlind, isProjectile: true);
+            var visibility = CwslTeamVision.EvaluateTeamVisibility(projectile.transform.position, isProjectile: true);
             SetOccludeeVisibility(projectile.gameObject, visibility);
         }
-    }
-
-    private float EvaluateCombinedVisibility(
-        Vector3 origin,
-        Vector3 worldPosition,
-        float radius,
-        bool blind,
-        bool absoluteBlind,
-        bool isProjectile)
-    {
-        if (absoluteBlind)
-            return playerVision != null
-                ? playerVision.TryGetScryVisibility(worldPosition, isProjectile)
-                : 0f;
-
-        var visibility = EvaluateVisibility(origin, worldPosition, radius, blind, isProjectile);
-        if (playerVision == null || !playerVision.HasActiveScry)
-            return visibility;
-
-        var scryVisibility = playerVision.TryGetScryVisibility(worldPosition, isProjectile);
-        return Mathf.Max(visibility, scryVisibility);
     }
 
     /// <summary>
@@ -166,7 +140,6 @@ public class CwslLocalVisionSystem : MonoBehaviour
 
         if (blind)
         {
-            // 시야 없는 캐릭터: 완전 가깝지 않으면 거의 안 보임
             if (isProjectile)
             {
                 var hideAt = radius * 0.55f;
@@ -187,7 +160,6 @@ public class CwslLocalVisionSystem : MonoBehaviour
             return Mathf.Lerp(1f, 0f, fade);
         }
 
-        // 일반 시야: 부드러운 그라데이션 + 바깥 은은한 실루엣
         if (isProjectile)
         {
             var inner = radius * 0.45f;

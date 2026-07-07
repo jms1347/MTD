@@ -8,6 +8,7 @@ public class CwslPlayerCombat : NetworkBehaviour
     private CwslPlayerSelection selection;
     private CwslPlayerCharacter playerCharacter;
     private CwslMissileTankSkill missileTankSkill;
+    private CwslTankShieldAttack tankShieldAttack;
     private CwslPlayerMovement movement;
 
     private bool attackMoveActive;
@@ -45,6 +46,7 @@ public class CwslPlayerCombat : NetworkBehaviour
         selection = GetComponent<CwslPlayerSelection>();
         playerCharacter = GetComponent<CwslPlayerCharacter>();
         missileTankSkill = GetComponent<CwslMissileTankSkill>();
+        tankShieldAttack = GetComponent<CwslTankShieldAttack>();
         movement = GetComponent<CwslPlayerMovement>();
     }
 
@@ -65,6 +67,15 @@ public class CwslPlayerCombat : NetworkBehaviour
         if (!chaseAttackTarget.IsSpawned)
         {
             chaseAttackTarget = null;
+            return;
+        }
+
+        if (TryGetLivingEnemyBase(chaseAttackTarget, out var enemyBase))
+        {
+            if (playerCharacter != null && playerCharacter.CharacterId == CwslCharacterId.MissileTank)
+                UpdateMissileTankChaseStructure(enemyBase);
+            else
+                UpdateMeleeChaseStructure(enemyBase);
             return;
         }
 
@@ -95,8 +106,62 @@ public class CwslPlayerCombat : NetworkBehaviour
         missileTankSkill?.TryFireAttackServer(dualWieldMode: false);
     }
 
+    private void UpdateMeleeChaseStructure(CwslEnemyBase enemyBase)
+    {
+        if (playerCharacter != null && playerCharacter.CharacterId == CwslCharacterId.Tank)
+        {
+            if (!CwslPlayerShieldBashVisual.IsInStrikeRange(transform, chaseAttackTarget))
+            {
+                movement?.RequestMoveTo(enemyBase.transform.position);
+                return;
+            }
+
+            movement?.StopMovement();
+            AttackSelectedTarget(dualWieldMode: false);
+            return;
+        }
+
+        var distance = Vector3.Distance(transform.position, enemyBase.transform.position);
+        var range = GetAttackRange(chaseAttackTarget);
+        if (distance > range)
+        {
+            movement?.RequestMoveTo(enemyBase.transform.position);
+            return;
+        }
+
+        movement?.StopMovement();
+        AttackSelectedTarget(dualWieldMode: false);
+    }
+
+    private void UpdateMissileTankChaseStructure(CwslEnemyBase enemyBase)
+    {
+        var range = missileTankSkill != null ? missileTankSkill.AttackRange : 24f;
+        var distance = Vector3.Distance(transform.position, enemyBase.transform.position);
+        if (distance > range)
+        {
+            movement?.RequestMoveTo(enemyBase.transform.position);
+            return;
+        }
+
+        movement?.StopMovement();
+        missileTankSkill?.TryFireAttackServer(dualWieldMode: false);
+    }
+
     private void UpdateMeleeChase(CwslMonsterHealth monsterHealth)
     {
+        if (playerCharacter != null && playerCharacter.CharacterId == CwslCharacterId.Tank)
+        {
+            if (!CwslPlayerShieldBashVisual.IsInStrikeRange(transform, monsterHealth.NetworkObject))
+            {
+                movement?.RequestMoveTo(monsterHealth.transform.position);
+                return;
+            }
+
+            movement?.StopMovement();
+            AttackSelectedTarget(dualWieldMode: false);
+            return;
+        }
+
         var distance = Vector3.Distance(transform.position, monsterHealth.transform.position);
         var range = GetAttackRange(chaseAttackTarget);
         if (distance > range)
@@ -165,6 +230,40 @@ public class CwslPlayerCombat : NetworkBehaviour
         pureMoveMode = false;
         selection?.SetTargetServer(target);
 
+        if (TryGetLivingEnemyBase(target, out var enemyBase))
+        {
+            if (playerCharacter != null && playerCharacter.CharacterId == CwslCharacterId.MissileTank)
+            {
+                var range = missileTankSkill != null ? missileTankSkill.AttackRange : 24f;
+                var distance = Vector3.Distance(transform.position, target.transform.position);
+                if (distance > range)
+                {
+                    chaseAttackTarget = target;
+                    movement?.RequestMoveTo(target.transform.position);
+                    return;
+                }
+
+                chaseAttackTarget = null;
+                movement?.StopMovement();
+                missileTankSkill?.TryFireAttackServer(dualWieldMode);
+                return;
+            }
+
+            var structureRange = GetAttackRange(target);
+            var structureDistance = Vector3.Distance(transform.position, target.transform.position);
+            if (structureDistance > structureRange)
+            {
+                chaseAttackTarget = target;
+                movement?.RequestMoveTo(target.transform.position);
+                return;
+            }
+
+            chaseAttackTarget = null;
+            movement?.StopMovement();
+            AttackSelectedTarget(dualWieldMode);
+            return;
+        }
+
         var monsterHealth = target.GetComponent<CwslMonsterHealth>();
         if (monsterHealth == null || !monsterHealth.IsAlive)
             return;
@@ -211,10 +310,16 @@ public class CwslPlayerCombat : NetworkBehaviour
             return;
         }
 
+        if (playerCharacter != null && playerCharacter.CharacterId == CwslCharacterId.Tank)
+        {
+            TryPerformTankShieldAttack();
+            return;
+        }
+
         if (Time.time < nextAttackTime)
             return;
 
-        if (!TryResolveMeleeTarget(out var monsterHealth, out var targetObject))
+        if (!TryResolveMeleeTarget(out var monsterHealth, out var enemyBase, out var targetObject))
             return;
 
         var distance = Vector3.Distance(transform.position, targetObject.transform.position);
@@ -228,14 +333,59 @@ public class CwslPlayerCombat : NetworkBehaviour
             return;
         }
 
-        nextAttackTime = Time.time + CwslGameConstants.AttackCooldown;
+        nextAttackTime = Time.time + ResolveAttackCooldown();
         PlayAttackClientRpc();
-        monsterHealth.DamageFromPlayer(OwnerClientId, CwslGameConstants.AttackDamage);
+
+        var attackPower = playerCharacter != null
+            ? CwslCharacterStatCatalog.GetAttackPower(playerCharacter.CharacterId)
+            : CwslGameConstants.AttackDamage;
+
+        if (monsterHealth != null)
+            monsterHealth.DamageFromPlayer(OwnerClientId, attackPower);
+        else if (enemyBase != null)
+            enemyBase.DamageFromPlayer(OwnerClientId, attackPower);
     }
 
-    private bool TryResolveMeleeTarget(out CwslMonsterHealth monsterHealth, out NetworkObject targetObject)
+    private void TryPerformTankShieldAttack()
+    {
+        if (tankShieldAttack != null && tankShieldAttack.IsAttacking)
+            return;
+
+        if (!TryResolveMeleeTarget(out var monsterHealth, out var enemyBase, out var targetObject))
+            return;
+
+        if (!CwslPlayerShieldBashVisual.IsInStrikeRange(transform, targetObject))
+        {
+            if (attackMoveActive)
+                return;
+
+            movement?.RequestMoveTo(targetObject.transform.position);
+            return;
+        }
+
+        movement?.StopMovement();
+        tankShieldAttack?.TryPerformAttackServer(
+            targetObject,
+            monsterHealth,
+            enemyBase,
+            CwslPlayerShieldBashVisual.GetAttackRange(targetObject));
+    }
+
+    private float ResolveAttackCooldown()
+    {
+        var characterId = playerCharacter != null
+            ? playerCharacter.CharacterId
+            : CwslCharacterId.Tank;
+        return CwslCharacterStatCatalog.GetAttackCooldown(characterId);
+    }
+
+    private bool TryResolveMeleeTarget(
+        out CwslMonsterHealth monsterHealth,
+        out CwslEnemyBase enemyBase,
+        out NetworkObject targetObject)
     {
         monsterHealth = null;
+        enemyBase = null;
         targetObject = null;
 
         if (selection != null &&
@@ -246,6 +396,13 @@ public class CwslPlayerCombat : NetworkBehaviour
             if (selectedHealth != null && selectedHealth.IsAlive)
             {
                 monsterHealth = selectedHealth;
+                targetObject = selected;
+                return true;
+            }
+
+            if (TryGetLivingEnemyBase(selected, out var selectedBase))
+            {
+                enemyBase = selectedBase;
                 targetObject = selected;
                 return true;
             }
@@ -268,13 +425,23 @@ public class CwslPlayerCombat : NetworkBehaviour
             bestDistance = distance;
             monsterHealth = monster;
             targetObject = monster.NetworkObject;
+            enemyBase = null;
         }
 
         return monsterHealth != null && targetObject != null;
     }
 
+    private static bool TryGetLivingEnemyBase(NetworkObject networkObject, out CwslEnemyBase enemyBase)
+    {
+        enemyBase = networkObject != null ? networkObject.GetComponent<CwslEnemyBase>() : null;
+        return enemyBase != null && enemyBase.IsAlive;
+    }
+
     private float GetAttackRange(NetworkObject target)
     {
+        if (playerCharacter != null && playerCharacter.CharacterId == CwslCharacterId.Tank)
+            return CwslPlayerShieldBashVisual.GetAttackRange(target);
+
         var scale = target != null ? target.transform.localScale.x : 1f;
         return CwslGameConstants.AttackRange + scale;
     }

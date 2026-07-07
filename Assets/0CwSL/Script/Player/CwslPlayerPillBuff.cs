@@ -57,7 +57,8 @@ public class CwslPlayerPillBuff : NetworkBehaviour
         switch (pillType)
         {
             case CwslPillType.Green:
-                var healAmount = CwslGameConstants.PlayerMaxHealth * CwslGameConstants.PillGreenHealRatio;
+                var maxHealth = playerHealth != null ? playerHealth.MaxHealth : CwslGameConstants.PlayerMaxHealth;
+                var healAmount = maxHealth * CwslGameConstants.PillGreenHealRatio;
                 playerHealth?.TryHealServer(healAmount);
                 break;
 
@@ -100,7 +101,7 @@ public class CwslPlayerPillBuff : NetworkBehaviour
         if (playerHealth == null || !playerHealth.IsAlive)
             return;
 
-        var maxHealth = CwslGameConstants.PlayerMaxHealth;
+        var maxHealth = playerHealth != null ? playerHealth.MaxHealth : CwslGameConstants.PlayerMaxHealth;
         var missingHealth = Mathf.Max(0f, maxHealth - playerHealth.CurrentHealth);
         if (missingHealth <= 0f)
             return;

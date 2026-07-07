@@ -7,7 +7,6 @@ using UnityEngine;
 /// </summary>
 public class CwslRedMageMeteorSkill : CwslPlayerSkillBase
 {
-    private const float MeteorDamage = 1f;
     private const float MeteorRadius = 4.8f;
     private const float FallHeight = 18f;
     private const float FallDuration = 0.55f;
@@ -57,6 +56,10 @@ public class CwslRedMageMeteorSkill : CwslPlayerSkillBase
     {
         yield return new WaitForSeconds(FallDuration);
 
+        var meteorDamage = GetComponent<CwslPlayerCharacter>() != null
+            ? CwslCharacterStatCatalog.GetAttackPower(GetComponent<CwslPlayerCharacter>().CharacterId)
+            : CwslGameConstants.AttackDamage;
+
         var monsters = FindObjectsByType<CwslMonsterHealth>(FindObjectsSortMode.None);
         var radiusSqr = MeteorRadius * MeteorRadius;
         foreach (var monster in monsters)
@@ -69,7 +72,7 @@ public class CwslRedMageMeteorSkill : CwslPlayerSkillBase
             if (flat.sqrMagnitude > radiusSqr)
                 continue;
 
-            monster.DamageFromPlayer(OwnerClientId, MeteorDamage);
+            monster.DamageFromPlayer(OwnerClientId, meteorDamage);
         }
 
         if (NetworkManager.Singleton == null)
@@ -90,7 +93,7 @@ public class CwslRedMageMeteorSkill : CwslPlayerSkillBase
             if (flat.sqrMagnitude > radiusSqr)
                 continue;
 
-            playerHealth.TryReceiveExplosionHitServer(MeteorDamage, playerObject.transform.position);
+            playerHealth.TryReceiveExplosionHitServer(meteorDamage, playerObject.transform.position);
         }
     }
 }

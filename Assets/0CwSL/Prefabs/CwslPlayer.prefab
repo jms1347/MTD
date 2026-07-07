@@ -25,6 +25,10 @@ GameObject:
   - component: {fileID: 8074977520065138944}
   - component: {fileID: 2072339752510913828}
   - component: {fileID: 8211382486950668908}
+  - component: {fileID: 8812345678901234567}
+  - component: {fileID: 1778930920352197783}
+  - component: {fileID: 3314770673784297336}
+  - component: {fileID: 7674935213541368040}
   - component: {fileID: 502652676472628478}
   - component: {fileID: 8372615235669053322}
   - component: {fileID: 9123456789012345678}
@@ -125,7 +129,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 2131578472
+  GlobalObjectIdHash: 2894574119
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -339,6 +343,58 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c04e592407898ee4b9407e9adb1ef295, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CwslTankFortifySkill
+  ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &8812345678901234567
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6360497807503343767}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f8a2c1d04e5b4a389b0c7d6e5f4a3b2c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CwslTankShieldAttack
+  ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &1778930920352197783
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6360497807503343767}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4e4f86b395316a4992319a03203df7a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CwslTankShieldDashSkill
+  ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &3314770673784297336
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6360497807503343767}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 600aa7947088b5d4e85e80d25d9e1279, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CwslTankShieldSlamSkill
+  ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &7674935213541368040
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6360497807503343767}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 90c9b5d4975b0d942b832ed52bd591f7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CwslTankShieldWhirlwindSkill
   ShowTopMostFoldoutHeaderGroup: 1
 --- !u!114 &502652676472628478
 MonoBehaviour:

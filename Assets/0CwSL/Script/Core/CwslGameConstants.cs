@@ -7,13 +7,24 @@ public static class CwslGameConstants
     public const ushort GamePort = GameNetcodePort;
     public const int MaxPlayers = 5;
 
-    public const float MonsterMaxHealth = 1f;
-    public const float PlayerMaxHealth = 100f;
-    public const float PlayerAttackDamage = 1f;
-    public const float PlayerDefense = 0f;
+    public const int PoolHighChurnInitialSize = 100;
+    public const int PoolHighChurnExpandSize = 16;
+    public const int PoolBossInitialSize = 4;
+    public const int PoolBossExpandSize = 2;
+    public const int PoolFallbackInitialSize = 32;
+    public const int PoolFallbackExpandSize = 8;
+
+    public const float NexusDefaultHealth = 20000f;
+    public const float NexusTeamVisionRadius = 11f;
+    public const float EnemyBaseDefaultHealth = 3000f;
+
+    public const float MonsterMaxHealth = 50f;
+    public const float PlayerMaxHealth = 600f;
+    public const float PlayerAttackDamage = 15f;
+    public const float PlayerDefense = 15f;
     public const float PlayerVisionRadius = 16f;
     public const float PlayerMaxStamina = 100f;
-    public const float PlayerStaminaRegenPerSecond = 14f;
+    public const float PlayerStaminaRegenPerSecond = 15f;
     public const int SkillsPerCharacter = 4;
     public const float DefaultSkillStaminaCost = 22f;
     public const int StartingGold = 50;
@@ -107,6 +118,42 @@ public static class CwslGameConstants
     public const float FortifyShieldBlockRadius = 2.8f;
     public const float FortifyShieldGrowSmoothTime = 0.52f;
     public const float FortifyShieldShrinkSmoothTime = 0.08f;
+    public const float FortifyEmpoweredAttackDamageMultiplier = 3f;
+    public const float FortifyEmpoweredAttackRadius = 3.2f;
+
+    public const float TankShieldDashDistance = 5.5f;
+    public const float TankShieldDashDuration = 0.24f;
+    public const float TankShieldDashSpeed = 24f;
+    public const float TankShieldDashCooldown = 4.5f;
+    public const float TankShieldDashPushRadius = 0.95f;
+    public const float TankShieldDashPushDistance = 2.6f;
+    public const float TankShieldDashPushDuration = 0.34f;
+    public const float TankShieldDashEmpoweredPushDistance = 4.2f;
+    public const float TankShieldDashEmpoweredPushDuration = 0.42f;
+    public const float TankShieldDashShieldPushDistance = 3.8f;
+    public const float TankShieldDashShieldPushDuration = 0.4f;
+
+    public const float TankSkillEmpowerRadiusMultiplier = 3f;
+    public const float TankSkillEmpowerPowerMultiplier = 3f;
+
+    public const float TankShieldSlamRadius = 3.2f;
+    public const float TankShieldSlamStunDuration = 2f;
+    public const float TankShieldSlamWindup = 0.45f;
+    public const float TankShieldSlamCooldown = 8f;
+    public const float TankShieldSlamShakeDuration = 0.38f;
+    public const float TankShieldSlamShakeMagnitude = 0.24f;
+
+    public const float TankShieldWhirlwindDuration = 4f;
+    public const float TankShieldWhirlwindRadius = 2.9f;
+    public const float TankShieldWhirlwindTickInterval = 0.5f;
+    public const float TankShieldWhirlwindDamagePerTick = 0.55f;
+    public const float TankShieldWhirlwindCooldown = 12f;
+    public const float TankShieldWhirlwindSpinSpeed = 900f;
+    public const float TankShieldWhirlwindMoveSpeedMultiplier = 1.2f;
+
+    public const float TankFortifyMissileBlockStaminaCost = 1f;
+    public const float TankSkillStaminaCost = 20f;
+    public const float TankWhirlwindStaminaCost = 30f;
 
     public const string LayerGold = "CwslGold";
 
@@ -115,16 +162,16 @@ public static class CwslGameConstants
     public const long KarmaPickupAmount = 10L;
     public const long CheatKarmaIncrement = 100L; // TODO(릴리즈): U키 치트용 — 정식 버전 전 제거
 
-    public const float BossMaxHealth = 380f;
+    public const float BossMaxHealth = 15000f;
     public const float BossVisualScale = 10f;
     public const float BossAttackIntervalPhase1 = 6.5f;
     public const float BossAttackIntervalPhase2 = 5.5f;
     public const float BossAttackIntervalPhase3 = 4.5f;
     public const float BossAttackIntervalPhase4 = 3.8f;
     public const float BossSlamRadius = 14f;
-    public const float BossSlamDamage = 18f;
+    public const float BossSlamDamage = 150f;
     public const float BossRingBurstRadius = 24f;
-    public const float BossRingBurstDamage = 14f;
+    public const float BossRingBurstDamage = 100f;
     public const int BossProjectileFanCount = 5;
     public const float BossProjectileSpreadDegrees = 50f;
     public const float BossProjectileSpeed = 16f;
@@ -133,9 +180,9 @@ public static class CwslGameConstants
     public const int BossSummonCountMax = 7;
     public const float BossSummonSpread = 10f;
     public const float BossSummonMinRadius = 18f;
-    public const float BossPhase2Hp = 285f;
-    public const float BossPhase3Hp = 190f;
-    public const float BossPhase4Hp = 95f;
+    public const float BossPhase2Hp = 11250f;
+    public const float BossPhase3Hp = 7500f;
+    public const float BossPhase4Hp = 3750f;
     public const float BossPhase1TeleportCooldown = 15f;
     public const float BossPhase2BallInterval = 8f;
     public const int BossPhase2BallCountMin = 2;

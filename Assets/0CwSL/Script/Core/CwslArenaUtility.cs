@@ -118,4 +118,13 @@ public static class CwslArenaUtility
         position.z = Mathf.Clamp(position.z, -extent, extent);
         return position;
     }
+
+    /// <summary>유닛 몸체 반경을 고려해 맵 사각형 안으로 제한.</summary>
+    public static Vector3 ClampToPlayArea(Vector3 position, float bodyRadius = 0f)
+    {
+        var extent = Mathf.Max(0.5f, GetPlayHalfExtent() - bodyRadius);
+        position.x = Mathf.Clamp(position.x, -extent, extent);
+        position.z = Mathf.Clamp(position.z, -extent, extent);
+        return position;
+    }
 }

@@ -19,6 +19,7 @@ public class CwslLocalPlayerHud : NetworkBehaviour
         if (!IsOwner)
             return;
 
+        CwslDamagePopupPool.EnsureReady();
         playerGold = GetComponent<CwslPlayerGold>();
         playerCharacter = GetComponent<CwslPlayerCharacter>();
         CreateHud();

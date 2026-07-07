@@ -41,6 +41,19 @@ public class CwslMonsterHealth : NetworkBehaviour, ICwslPooledNetworkObject
         return new Vector3(worldCenter.x, transform.position.y, worldCenter.z);
     }
 
+    public Vector3 GetDamagePopupAnchor()
+    {
+        var capsule = GetComponent<CapsuleCollider>();
+        if (capsule != null)
+        {
+            var top = transform.TransformPoint(capsule.center + Vector3.up * (capsule.height * 0.5f));
+            return top + Vector3.up * (0.22f * transform.lossyScale.y);
+        }
+
+        return transform.position + Vector3.up *
+            (CwslGameConstants.MonsterHitCenterY + CwslGameConstants.MonsterHitHeight * 0.5f + 0.22f);
+    }
+
     public float GetFlatHitRadius()
     {
         var capsule = GetComponent<CapsuleCollider>();
@@ -61,7 +74,7 @@ public class CwslMonsterHealth : NetworkBehaviour, ICwslPooledNetworkObject
             : executive
                 ? CwslGameConstants.GoldDropExecutive
                 : CwslGameConstants.GoldDropNormal;
-        maxHealth = CwslGameConstants.MonsterMaxHealth * Mathf.Max(0.1f, healthMultiplier);
+        maxHealth = CwslMonsterStatCatalog.GetMaxHealth(type);
         if (IsServer)
             syncedMonsterType.Value = (byte)type;
     }
@@ -71,12 +84,12 @@ public class CwslMonsterHealth : NetworkBehaviour, ICwslPooledNetworkObject
         MonsterType = CwslMonsterType.BossHongmyeongbo;
         isExecutive = false;
         dropGoldAmount = 0;
-        maxHealth = bossMaxHealth;
+        maxHealth = CwslMonsterStatCatalog.BossHongmyeongboHealth;
         RefreshBossHitCollider();
         if (IsServer)
         {
             syncedMonsterType.Value = (byte)CwslMonsterType.BossHongmyeongbo;
-            health.Value = bossMaxHealth;
+            health.Value = maxHealth;
         }
     }
 
@@ -136,10 +149,24 @@ public class CwslMonsterHealth : NetworkBehaviour, ICwslPooledNetworkObject
     public void OnSpawnedFromPool()
     {
         EnsureCombatHitCollider();
+        EnsureKnockback();
+        EnsureStun();
         if (IsServer && !IsBoss)
             health.Value = maxHealth;
 
         SyncMonsterVisualsForNetwork();
+    }
+
+    private void EnsureKnockback()
+    {
+        if (GetComponent<CwslMonsterKnockback>() == null)
+            gameObject.AddComponent<CwslMonsterKnockback>();
+    }
+
+    private void EnsureStun()
+    {
+        if (GetComponent<CwslMonsterStun>() == null)
+            gameObject.AddComponent<CwslMonsterStun>();
     }
 
     public void OnReturnedToPool()
@@ -210,7 +237,7 @@ public class CwslMonsterHealth : NetworkBehaviour, ICwslPooledNetworkObject
                 return;
 
             health.Value = Mathf.Max(0f, health.Value - scaledAmount);
-            ShowDamagePopupClientRpc(transform.position + Vector3.up * 1.2f, scaledAmount, (int)CwslDamagePopupKind.Monster);
+            CwslDamageFeedback.PlayFromServer(GetDamagePopupAnchor(), scaledAmount, CwslDamagePopupKind.Monster);
             OnDamaged?.Invoke(this, health.Value, attackerClientId);
             GetComponent<CwslBossHongmyeongbo>()?.NotifyDamagedServer(health.Value);
 
@@ -223,15 +250,18 @@ public class CwslMonsterHealth : NetworkBehaviour, ICwslPooledNetworkObject
         if (MonsterType is CwslMonsterType.MidBoss or CwslMonsterType.DefenseBoss)
         {
             health.Value = Mathf.Max(0f, health.Value - scaledAmount);
-            ShowDamagePopupClientRpc(transform.position + Vector3.up * 1.2f, scaledAmount, (int)CwslDamagePopupKind.Monster);
+            CwslDamageFeedback.PlayFromServer(GetDamagePopupAnchor(), scaledAmount, CwslDamagePopupKind.Monster);
             OnDamaged?.Invoke(this, health.Value, attackerClientId);
             if (health.Value <= 0f)
                 Die(attackerClientId, dropGold: false);
             return;
         }
 
-        ShowDamagePopupClientRpc(transform.position + Vector3.up * 1.2f, scaledAmount, (int)CwslDamagePopupKind.Monster);
-        Die(attackerClientId);
+        health.Value = Mathf.Max(0f, health.Value - scaledAmount);
+        CwslDamageFeedback.PlayFromServer(GetDamagePopupAnchor(), scaledAmount, CwslDamagePopupKind.Monster);
+        OnDamaged?.Invoke(this, health.Value, attackerClientId);
+        if (health.Value <= 0f)
+            Die(attackerClientId);
     }
 
     private static float ApplyAttackerBuffs(ulong attackerClientId, float amount)
@@ -283,12 +313,6 @@ public class CwslMonsterHealth : NetworkBehaviour, ICwslPooledNetworkObject
 
         if (NetworkObject != null && NetworkObject.IsSpawned)
             CwslNetworkPoolService.Instance?.Release(NetworkObject);
-    }
-
-    [ClientRpc]
-    private void ShowDamagePopupClientRpc(Vector3 position, float amount, int kind)
-    {
-        CwslDamagePopupPool.Play(position, amount, (CwslDamagePopupKind)kind);
     }
 
     [ClientRpc]

@@ -3,7 +3,7 @@ using UnityEngine;
 
 public abstract class CwslMonsterBase : NetworkBehaviour
 {
-    [SerializeField] protected float moveSpeed = 3.5f;
+    [SerializeField] protected float moveSpeed = CwslMonsterStatCatalog.MeleeMoveSpeed;
 
     protected CwslMonsterHealth health;
     protected NetworkObject currentTarget;
@@ -24,6 +24,7 @@ public abstract class CwslMonsterBase : NetworkBehaviour
         var healthMultiplier = ApplyDefenseProfile(type);
         var goldDrop = CwslMonsterTypeUtil.IsElite(type) || CwslMonsterTypeUtil.IsNexusPriority(type) ? 0 : -1;
         health?.Configure(type, goldDrop: goldDrop, healthMultiplier: healthMultiplier);
+        moveSpeed = ResolveMoveSpeed(type);
         CwslMonsterVisualRefresh.Refresh(transform, type);
         EnsureMeleeLungeVisual();
         EnsureThreatLight();
@@ -39,7 +40,6 @@ public abstract class CwslMonsterBase : NetworkBehaviour
         if (CwslMonsterTypeUtil.IsNexusPriority(type))
         {
             localDamageMultiplier = 1f;
-            localSpeedMultiplier = manager.NexusVariantSpeedMultiplier;
             localScaleMultiplier = manager.NexusVariantScaleMultiplier;
             return manager.NexusVariantHealthMultiplier;
         }
@@ -47,17 +47,23 @@ public abstract class CwslMonsterBase : NetworkBehaviour
         switch (type)
         {
             case CwslMonsterType.MidBoss:
-                localSpeedMultiplier = manager.MidBossSpeedMultiplier;
                 localScaleMultiplier = manager.MidBossScaleMultiplier;
                 GetComponent<CwslDefenseMidBoss>()?.ConfigureBuff((CwslMidBossBuffKind)Random.Range(0, 3));
                 return manager.MidBossHealthMultiplier;
             case CwslMonsterType.DefenseBoss:
-                localSpeedMultiplier = manager.DefenseBossSpeedMultiplier;
                 localScaleMultiplier = manager.DefenseBossScaleMultiplier;
                 return manager.DefenseBossHealthMultiplier;
             default:
                 return 1f;
         }
+    }
+
+    private float ResolveMoveSpeed(CwslMonsterType type)
+    {
+        var manager = CwslMonsterManager.Instance;
+        var nexusMult = manager != null ? manager.NexusVariantSpeedMultiplier : 0.72f;
+        var midMult = manager != null ? manager.MidBossSpeedMultiplier : 0.667f;
+        return CwslMonsterStatCatalog.GetMoveSpeed(type, nexusMult, midMult);
     }
 
     private void ApplyScaleMultiplier()
@@ -110,6 +116,12 @@ public abstract class CwslMonsterBase : NetworkBehaviour
             return;
 
         if (health == null || !health.IsAlive)
+            return;
+
+        if (GetComponent<CwslMonsterKnockback>()?.IsKnockedBack == true)
+            return;
+
+        if (GetComponent<CwslMonsterStun>()?.IsStunned == true)
             return;
 
         targetRefreshTimer -= Time.deltaTime;
@@ -178,6 +190,55 @@ public abstract class CwslMonsterBase : NetworkBehaviour
         return baseDamage * managerMult * localDamageMultiplier * runtimeMult;
     }
 
+    protected Vector3 GetTargetMovePosition()
+    {
+        if (currentTarget == null)
+            return transform.position;
+
+        var nexus = currentTarget.GetComponent<CwslNexus>();
+        if (nexus != null)
+            return nexus.GetMeleeApproachPoint(transform.position, GetMovementClampRadius());
+
+        return currentTarget.transform.position;
+    }
+
+    protected Vector3 GetTargetFacePosition()
+    {
+        if (currentTarget == null)
+            return transform.position + transform.forward;
+
+        var nexus = currentTarget.GetComponent<CwslNexus>();
+        if (nexus != null)
+            return nexus.GetAimPoint();
+
+        var enemyBase = currentTarget.GetComponent<CwslEnemyBase>();
+        if (enemyBase != null)
+            return enemyBase.GetAimPoint();
+
+        return currentTarget.transform.position + Vector3.up * CwslGameConstants.MonsterHitCenterY;
+    }
+
+    protected float GetCombatStandDistance()
+    {
+        return currentTarget != null && currentTarget.GetComponent<CwslNexus>() != null ? 1.2f : 1.05f;
+    }
+
+    protected float GetFlatDistanceToCombatPosition()
+    {
+        var flat = GetTargetMovePosition() - transform.position;
+        flat.y = 0f;
+        return flat.magnitude;
+    }
+
+    protected float GetMovementClampRadius()
+    {
+        var capsule = GetComponent<CapsuleCollider>();
+        if (capsule != null)
+            return capsule.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.z);
+
+        return CwslGameConstants.MonsterHitMinRadius;
+    }
+
     protected void MoveToward(Vector3 worldPosition, float speedMultiplier = 1f)
     {
         var flat = worldPosition - transform.position;
@@ -188,9 +249,11 @@ public abstract class CwslMonsterBase : NetworkBehaviour
         var runtime = GetComponent<CwslMonsterRuntimeStats>();
         var runtimeSpeed = runtime != null ? runtime.SpeedMultiplier : 1f;
         var step = flat.normalized * (moveSpeed * speedMultiplier * localSpeedMultiplier * runtimeSpeed
+            * CwslMonsterStatCatalog.GlobalMoveSpeedMultiplier
             * CwslArenaZones.GetMonsterSpeedMultiplier(transform.position)
             * (GetComponent<CwslSlowModifier>()?.SpeedMultiplier ?? 1f) * Time.deltaTime);
-        transform.position += step;
+        var next = transform.position + step;
+        transform.position = CwslArenaUtility.ClampToPlayArea(next, GetMovementClampRadius());
         transform.rotation = Quaternion.Slerp(
             transform.rotation,
             Quaternion.LookRotation(flat.normalized),
@@ -212,7 +275,10 @@ public abstract class CwslMonsterBase : NetworkBehaviour
         if (!IsValidTarget(currentTarget))
             return false;
 
-        if (GetFlatDistanceTo(currentTarget) > maxDistance)
+        var distance = currentTarget.GetComponent<CwslNexus>() != null
+            ? GetFlatDistanceToCombatPosition()
+            : GetFlatDistanceTo(currentTarget);
+        if (distance > maxDistance)
             return false;
 
         var damage = GetScaledDamage(baseDamage);

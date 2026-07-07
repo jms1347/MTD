@@ -61,10 +61,10 @@ public class CwslBossHongmyeongbo : CwslMonsterBase
     public override void Initialize(CwslMonsterType type)
     {
         base.Initialize(type);
-        moveSpeed = 2.8f;
+        moveSpeed = CwslMonsterStatCatalog.BossHongmyeongboMoveSpeed;
         ApplyBossScale();
         bossHealth = GetComponent<CwslMonsterHealth>();
-        bossHealth?.ConfigureBoss(CwslGameConstants.BossMaxHealth);
+        bossHealth?.ConfigureBoss(CwslMonsterStatCatalog.BossHongmyeongboHealth);
         Active = this;
         currentPhase = CwslBossPhase.BlackTeleport;
         nextTeleportTime = Time.time + 4f;

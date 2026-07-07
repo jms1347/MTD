@@ -25,6 +25,9 @@ public class CwslPlayerSkills : NetworkBehaviour
             playerStamina = gameObject.AddComponent<CwslPlayerStamina>();
         skills.Clear();
         skills.AddRange(GetComponents<CwslPlayerSkillBase>());
+        EnsureTankDashSkill();
+        EnsureTankSlamSkill();
+        EnsureTankWhirlwindSkill();
         crowdGatherSkill = GetComponent<CwslCrowdGatherSkill>();
         foreach (var skill in skills)
         {
@@ -79,7 +82,7 @@ public class CwslPlayerSkills : NetworkBehaviour
         if (!IsServer || BlocksSkillUseServer(senderClientId))
             return;
 
-        if (!TrySpendStaminaForSlot(0))
+        if (!TrySpendStaminaForChargedPress())
             return;
 
         foreach (var skill in skills)
@@ -109,7 +112,7 @@ public class CwslPlayerSkills : NetworkBehaviour
         }
     }
 
-    public void UseSkillSlotServer(ulong senderClientId, int slotIndex)
+    public void UseSkillSlotServer(ulong senderClientId, int slotIndex, Vector3 worldPoint = default)
     {
         if (!IsServer || BlocksSkillUseServer(senderClientId))
             return;
@@ -121,7 +124,34 @@ public class CwslPlayerSkills : NetworkBehaviour
             ? playerCharacter.CharacterId
             : CwslCharacterId.Tank;
         var definition = CwslCharacterSkillCatalog.Get(characterId, slotIndex);
+        var hasSlotHandler = false;
+
+        foreach (var skill in skills)
+        {
+            if (!IsSkillActiveForCharacter(skill) || skill.SkillSlotIndex != slotIndex)
+                continue;
+
+            hasSlotHandler = true;
+            if (!skill.CanUseSkillSlotServer(senderClientId, slotIndex, worldPoint))
+                return;
+        }
+
+        if (definition.Implemented && !hasSlotHandler)
+            return;
+
         if (!TrySpendStaminaForSlot(slotIndex))
+            return;
+
+        foreach (var skill in skills)
+        {
+            if (!IsSkillActiveForCharacter(skill))
+                continue;
+
+            if (skill.TryUseSkillSlotServer(senderClientId, slotIndex, worldPoint))
+                return;
+        }
+
+        if (definition.Implemented)
             return;
 
         NotifyPlaceholderSkillClientRpc(definition.DisplayName);
@@ -144,6 +174,19 @@ public class CwslPlayerSkills : NetworkBehaviour
 
         NotifyStaminaInsufficientServer();
         return false;
+    }
+
+    private bool TrySpendStaminaForChargedPress()
+    {
+        var characterId = playerCharacter != null
+            ? playerCharacter.CharacterId
+            : CwslCharacterId.Tank;
+
+        // 탱커 Q는 미사일 막을 때마다 스태미너 1 소모 — 홀드 시 선차감 없음
+        if (characterId == CwslCharacterId.Tank)
+            return true;
+
+        return TrySpendStaminaForSlot(0);
     }
 
     public void CastGroundSkillServer(ulong senderClientId, Vector3 worldPoint)
@@ -258,6 +301,33 @@ public class CwslPlayerSkills : NetworkBehaviour
             ? playerCharacter.CharacterId
             : CwslCharacterId.Tank;
         return skill.IsActiveForCharacter(characterId);
+    }
+
+    private void EnsureTankDashSkill()
+    {
+        if (GetComponent<CwslTankShieldDashSkill>() != null)
+            return;
+
+        var dash = gameObject.AddComponent<CwslTankShieldDashSkill>();
+        skills.Add(dash);
+    }
+
+    private void EnsureTankSlamSkill()
+    {
+        if (GetComponent<CwslTankShieldSlamSkill>() != null)
+            return;
+
+        var slam = gameObject.AddComponent<CwslTankShieldSlamSkill>();
+        skills.Add(slam);
+    }
+
+    private void EnsureTankWhirlwindSkill()
+    {
+        if (GetComponent<CwslTankShieldWhirlwindSkill>() != null)
+            return;
+
+        var whirl = gameObject.AddComponent<CwslTankShieldWhirlwindSkill>();
+        skills.Add(whirl);
     }
 
     private bool BlocksSkillUseServer(ulong senderClientId)

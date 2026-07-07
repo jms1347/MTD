@@ -7,6 +7,7 @@ public class CwslDefenseHud : MonoBehaviour
 {
     private TextMeshProUGUI timerLabel;
     private TextMeshProUGUI nexusLabel;
+    private TextMeshProUGUI spawnGuideLabel;
     private Image nexusFill;
     private GameObject nexusBarRoot;
 
@@ -48,6 +49,8 @@ public class CwslDefenseHud : MonoBehaviour
 
         if (controller.MatchPhase is CwslDefenseMatchPhase.PreMatch or CwslDefenseMatchPhase.Countdown)
             RefreshPrepUi();
+        else if (controller.MatchPhase == CwslDefenseMatchPhase.Active)
+            RefreshSpawnGuide(controller);
     }
 
     private void BuildUi()
@@ -60,13 +63,18 @@ public class CwslDefenseHud : MonoBehaviour
         rect.anchorMax = new Vector2(0.5f, 1f);
         rect.pivot = new Vector2(0.5f, 1f);
         rect.anchoredPosition = new Vector2(0f, -18f);
-        rect.sizeDelta = new Vector2(420f, 88f);
+        rect.sizeDelta = new Vector2(520f, 108f);
 
-        timerLabel = CreateLabel("Timer", 28f, FontStyles.Bold, new Vector2(0f, -8f), new Vector2(420f, 36f));
+        timerLabel = CreateLabel("Timer", 28f, FontStyles.Bold, new Vector2(0f, -8f), new Vector2(520f, 36f));
         timerLabel.color = new Color(1f, 0.92f, 0.55f);
 
-        nexusLabel = CreateLabel("Nexus", 18f, FontStyles.Normal, new Vector2(0f, -44f), new Vector2(420f, 24f));
+        nexusLabel = CreateLabel("Nexus", 18f, FontStyles.Normal, new Vector2(0f, -44f), new Vector2(520f, 24f));
         nexusLabel.color = new Color(0.85f, 0.9f, 0.95f);
+
+        spawnGuideLabel = CreateLabel("SpawnGuide", 15f, FontStyles.Normal, new Vector2(0f, -88f), new Vector2(520f, 36f));
+        spawnGuideLabel.color = new Color(1f, 0.72f, 0.45f);
+        spawnGuideLabel.alignment = TextAlignmentOptions.Center;
+        spawnGuideLabel.gameObject.SetActive(false);
 
         nexusBarRoot = new GameObject("NexusBarBg", typeof(RectTransform), typeof(Image));
         nexusBarRoot.transform.SetParent(transform, false);
@@ -140,18 +148,50 @@ public class CwslDefenseHud : MonoBehaviour
             case CwslDefenseMatchPhase.PreMatch:
                 timerLabel.text = $"시작 발판 준비 {controller.GetReadyCount()} / {controller.RequiredPlayerCount}";
                 nexusLabel.text = "공용 시작 발판에 모두 모이세요";
+                SetSpawnGuideVisible(false);
                 SetNexusBarVisible(false);
                 break;
             case CwslDefenseMatchPhase.Countdown:
                 var seconds = Mathf.CeilToInt(Mathf.Max(0f, controller.CountdownSeconds));
                 timerLabel.text = seconds > 0 ? seconds.ToString() : "시작!";
                 nexusLabel.text = "곧 전투가 시작됩니다";
+                SetSpawnGuideVisible(false);
                 SetNexusBarVisible(false);
                 break;
             default:
                 SetNexusBarVisible(true);
+                RefreshSpawnGuide(controller);
                 break;
         }
+    }
+
+    private void RefreshSpawnGuide(CwslDefenseModeController controller)
+    {
+        if (spawnGuideLabel == null)
+            return;
+
+        if (!controller.IsDefenseActive)
+        {
+            SetSpawnGuideVisible(false);
+            return;
+        }
+
+        var manager = CwslMonsterManager.Instance;
+        var baseInterval = manager != null ? Mathf.RoundToInt(manager.BaseSpawnIntervalSeconds) : 60;
+        var spawnInterval = manager != null ? manager.SpawnIntervalPerBase.ToString("0.#") : "4";
+        var maxBases = manager != null ? manager.MaxBases : 8;
+        var baseCount = controller.EnemyBaseCount;
+
+        spawnGuideLabel.text =
+            $"적 기지 {baseCount}/{maxBases} · 기지마다 {spawnInterval}초마다 몬스터\n" +
+            $"{baseInterval}초마다 기지 추가 + 분당 강화 · 중간보스/보스 등장";
+        SetSpawnGuideVisible(true);
+    }
+
+    private void SetSpawnGuideVisible(bool visible)
+    {
+        if (spawnGuideLabel != null)
+            spawnGuideLabel.gameObject.SetActive(visible);
     }
 
     private void SetNexusBarVisible(bool visible)

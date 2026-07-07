@@ -12,11 +12,11 @@ public enum CwslDefenseBossSkillKind : byte
 /// <summary>방어 모드 보스 — 1~2개 랜덤 스킬, 시전 전 텔레그래프.</summary>
 public class CwslDefenseBoss : CwslMonsterBase
 {
-    private const float MoveSpeedBase = 1.1f;
+    private const float MoveSpeedBase = CwslMonsterStatCatalog.DefenseBossMoveSpeed;
     private const float SlamRadius = 6f;
     private const float SlamCastSeconds = 2.4f;
     private const float SlamCooldown = 9f;
-    private const float SlamDamage = 22f;
+    private const float SlamDamage = CwslMonsterStatCatalog.DefenseBossSlamDamage;
     private const float MissileCastSeconds = 2.1f;
     private const float MissileCooldown = 11f;
     private const float MissileZoneRadius = 3.2f;
@@ -55,7 +55,7 @@ public class CwslDefenseBoss : CwslMonsterBase
 
         var nexus = CwslNexus.Instance;
         if (nexus != null && nexus.IsAlive)
-            MoveToward(nexus.transform.position, 0.9f);
+            MoveToward(nexus.GetMeleeApproachPoint(transform.position, GetMovementClampRadius()), 0.9f);
 
         foreach (var skill in skills)
         {
@@ -121,7 +121,7 @@ public class CwslDefenseBoss : CwslMonsterBase
 
         yield return new WaitForSeconds(MissileCastSeconds);
 
-        var damage = GetScaledDamage(14f);
+        var damage = GetScaledDamage(CwslMonsterStatCatalog.DefenseBossMissileDamage);
         foreach (var zone in zones)
         {
             DamagePlayersInRadius(zone, MissileZoneRadius, damage);

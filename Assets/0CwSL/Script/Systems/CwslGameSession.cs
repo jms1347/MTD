@@ -43,6 +43,13 @@ public class CwslGameSession : NetworkBehaviour
         EnsureArenaSystems();
     }
 
+    [ClientRpc]
+    public void ReportDamagePopupClientRpc(Vector3 worldAnchor, float damage, int kind)
+    {
+        CwslDamagePopupPool.EnsureReady();
+        CwslDamagePopupPool.Play(worldAnchor, damage, (CwslDamagePopupKind)kind);
+    }
+
     private void EnsureArenaSystems()
     {
         if (CwslGameConstants.UseDefenseMode)
@@ -72,6 +79,8 @@ public class CwslGameSession : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
+        CwslDamagePopupPool.EnsureReady();
+
         if (IsServer && assets != null)
             CwslNetworkPoolService.Instance?.Initialize(assets);
 

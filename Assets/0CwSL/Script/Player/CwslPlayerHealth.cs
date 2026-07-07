@@ -25,6 +25,7 @@ public class CwslPlayerHealth : NetworkBehaviour
     public bool IsDead => isDead.Value;
     public bool IsAlive => !isDead.Value && health.Value > 0f;
     public float CurrentHealth => health.Value;
+    public float MaxHealth => GetMaxHealthForCharacter();
 
     public event System.Action<float> OnHealthChanged;
     public event System.Action OnDied;
@@ -43,11 +44,11 @@ public class CwslPlayerHealth : NetworkBehaviour
         health.OnValueChanged += HandleHealthChanged;
         isDead.OnValueChanged += HandleDeadStateChanged;
 
+        if (playerCharacter != null)
+            playerCharacter.OnCharacterChanged += HandleCharacterChanged;
+
         if (IsServer)
-        {
-            health.Value = CwslGameConstants.PlayerMaxHealth;
-            isDead.Value = false;
-        }
+            ResetHealthServer();
 
         ApplyAliveVisual(!isDead.Value);
     }
@@ -56,6 +57,31 @@ public class CwslPlayerHealth : NetworkBehaviour
     {
         health.OnValueChanged -= HandleHealthChanged;
         isDead.OnValueChanged -= HandleDeadStateChanged;
+
+        if (playerCharacter != null)
+            playerCharacter.OnCharacterChanged -= HandleCharacterChanged;
+    }
+
+    private void HandleCharacterChanged(CwslCharacterId characterId)
+    {
+        if (!IsServer || isDead.Value)
+            return;
+
+        ResetHealthServer();
+    }
+
+    private void ResetHealthServer()
+    {
+        isDead.Value = false;
+        health.Value = GetMaxHealthForCharacter();
+    }
+
+    private float GetMaxHealthForCharacter()
+    {
+        var characterId = playerCharacter != null
+            ? playerCharacter.CharacterId
+            : CwslCharacterId.Tank;
+        return CwslCharacterStatCatalog.GetMaxHealth(characterId);
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -94,19 +120,44 @@ public class CwslPlayerHealth : NetworkBehaviour
         if (toProjectile.sqrMagnitude > blockRadius * blockRadius)
             return false;
 
-        return TryBlockHitServer(projectilePosition, damage);
+        return TryBlockHitServer(projectilePosition, damage, isProjectile: true);
     }
 
-    public bool TryBlockHitServer(Vector3 hitPosition, float damage)
+    public bool TryBlockHitServer(Vector3 hitPosition, float damage, bool isProjectile = false)
     {
         if (!IsServer || !IsAlive || !CanBlockNow())
+            return false;
+
+        if (isProjectile && !CanBlockProjectileWithStamina())
             return false;
 
         if (!fortifySkill.TryBlockDamageServer())
             return false;
 
+        if (isProjectile)
+            SpendProjectileBlockStamina();
+
         PlayBlockFeedbackClientRpc(hitPosition, damage);
         return true;
+    }
+
+    private bool CanBlockProjectileWithStamina()
+    {
+        if (!CwslGameConstants.SkillsUseStamina)
+            return true;
+
+        var stamina = GetComponent<CwslPlayerStamina>();
+        return stamina != null &&
+               stamina.Current + 0.001f >= CwslGameConstants.TankFortifyMissileBlockStaminaCost;
+    }
+
+    private void SpendProjectileBlockStamina()
+    {
+        if (!CwslGameConstants.SkillsUseStamina)
+            return;
+
+        GetComponent<CwslPlayerStamina>()
+            ?.TrySpendServer(CwslGameConstants.TankFortifyMissileBlockStaminaCost);
     }
 
     // TODO(릴리즈): R키 치트용 — 로비 설정으로 비활성 가능
@@ -122,7 +173,7 @@ public class CwslPlayerHealth : NetworkBehaviour
             return;
         }
 
-        health.Value = CwslGameConstants.PlayerMaxHealth;
+        health.Value = GetMaxHealthForCharacter();
         playerGold?.SetGoldServer(Mathf.Max(playerGold.Gold, CwslGameConstants.StartingGold));
         GetComponent<CwslPlayerStamina>()?.RestoreFullServer();
     }
@@ -164,7 +215,7 @@ public class CwslPlayerHealth : NetworkBehaviour
         if (!IsServer || !IsAlive || amount <= 0f)
             return;
 
-        var maxHealth = CwslGameConstants.PlayerMaxHealth;
+        var maxHealth = GetMaxHealthForCharacter();
         if (health.Value >= maxHealth)
             return;
 
@@ -174,7 +225,7 @@ public class CwslPlayerHealth : NetworkBehaviour
 
         health.Value += healed;
         if (showPopup)
-            ShowHealPopupClientRpc(GetDamagePopupAnchor(), healed);
+            CwslDamageFeedback.PlayFromServer(GetDamagePopupAnchor(), healed, CwslDamagePopupKind.Heal);
     }
 
     private bool ApplyDamageServer(float amount, CwslDamagePopupKind popupKind, Vector3 feedbackPosition)
@@ -191,11 +242,11 @@ public class CwslPlayerHealth : NetworkBehaviour
             return true;
         }
 
-        var finalAmount = Mathf.Max(0f, amount - CwslGameConstants.PlayerDefense);
-        if (finalAmount <= 0f)
-            return true;
-
-        ShowDamagePopupClientRpc(ResolvePopupAnchor(popupKind, feedbackPosition), finalAmount, (int)popupKind);
+        var defense = playerCharacter != null
+            ? CwslCharacterStatCatalog.GetDefense(playerCharacter.CharacterId)
+            : CwslGameConstants.PlayerDefense;
+        var finalAmount = CwslCombatMath.ResolveDamage(amount, defense);
+        CwslDamageFeedback.PlayFromServer(ResolvePopupAnchor(popupKind, feedbackPosition), finalAmount, popupKind);
         health.Value = Mathf.Max(0f, health.Value - finalAmount);
         if (health.Value <= 0f)
             DieServer();
@@ -206,9 +257,8 @@ public class CwslPlayerHealth : NetworkBehaviour
     private void PlayBlockFeedbackClientRpc(Vector3 position, float amount)
     {
         var hitPoint = position + Vector3.up * 0.4f;
-        CwslDamagePopupPool.Play(hitPoint, amount, CwslDamagePopupKind.Blocked);
+        CwslDamageFeedback.Play(hitPoint, amount, CwslDamagePopupKind.Blocked);
         CwslVfxSpawner.SpawnFortifyBlock(position + Vector3.up * 0.35f);
-        // 골드 소모 이펙트는 CwslPlayerGold.TrySpendGoldServer 에서 처리
     }
 
     internal void ReviveServer(int restoredGold)
@@ -217,7 +267,7 @@ public class CwslPlayerHealth : NetworkBehaviour
             return;
 
         isDead.Value = false;
-        health.Value = CwslGameConstants.PlayerMaxHealth;
+        health.Value = GetMaxHealthForCharacter();
         playerGold?.SetGoldServer(restoredGold);
         GetComponent<CwslPlayerStamina>()?.RestoreFullServer();
         visualScale?.SetScaleServer(1f);
@@ -245,18 +295,6 @@ public class CwslPlayerHealth : NetworkBehaviour
         PlayDeathClientRpc(transform.position);
         playerGrave?.BeginTombstoneServer(goldAtDeath);
         CwslGameFlow.Instance?.NotifyPlayerStateChangedServer();
-    }
-
-    [ClientRpc]
-    private void ShowDamagePopupClientRpc(Vector3 position, float amount, int kind)
-    {
-        CwslDamagePopupPool.Play(position, amount, (CwslDamagePopupKind)kind);
-    }
-
-    [ClientRpc]
-    private void ShowHealPopupClientRpc(Vector3 position, float amount)
-    {
-        CwslDamagePopupPool.Play(position, amount, CwslDamagePopupKind.Heal);
     }
 
     [ClientRpc]

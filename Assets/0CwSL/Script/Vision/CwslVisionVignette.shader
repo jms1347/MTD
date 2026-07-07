@@ -12,6 +12,7 @@ Shader "CwSL/VisionVignette"
         _ScryCenter ("Scry Center (Viewport)", Vector) = (0.5, 0.5, 0, 0)
         _ScryInnerRadius ("Scry Inner Radius", Float) = 0.08
         _ScryOuterRadius ("Scry Outer Radius", Float) = 0.18
+        _TeamVisionCount ("Team Vision Count", Int) = 0
     }
 
     SubShader
@@ -49,6 +50,12 @@ Shader "CwSL/VisionVignette"
             float4 _ScryCenter;
             float _ScryInnerRadius;
             float _ScryOuterRadius;
+            int _TeamVisionCount;
+
+            #define MAX_TEAM_VISION 6
+            float4 _TeamCenters[MAX_TEAM_VISION];
+            float _TeamInnerRadii[MAX_TEAM_VISION];
+            float _TeamOuterRadii[MAX_TEAM_VISION];
 
             struct appdata
             {
@@ -84,15 +91,30 @@ Shader "CwSL/VisionVignette"
             {
                 fixed4 tex = tex2D(_MainTex, i.uv);
 
-                float2 delta = i.uv - _Center.xy;
-                float mainDarkness = CircleDarkness(delta, _InnerRadius, _OuterRadius);
+                float darkness = 1.0;
+                if (_TeamVisionCount > 0)
+                {
+                    for (int idx = 0; idx < _TeamVisionCount; idx++)
+                    {
+                        float2 teamDelta = i.uv - _TeamCenters[idx].xy;
+                        float teamDarkness = CircleDarkness(
+                            teamDelta,
+                            _TeamInnerRadii[idx],
+                            _TeamOuterRadii[idx]);
+                        darkness = min(darkness, teamDarkness);
+                    }
+                }
+                else
+                {
+                    float2 delta = i.uv - _Center.xy;
+                    darkness = CircleDarkness(delta, _InnerRadius, _OuterRadius);
+                }
 
-                float darkness = mainDarkness;
                 if (_ScryActive > 0.5)
                 {
                     float2 scryDelta = i.uv - _ScryCenter.xy;
                     float scryDarkness = CircleDarkness(scryDelta, _ScryInnerRadius, _ScryOuterRadius);
-                    darkness = min(mainDarkness, scryDarkness);
+                    darkness = min(darkness, scryDarkness);
                 }
 
                 fixed4 col = _Color;

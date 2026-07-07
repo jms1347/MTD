@@ -75,11 +75,29 @@ public class CwslPlayerInput : NetworkBehaviour
 
     private void HandleExtraSkillSlots()
     {
+        var characterId = playerCharacter != null ? playerCharacter.CharacterId : CwslCharacterId.Tank;
+
+        if (Input.GetKeyDown(KeyCode.W) && characterId == CwslCharacterId.Tank)
+        {
+            var dashPoint = transform.position + transform.forward * 5f;
+            if (playerCamera != null && CwslMouseGround.TryGetGroundPoint(playerCamera, out var point, out _))
+                dashPoint = point;
+
+            UseSkillSlotServerRpc(3, dashPoint);
+            return;
+        }
+
         if (Input.GetKeyDown(KeyCode.E))
-            UseSkillSlotServerRpc(1);
+        {
+            var slamPoint = transform.position + transform.forward * 5f;
+            if (playerCamera != null && CwslMouseGround.TryGetGroundPoint(playerCamera, out var point, out _))
+                slamPoint = point;
+
+            UseSkillSlotServerRpc(1, slamPoint);
+        }
         if (Input.GetKeyDown(KeyCode.R))
             UseSkillSlotServerRpc(2);
-        if (Input.GetKeyDown(KeyCode.F))
+        if (Input.GetKeyDown(KeyCode.F) && characterId != CwslCharacterId.Tank)
             UseSkillSlotServerRpc(3);
     }
 
@@ -223,6 +241,13 @@ public class CwslPlayerInput : NetworkBehaviour
                 return;
             }
 
+            var enemyBase = target.GetComponent<CwslEnemyBase>();
+            if (enemyBase != null && enemyBase.IsAlive)
+            {
+                SelectTargetServerRpc(new NetworkObjectReference(target));
+                return;
+            }
+
             var playerHealthTarget = target.GetComponent<CwslPlayerHealth>();
             if (playerHealthTarget != null && target.OwnerClientId != OwnerClientId)
             {
@@ -241,6 +266,15 @@ public class CwslPlayerInput : NetworkBehaviour
         {
             var monsterHealth = target.GetComponent<CwslMonsterHealth>();
             if (monsterHealth != null && monsterHealth.IsAlive)
+            {
+                CwslMoveDestinationMarker.ShowAttack(target.transform.position);
+                AttackTargetServerRpc(new NetworkObjectReference(target));
+                CancelAttackMovePending();
+                return;
+            }
+
+            var enemyBase = target.GetComponent<CwslEnemyBase>();
+            if (enemyBase != null && enemyBase.IsAlive)
             {
                 CwslMoveDestinationMarker.ShowAttack(target.transform.position);
                 AttackTargetServerRpc(new NetworkObjectReference(target));
@@ -492,9 +526,9 @@ public class CwslPlayerInput : NetworkBehaviour
     }
 
     [ServerRpc]
-    private void UseSkillSlotServerRpc(int slotIndex)
+    private void UseSkillSlotServerRpc(int slotIndex, Vector3 worldPoint = default)
     {
-        skills?.UseSkillSlotServer(OwnerClientId, slotIndex);
+        skills?.UseSkillSlotServer(OwnerClientId, slotIndex, worldPoint);
     }
 
     [ServerRpc]

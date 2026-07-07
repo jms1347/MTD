@@ -13,6 +13,7 @@ public class CwslPlayerMovement : NetworkBehaviour
     private CwslPlayerHealth playerHealth;
     private CwslPlayerStun playerStun;
     private float speedMultiplier = 1f;
+    private float whirlwindSpeedMultiplier = 1f;
 
     public float CurrentMoveSpeed { get; private set; }
     public bool IsMoving => CurrentMoveSpeed > 0.12f;
@@ -27,6 +28,16 @@ public class CwslPlayerMovement : NetworkBehaviour
         }
     }
 
+    public float WhirlwindSpeedMultiplier
+    {
+        get => whirlwindSpeedMultiplier;
+        set
+        {
+            whirlwindSpeedMultiplier = Mathf.Max(0.05f, value);
+            ApplySpeed();
+        }
+    }
+
     public override void OnNetworkSpawn()
     {
         agent = GetComponent<NavMeshAgent>();
@@ -36,7 +47,9 @@ public class CwslPlayerMovement : NetworkBehaviour
         playerHealth = GetComponent<CwslPlayerHealth>();
         playerStun = GetComponent<CwslPlayerStun>();
         agent.enabled = IsServer;
-        agent.speed = CwslGameConstants.BaseMoveSpeed;
+        if (playerCharacter != null)
+            playerCharacter.OnCharacterChanged += HandleCharacterChanged;
+        ApplySpeed();
         agent.angularSpeed = 720f;
         agent.acceleration = 48f;
         agent.stoppingDistance = 0.15f;
@@ -45,6 +58,17 @@ public class CwslPlayerMovement : NetworkBehaviour
         agent.obstacleAvoidanceType = ObstacleAvoidanceType.LowQualityObstacleAvoidance;
         agent.avoidancePriority = 40;
         lastSampledPosition = transform.position;
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        if (playerCharacter != null)
+            playerCharacter.OnCharacterChanged -= HandleCharacterChanged;
+    }
+
+    private void HandleCharacterChanged(CwslCharacterId characterId)
+    {
+        ApplySpeed();
     }
 
     private void Update()
@@ -68,6 +92,20 @@ public class CwslPlayerMovement : NetworkBehaviour
             CurrentMoveSpeed = 0f;
             if (IsServer)
                 HoldGatherChargeMovementServer();
+            return;
+        }
+
+        var tankDash = GetComponent<CwslTankShieldDashSkill>();
+        if (tankDash != null && tankDash.IsDashing)
+        {
+            SampleMoveSpeedFromTransform();
+            return;
+        }
+
+        var tankSlam = GetComponent<CwslTankShieldSlamSkill>();
+        if (tankSlam != null && tankSlam.IsSlamming)
+        {
+            CurrentMoveSpeed = 0f;
             return;
         }
 
@@ -99,6 +137,23 @@ public class CwslPlayerMovement : NetworkBehaviour
 
         CurrentMoveSpeed = agent.velocity.magnitude;
         lastSampledPosition = transform.position;
+        ClampPositionToMapServer();
+    }
+
+    private void ClampPositionToMapServer()
+    {
+        if (CwslDefensePrepUtility.IsPrepBoundaryActive())
+            return;
+
+        var bodyRadius = GetComponent<CwslPlayerBodyCollider>()?.Radius
+            ?? CwslGameConstants.PlayerBodyColliderRadiusDefault;
+        var clamped = CwslArenaUtility.ClampToPlayArea(transform.position, bodyRadius);
+        if ((clamped - transform.position).sqrMagnitude < 0.0001f)
+            return;
+
+        transform.position = clamped;
+        if (agent != null && agent.enabled && agent.isOnNavMesh)
+            agent.Warp(clamped);
     }
 
     private void SampleMoveSpeedFromTransform()
@@ -120,6 +175,12 @@ public class CwslPlayerMovement : NetworkBehaviour
                 ?? CwslGameConstants.PlayerBodyColliderRadiusDefault;
             worldPoint = CwslDefensePrepUtility.ClampToPrepArea(worldPoint, bodyRadius);
         }
+        else
+        {
+            var mapBodyRadius = GetComponent<CwslPlayerBodyCollider>()?.Radius
+                ?? CwslGameConstants.PlayerBodyColliderRadiusDefault;
+            worldPoint = CwslArenaUtility.ClampToPlayArea(worldPoint, mapBodyRadius);
+        }
 
         GetComponent<CwslBlackHoleEscape>()?.TryRegisterMoveAwayClickServer(worldPoint);
 
@@ -128,6 +189,14 @@ public class CwslPlayerMovement : NetworkBehaviour
 
         if (crowdGatherSkill != null && crowdGatherSkill.IsCharging)
             return;
+
+        if (GetCharacterId() == CwslCharacterId.Tank)
+        {
+            if (GetComponent<CwslTankShieldSlamSkill>()?.IsSlamming == true)
+                return;
+            if (GetComponent<CwslTankShieldDashSkill>()?.IsDashing == true)
+                return;
+        }
 
         if (rammerSkill != null && rammerSkill.IsActiveForCharacter(GetCharacterId()))
         {
@@ -215,10 +284,18 @@ public class CwslPlayerMovement : NetworkBehaviour
 
     private void ApplySpeed()
     {
-        if (agent != null)
-            agent.speed = CwslGameConstants.BaseMoveSpeed * speedMultiplier
-                          * (GetComponent<CwslSlowModifier>()?.SpeedMultiplier ?? 1f)
-                          * (GetComponent<CwslMoveSpeedBuff>()?.SpeedMultiplier ?? 1f);
+        if (agent == null)
+            return;
+
+        var characterId = GetCharacterId();
+        var baseSpeed = characterId == CwslCharacterId.MomentumRammer
+            ? CwslGameConstants.BaseMoveSpeed
+            : CwslCharacterStatCatalog.GetMoveSpeed(characterId);
+
+        agent.speed = baseSpeed * speedMultiplier
+                      * whirlwindSpeedMultiplier
+                      * (GetComponent<CwslSlowModifier>()?.SpeedMultiplier ?? 1f)
+                      * (GetComponent<CwslMoveSpeedBuff>()?.SpeedMultiplier ?? 1f);
     }
 
     private CwslCharacterId GetCharacterId()

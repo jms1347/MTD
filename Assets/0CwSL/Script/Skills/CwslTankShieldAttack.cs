@@ -1,0 +1,182 @@
+using System.Collections;
+using Unity.Netcode;
+using UnityEngine;
+
+/// <summary>방패 탱커 평타 — 3초 쿨, 선딜 후 방패 강타. Q 방패 강화 시 3배·광역.</summary>
+public class CwslTankShieldAttack : NetworkBehaviour
+{
+    private const float WindupSeconds = 0.32f;
+
+    private float nextAttackTime;
+    private Coroutine bashRoutine;
+    private CwslPlayerCharacter playerCharacter;
+    private CwslTankFortifySkill fortifySkill;
+    private CwslTankShieldDashSkill dashSkill;
+    private CwslTankShieldSlamSkill slamSkill;
+    private CwslTankShieldWhirlwindSkill whirlwindSkill;
+
+    public bool IsAttacking => bashRoutine != null;
+
+    public override void OnNetworkSpawn()
+    {
+        playerCharacter = GetComponent<CwslPlayerCharacter>();
+        fortifySkill = GetComponent<CwslTankFortifySkill>();
+        dashSkill = GetComponent<CwslTankShieldDashSkill>();
+        slamSkill = GetComponent<CwslTankShieldSlamSkill>();
+        whirlwindSkill = GetComponent<CwslTankShieldWhirlwindSkill>();
+    }
+
+    public bool TryPerformAttackServer(
+        NetworkObject targetObject,
+        CwslMonsterHealth monsterHealth,
+        CwslEnemyBase enemyBase,
+        float attackRange)
+    {
+        if (!IsServer || targetObject == null || bashRoutine != null)
+            return false;
+
+        if (dashSkill != null && dashSkill.IsDashing)
+            return false;
+
+        if (slamSkill != null && slamSkill.IsSlamming)
+            return false;
+
+        if (whirlwindSkill != null && whirlwindSkill.IsWhirlwinding)
+            return false;
+
+        if (Time.time < nextAttackTime)
+            return false;
+
+        if (!CwslPlayerShieldBashVisual.IsInStrikeRange(transform, targetObject))
+            return false;
+
+        var attackPower = playerCharacter != null
+            ? CwslCharacterStatCatalog.GetAttackPower(playerCharacter.CharacterId)
+            : CwslGameConstants.AttackDamage;
+
+        var hitPoint = ResolveHitPoint(targetObject);
+        bashRoutine = StartCoroutine(BashRoutine(
+            targetObject,
+            monsterHealth,
+            enemyBase,
+            attackPower,
+            hitPoint));
+        return true;
+    }
+
+    private IEnumerator BashRoutine(
+        NetworkObject targetObject,
+        CwslMonsterHealth monsterHealth,
+        CwslEnemyBase enemyBase,
+        float attackPower,
+        Vector3 hitPoint)
+    {
+        nextAttackTime = Time.time + CwslCharacterStatCatalog.GetAttackCooldown(CwslCharacterId.Tank);
+        PlayShieldWindupClientRpc(hitPoint);
+
+        yield return new WaitForSeconds(WindupSeconds);
+
+        if (IsEmpoweredShieldAttack())
+        {
+            var empoweredDamage = attackPower * CwslGameConstants.FortifyEmpoweredAttackDamageMultiplier;
+            ApplyAreaDamageServer(empoweredDamage, ResolveEmpoweredHitCenter());
+        }
+        else if (targetObject != null && targetObject.IsSpawned &&
+                 CwslPlayerShieldBashVisual.IsInStrikeRange(transform, targetObject))
+        {
+            if (monsterHealth != null && monsterHealth.IsAlive)
+                monsterHealth.DamageFromPlayer(OwnerClientId, attackPower);
+            else if (enemyBase != null && enemyBase.IsAlive)
+                enemyBase.DamageFromPlayer(OwnerClientId, attackPower);
+        }
+
+        PlayShieldImpactClientRpc(hitPoint, IsEmpoweredShieldAttack());
+        bashRoutine = null;
+    }
+
+    private bool IsEmpoweredShieldAttack()
+    {
+        return fortifySkill != null && fortifySkill.IsShieldActive;
+    }
+
+    private Vector3 ResolveEmpoweredHitCenter()
+    {
+        var forward = transform.forward;
+        forward.y = 0f;
+        if (forward.sqrMagnitude < 0.0001f)
+            forward = Vector3.forward;
+        else
+            forward.Normalize();
+
+        return transform.position + forward * CwslPlayerShieldBashVisual.StrikeReach;
+    }
+
+    private void ApplyAreaDamageServer(float damage, Vector3 center)
+    {
+        if (!IsServer || damage <= 0f)
+            return;
+
+        var radius = CwslGameConstants.FortifyEmpoweredAttackRadius;
+        var radiusSq = radius * radius;
+        var flatCenter = center;
+        flatCenter.y = 0f;
+
+        var monsters = FindObjectsByType<CwslMonsterHealth>(FindObjectsSortMode.None);
+        foreach (var monster in monsters)
+        {
+            if (monster == null || !monster.IsAlive)
+                continue;
+
+            var flat = monster.transform.position;
+            flat.y = 0f;
+            if ((flat - flatCenter).sqrMagnitude > radiusSq)
+                continue;
+
+            monster.DamageFromPlayer(OwnerClientId, damage);
+        }
+
+        var enemyBases = FindObjectsByType<CwslEnemyBase>(FindObjectsSortMode.None);
+        foreach (var enemyBase in enemyBases)
+        {
+            if (enemyBase == null || !enemyBase.IsAlive)
+                continue;
+
+            var flat = enemyBase.transform.position;
+            flat.y = 0f;
+            if ((flat - flatCenter).sqrMagnitude > radiusSq)
+                continue;
+
+            enemyBase.DamageFromPlayer(OwnerClientId, damage);
+        }
+    }
+
+    private static Vector3 ResolveHitPoint(NetworkObject target)
+    {
+        if (target == null)
+            return Vector3.zero;
+
+        var monster = target.GetComponent<CwslMonsterHealth>();
+        if (monster != null)
+            return monster.GetAimPoint();
+
+        var enemyBase = target.GetComponent<CwslEnemyBase>();
+        if (enemyBase != null)
+            return enemyBase.GetAimPoint();
+
+        return target.transform.position + Vector3.up * 1f;
+    }
+
+    [ClientRpc]
+    private void PlayShieldWindupClientRpc(Vector3 hitPoint)
+    {
+        var visual = transform.Find("Visual");
+        visual?.GetComponent<CwslPlayerShieldBashVisual>()?.PlayWindup(hitPoint);
+    }
+
+    [ClientRpc]
+    private void PlayShieldImpactClientRpc(Vector3 hitPoint, bool empowered)
+    {
+        var visual = transform.Find("Visual");
+        visual?.GetComponent<CwslPlayerShieldBashVisual>()?.PlayImpact(hitPoint, empowered);
+    }
+}

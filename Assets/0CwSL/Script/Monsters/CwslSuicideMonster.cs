@@ -3,15 +3,14 @@ using UnityEngine;
 
 public class CwslSuicideMonster : CwslMonsterBase, ICwslPooledNetworkObject
 {
-    private const float RushSpeedMultiplier = 1.15f;
-    private const float DetonateRadius = 1.15f;
-    private const float ExplosionDamage = 18f;
+    private const float RushSpeedMultiplier = 1.05f;
+    private const float DetonateRadius = CwslMonsterStatCatalog.SuicideExplosionRadius;
+    private const float ExplosionDamage = CwslMonsterStatCatalog.SuicideExplosionDamage;
     private bool detonated;
 
     public override void Initialize(CwslMonsterType type)
     {
         base.Initialize(type);
-        moveSpeed = CwslMonsterTypeUtil.IsNexusPriority(type) ? 1.45f : 2f;
         detonated = false;
     }
 
@@ -49,7 +48,7 @@ public class CwslSuicideMonster : CwslMonsterBase, ICwslPooledNetworkObject
         var nexus = currentTarget != null ? currentTarget.GetComponent<CwslNexus>() : null;
         if (nexus != null && nexus.IsAlive)
         {
-            nexus.DamageServer(damage * 1.25f);
+            nexus.DamageServer(GetScaledDamage(CwslMonsterStatCatalog.SuicideNexusExplosionDamage));
         }
         else
         {

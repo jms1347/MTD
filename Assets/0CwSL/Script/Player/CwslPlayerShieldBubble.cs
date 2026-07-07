@@ -42,7 +42,7 @@ public class CwslPlayerShieldBubble : MonoBehaviour
         if (!IsBubbleActive || playerHealth == null)
             return false;
 
-        return playerHealth.TryBlockHitServer(hitPosition, damage);
+        return playerHealth.TryBlockHitServer(hitPosition, damage, isProjectile: true);
     }
 
     private bool ShouldBeActive()

@@ -37,7 +37,13 @@ public class CwslRangedMonster : CwslMonsterBase
         {
             var away = transform.position - currentTarget.transform.position;
             away.y = 0f;
-            MoveToward(transform.position + away.normalized * 2f);
+            if (away.sqrMagnitude < 0.0001f)
+                away = -transform.forward;
+
+            var fleeTarget = CwslArenaUtility.ClampToPlayArea(
+                transform.position + away.normalized * 2f,
+                GetMovementClampRadius());
+            MoveToward(fleeTarget);
         }
         else
         {
@@ -112,7 +118,7 @@ public class CwslRangedMonster : CwslMonsterBase
             return;
 
         var projectile = networkObject.GetComponent<CwslMonsterProjectile>();
-        var damage = GetScaledDamage(8f);
+        var damage = GetScaledDamage(CwslMonsterStatCatalog.RangedProjectileDamage);
         projectile?.Configure(fireDirection, 14f, 8f, damage);
         PlayFireFxClientRpc(muzzle, fireDirection);
     }

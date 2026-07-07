@@ -97,6 +97,20 @@ public static class CwslMouseGround
             if (hit.collider == null)
                 continue;
 
+            var enemyBase = hit.collider.GetComponentInParent<CwslEnemyBase>();
+            if (enemyBase != null && enemyBase.IsAlive)
+            {
+                target = enemyBase.NetworkObject;
+                if (target != null)
+                    return true;
+            }
+        }
+
+        foreach (var hit in hits)
+        {
+            if (hit.collider == null)
+                continue;
+
             var playerHealth = hit.collider.GetComponentInParent<CwslPlayerHealth>();
             if (playerHealth == null)
                 continue;

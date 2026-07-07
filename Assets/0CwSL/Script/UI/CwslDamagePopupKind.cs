@@ -8,5 +8,6 @@ public enum CwslDamagePopupKind
     Projectile,
     Blocked,
     Poison,
-    Heal
+    Heal,
+    Structure
 }

@@ -2,11 +2,15 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// 스크린 스페이스 시야 마스크 — 원형 어둠.
+/// 스크린 스페이스 시야 마스크 — 아군 시야 원 합집합.
 /// </summary>
 public class CwslScreenSpaceVision : MonoBehaviour
 {
     private static readonly Color DarkColor = new(0.01f, 0.012f, 0.018f, 0.96f);
+    private static readonly int TeamVisionCountId = Shader.PropertyToID("_TeamVisionCount");
+    private static readonly int TeamCentersId = Shader.PropertyToID("_TeamCenters");
+    private static readonly int TeamInnerRadiiId = Shader.PropertyToID("_TeamInnerRadii");
+    private static readonly int TeamOuterRadiiId = Shader.PropertyToID("_TeamOuterRadii");
 
     private Canvas canvas;
     private RawImage overlay;
@@ -15,6 +19,10 @@ public class CwslScreenSpaceVision : MonoBehaviour
     private float visionRadius = 14f;
     private bool isBlindVision;
     private bool isAbsoluteBlind;
+
+    private readonly Vector4[] teamCenters = new Vector4[CwslTeamVision.MaxSources];
+    private readonly float[] teamInnerRadii = new float[CwslTeamVision.MaxSources];
+    private readonly float[] teamOuterRadii = new float[CwslTeamVision.MaxSources];
 
     public void Activate(Transform target, float visionRadiusWorld, bool absoluteBlind = false)
     {
@@ -48,35 +56,51 @@ public class CwslScreenSpaceVision : MonoBehaviour
             return;
 
         vignetteMaterial.SetFloat("_Aspect", CwslVisionShape.GetScreenAspect(camera));
+        vignetteMaterial.SetColor("_Color", DarkColor);
+        ApplyTeamVisionMask(camera);
+        ApplyScryMask(camera);
+    }
 
-        if (isAbsoluteBlind)
+    private void ApplyTeamVisionMask(Camera camera)
+    {
+        var sources = CwslTeamVision.CollectSources();
+        var count = 0;
+
+        for (var i = 0; i < sources.Count && count < CwslTeamVision.MaxSources; i++)
         {
-            vignetteMaterial.SetVector("_Center", new Vector4(0.5f, 0.5f, 0f, 0f));
-            vignetteMaterial.SetFloat("_InnerRadius", 0f);
-            vignetteMaterial.SetFloat("_OuterRadius", 0.001f);
-            vignetteMaterial.SetColor("_Color", DarkColor);
-            ApplyScryMask(camera);
-            return;
+            var source = sources[i];
+            if (isAbsoluteBlind && source.PlayerVision == CwslPlayerVision.Local)
+                continue;
+
+            var viewport = camera.WorldToViewportPoint(source.Origin);
+            if (viewport.z <= 0f)
+                continue;
+
+            var radius = source.Radius;
+            if (source.PlayerVision == CwslPlayerVision.Local && isBlindVision)
+                radius = visionRadius;
+
+            CwslVisionShape.ProjectViewportRadii(
+                camera,
+                source.Origin,
+                radius,
+                source.BlindVision,
+                out var innerRadius,
+                out var outerRadius);
+
+            teamCenters[count] = new Vector4(viewport.x, viewport.y, 0f, 0f);
+            teamInnerRadii[count] = innerRadius;
+            teamOuterRadii[count] = outerRadius;
+            count++;
         }
 
-        var worldAnchor = followTarget.position;
-        var viewport = camera.WorldToViewportPoint(worldAnchor);
-        if (viewport.z <= 0f)
-            return;
-
-        CwslVisionShape.ProjectViewportRadii(
-            camera,
-            worldAnchor,
-            visionRadius,
-            isBlindVision,
-            out var innerRadius,
-            out var outerRadius);
-
-        vignetteMaterial.SetVector("_Center", new Vector4(viewport.x, viewport.y, 0f, 0f));
-        vignetteMaterial.SetFloat("_InnerRadius", innerRadius);
-        vignetteMaterial.SetFloat("_OuterRadius", outerRadius);
-        vignetteMaterial.SetColor("_Color", DarkColor);
-        ApplyScryMask(camera);
+        vignetteMaterial.SetInt(TeamVisionCountId, count);
+        if (count > 0)
+        {
+            vignetteMaterial.SetVectorArray(TeamCentersId, teamCenters);
+            vignetteMaterial.SetFloatArray(TeamInnerRadiiId, teamInnerRadii);
+            vignetteMaterial.SetFloatArray(TeamOuterRadiiId, teamOuterRadii);
+        }
     }
 
     private void ApplyScryMask(Camera camera)

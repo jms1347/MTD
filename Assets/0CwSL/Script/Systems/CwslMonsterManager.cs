@@ -9,11 +9,12 @@ public class CwslMonsterManager : MonoBehaviour
 
     [Header("방어 목표")]
     [SerializeField] private float defenseDurationSeconds = 300f;
-    [SerializeField] private float nexusMaxHealth = 500f;
+    [SerializeField] private float nexusMaxHealth = 20000f;
 
     [Header("적 기지")]
     [SerializeField] private int initialBaseCountMin = 2;
     [SerializeField] private int initialBaseCountMax = 3;
+    [SerializeField] private float enemyBaseMaxHealth = 3000f;
     [SerializeField] private float baseSpawnIntervalSeconds = 60f;
     [SerializeField] private int maxBases = 8;
 
@@ -28,25 +29,26 @@ public class CwslMonsterManager : MonoBehaviour
     [SerializeField] private bool spawnDefenseBossEachMinute = true;
 
     [Header("넥서스 우선 몬스터 배율")]
-    [SerializeField] private float nexusVariantHealthMultiplier = 2.2f;
+    [SerializeField] private float nexusVariantHealthMultiplier = 3f;
     [SerializeField] private float nexusVariantScaleMultiplier = 1.35f;
     [SerializeField] private float nexusVariantSpeedMultiplier = 0.72f;
 
     [Header("중간보스")]
-    [SerializeField] private float midBossHealthMultiplier = 12f;
+    [SerializeField] private float midBossHealthMultiplier = 30f;
     [SerializeField] private float midBossScaleMultiplier = 2.1f;
-    [SerializeField] private float midBossSpeedMultiplier = 0.85f;
+    [SerializeField] private float midBossSpeedMultiplier = 0.667f;
     [SerializeField] private float midBossBuffRadius = 7f;
 
     [Header("보스")]
-    [SerializeField] private float defenseBossHealthMultiplier = 28f;
+    [SerializeField] private float defenseBossHealthMultiplier = 60f;
     [SerializeField] private float defenseBossScaleMultiplier = 2.8f;
-    [SerializeField] private float defenseBossSpeedMultiplier = 0.7f;
+    [SerializeField] private float defenseBossSpeedMultiplier = 1f;
 
     public float DefenseDurationSeconds => defenseDurationSeconds;
     public float NexusMaxHealth => nexusMaxHealth;
     public int InitialBaseCountMin => initialBaseCountMin;
     public int InitialBaseCountMax => initialBaseCountMax;
+    public float EnemyBaseMaxHealth => enemyBaseMaxHealth;
     public float BaseSpawnIntervalSeconds => baseSpawnIntervalSeconds;
     public int MaxBases => maxBases;
     public float SpawnIntervalPerBase => spawnIntervalPerBase;

@@ -88,7 +88,7 @@ public class CwslDefenseModeController : NetworkBehaviour
 
 
 
-    private readonly List<Vector3> enemyBasePositions = new();
+    private readonly List<CwslEnemyBase> enemyBases = new();
 
     private readonly List<ulong> sortedClientIds = new();
 
@@ -116,7 +116,38 @@ public class CwslDefenseModeController : NetworkBehaviour
 
     public int RequiredPlayerCount => requiredPlayerCount.Value;
 
-    public IReadOnlyList<Vector3> EnemyBasePositions => enemyBasePositions;
+    public IReadOnlyList<Vector3> EnemyBasePositions
+    {
+        get
+        {
+            aliveBasePositions.Clear();
+            for (var i = 0; i < enemyBases.Count; i++)
+            {
+                var enemyBase = enemyBases[i];
+                if (enemyBase != null && enemyBase.IsAlive)
+                    aliveBasePositions.Add(enemyBase.SpawnPosition);
+            }
+
+            return aliveBasePositions;
+        }
+    }
+
+    public int EnemyBaseCount
+    {
+        get
+        {
+            var count = 0;
+            for (var i = 0; i < enemyBases.Count; i++)
+            {
+                if (enemyBases[i] != null && enemyBases[i].IsAlive)
+                    count++;
+            }
+
+            return count;
+        }
+    }
+
+    private readonly List<Vector3> aliveBasePositions = new();
 
 
 
@@ -316,7 +347,7 @@ public class CwslDefenseModeController : NetworkBehaviour
 
         DisableLegacyArenaSystems();
 
-        SpawnNexusServer(manager.NexusMaxHealth);
+        SpawnNexusServer(CwslGameConstants.NexusDefaultHealth);
 
 
 
@@ -330,7 +361,7 @@ public class CwslDefenseModeController : NetworkBehaviour
 
         minuteTimer = 0f;
 
-        enemyBasePositions.Clear();
+        enemyBases.Clear();
 
         matchPhase.Value = (byte)CwslDefenseMatchPhase.PreMatch;
 
@@ -762,7 +793,7 @@ public class CwslDefenseModeController : NetworkBehaviour
 
         var manager = CwslMonsterManager.Instance;
 
-        if (manager == null || enemyBasePositions.Count >= manager.MaxBases)
+        if (manager == null || EnemyBaseCount >= manager.MaxBases)
 
             return;
 
@@ -774,7 +805,7 @@ public class CwslDefenseModeController : NetworkBehaviour
 
         {
 
-            if (!enemyBasePositions.Exists(p => Vector3.Distance(p, position) < 8f))
+            if (!HasNearbyBase(position, 8f))
 
                 break;
 
@@ -786,9 +817,97 @@ public class CwslDefenseModeController : NetworkBehaviour
 
 
 
-        enemyBasePositions.Add(position);
+        SpawnEnemyBaseServer(position, manager.EnemyBaseMaxHealth);
 
-        ShowEnemyBaseClientRpc(position);
+    }
+
+
+
+    private bool HasNearbyBase(Vector3 position, float minDistance)
+
+    {
+
+        for (var i = 0; i < enemyBases.Count; i++)
+
+        {
+
+            var enemyBase = enemyBases[i];
+
+            if (enemyBase == null || !enemyBase.IsAlive)
+
+                continue;
+
+            if (Vector3.Distance(enemyBase.SpawnPosition, position) < minDistance)
+
+                return true;
+
+        }
+
+        return false;
+
+    }
+
+
+
+    private void SpawnEnemyBaseServer(Vector3 position, float maxHealth)
+
+    {
+
+        var prefab = CwslGameSession.Instance?.Assets?.enemyBasePrefab;
+
+        if (prefab == null)
+
+        {
+
+            Debug.LogWarning("[CwSL] enemyBasePrefab이 없습니다. Tools → CwSL → Setup Game Scene을 실행하세요.");
+
+            return;
+
+        }
+
+
+
+        var instance = Instantiate(prefab, position, Quaternion.Euler(0f, UnityEngine.Random.Range(0f, 360f), 0f));
+
+        var networkObject = instance.GetComponent<NetworkObject>();
+
+        if (networkObject == null)
+
+        {
+
+            Destroy(instance);
+
+            Debug.LogError("[CwSL] CwslEnemyBase 프리팹에 NetworkObject가 없습니다.");
+
+            return;
+
+        }
+
+
+
+        networkObject.Spawn();
+
+        var enemyBase = instance.GetComponent<CwslEnemyBase>();
+
+        enemyBase?.ConfigureServer(maxHealth);
+
+        if (enemyBase != null)
+
+            enemyBases.Add(enemyBase);
+
+    }
+
+
+
+    public void NotifyEnemyBaseDestroyedServer(CwslEnemyBase enemyBase)
+
+    {
+
+        if (!IsServer || enemyBase == null)
+
+            return;
+
+        enemyBases.Remove(enemyBase);
 
     }
 
@@ -800,13 +919,13 @@ public class CwslDefenseModeController : NetworkBehaviour
 
         var spawner = CwslGameSession.Instance?.MonsterSpawner;
 
-        if (spawner == null || enemyBasePositions.Count == 0)
+        if (spawner == null || EnemyBaseCount == 0)
 
             return;
 
 
 
-        spawner.TickDefenseSpawnsServer(dt, enemyBasePositions, manager.SpawnIntervalPerBase);
+        spawner.TickDefenseSpawnsServer(dt, EnemyBasePositions, manager.SpawnIntervalPerBase);
 
     }
 
@@ -816,15 +935,43 @@ public class CwslDefenseModeController : NetworkBehaviour
 
     {
 
-        if (enemyBasePositions.Count == 0)
+        if (EnemyBaseCount == 0)
 
             return;
 
 
 
-        var position = enemyBasePositions[UnityEngine.Random.Range(0, enemyBasePositions.Count)];
+        CwslEnemyBase chosen = null;
 
-        CwslGameSession.Instance?.MonsterSpawner?.QueueDefenseSpawnServer(position, type);
+        var aliveCount = 0;
+
+        for (var i = 0; i < enemyBases.Count; i++)
+
+        {
+
+            var enemyBase = enemyBases[i];
+
+            if (enemyBase == null || !enemyBase.IsAlive)
+
+                continue;
+
+            aliveCount++;
+
+            if (UnityEngine.Random.Range(0, aliveCount) == aliveCount - 1)
+
+                chosen = enemyBase;
+
+        }
+
+
+
+        if (chosen == null)
+
+            return;
+
+
+
+        CwslGameSession.Instance?.MonsterSpawner?.QueueDefenseSpawnServer(chosen.SpawnPosition, type);
 
     }
 
@@ -933,18 +1080,6 @@ public class CwslDefenseModeController : NetworkBehaviour
     {
 
         NotifyPrepStateChanged();
-
-    }
-
-
-
-    [ClientRpc]
-
-    private void ShowEnemyBaseClientRpc(Vector3 position)
-
-    {
-
-        CwslEnemyBaseMarker.Create(position);
 
     }
 

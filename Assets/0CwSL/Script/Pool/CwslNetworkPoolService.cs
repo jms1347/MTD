@@ -37,14 +37,21 @@ public class CwslNetworkPoolService : MonoBehaviour
         if (assets == null)
             return;
 
-        RegisterPool(assets.projectilePrefab, 24, 8);
-        RegisterPool(assets.playerMissilePrefab, 20, 6);
-        RegisterPool(assets.rangedMonsterPrefab, 12, 4);
-        RegisterPool(assets.suicideMonsterPrefab, 12, 4);
-        RegisterPool(assets.meleeMonsterPrefab, 12, 4);
-        RegisterPool(assets.bossPrefab, 2, 1);
-        RegisterPool(assets.goldPickupPrefab, 48, 12);
-        RegisterPool(assets.pillPickupPrefab, 16, 6);
+        var high = CwslGameConstants.PoolHighChurnInitialSize;
+        var highExpand = CwslGameConstants.PoolHighChurnExpandSize;
+        var boss = CwslGameConstants.PoolBossInitialSize;
+        var bossExpand = CwslGameConstants.PoolBossExpandSize;
+
+        RegisterPool(assets.projectilePrefab, high, highExpand);
+        RegisterPool(assets.playerMissilePrefab, high, highExpand);
+        RegisterPool(assets.rangedMonsterPrefab, high, highExpand);
+        RegisterPool(assets.suicideMonsterPrefab, high, highExpand);
+        RegisterPool(assets.meleeMonsterPrefab, high, highExpand);
+        RegisterPool(assets.midBossMonsterPrefab, high, highExpand);
+        RegisterPool(assets.defenseBossMonsterPrefab, high, highExpand);
+        RegisterPool(assets.goldPickupPrefab, high, highExpand);
+        RegisterPool(assets.pillPickupPrefab, high, highExpand);
+        RegisterPool(assets.bossPrefab, boss, bossExpand);
     }
 
     public NetworkObject Get(GameObject prefab, Vector3 position, Quaternion rotation)
@@ -53,7 +60,12 @@ public class CwslNetworkPoolService : MonoBehaviour
             return null;
 
         if (!pools.TryGetValue(prefab, out var pool))
-            pool = RegisterPool(prefab, 4, 2);
+        {
+            pool = RegisterPool(
+                prefab,
+                CwslGameConstants.PoolFallbackInitialSize,
+                CwslGameConstants.PoolFallbackExpandSize);
+        }
 
         return pool?.Get(position, rotation);
     }

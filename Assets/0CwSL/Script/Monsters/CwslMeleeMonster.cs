@@ -8,19 +8,15 @@ public class CwslMeleeMonster : CwslMonsterBase
 
 {
 
-    private const float StickDistance = 1.05f;
-
     private const float MeleeInterval = 2.1f;
 
     private const float WindupDuration = 0.13f;
 
-    private const float ChaseMoveMultiplier = 1.62f;
+    private const float ChaseMoveMultiplier = 1.28f;
 
-    private const float ChargeMoveMultiplier = 2.05f;
+    private const float ChargeMoveMultiplier = 1.45f;
 
     private const float LungeDistance = 0.62f;
-
-    private const float MeleeDamage = 6f;
 
 
 
@@ -38,8 +34,6 @@ public class CwslMeleeMonster : CwslMonsterBase
 
         base.Initialize(type);
 
-        moveSpeed = 1.525f;
-
     }
 
 
@@ -48,7 +42,9 @@ public class CwslMeleeMonster : CwslMonsterBase
 
     {
 
-        var distance = GetFlatDistanceTo(currentTarget);
+        var standDistance = GetCombatStandDistance();
+
+        var distance = GetFlatDistanceToCombatPosition();
 
 
 
@@ -60,7 +56,11 @@ public class CwslMeleeMonster : CwslMonsterBase
 
             FaceTarget(18f);
 
-            MoveToward(currentTarget.transform.position, ChargeMoveMultiplier);
+            if (distance > standDistance * 0.55f)
+
+                MoveToward(GetTargetMovePosition(), ChargeMoveMultiplier * 0.35f);
+
+
 
             if (windupTimer <= 0f)
 
@@ -80,9 +80,9 @@ public class CwslMeleeMonster : CwslMonsterBase
 
 
 
-        if (distance > StickDistance)
+        if (distance > standDistance)
 
-            MoveToward(currentTarget.transform.position, ChaseMoveMultiplier);
+            MoveToward(GetTargetMovePosition(), ChaseMoveMultiplier);
 
         else
 
@@ -92,7 +92,7 @@ public class CwslMeleeMonster : CwslMonsterBase
 
         meleeTimer -= Time.deltaTime;
 
-        if (meleeTimer > 0f || distance > StickDistance + 0.25f)
+        if (meleeTimer > 0f || distance > standDistance + 0.25f)
 
             return;
 
@@ -120,9 +120,9 @@ public class CwslMeleeMonster : CwslMonsterBase
 
 
 
-        var distance = GetFlatDistanceTo(currentTarget);
+        var standDistance = GetCombatStandDistance();
 
-        if (distance > StickDistance + 0.65f)
+        if (GetFlatDistanceToCombatPosition() > standDistance + 0.65f)
 
             return;
 
@@ -130,8 +130,20 @@ public class CwslMeleeMonster : CwslMonsterBase
 
         transform.position += transform.forward * LungeDistance;
 
-        if (TryDamageCurrentTargetMelee(MeleeDamage, StickDistance + 0.65f, Vector3.up * 1.05f))
-            PlayMeleeHitClientRpc(currentTarget.transform.position);
+        transform.position = CwslArenaUtility.ClampToPlayArea(transform.position, GetMovementClampRadius());
+
+
+
+        if (TryDamageCurrentTargetMelee(
+
+                GetScaledDamage(CwslMonsterStatCatalog.GetMeleeAttackPower(MonsterType)),
+
+                standDistance + 0.85f,
+
+                Vector3.up * 1.05f))
+
+            PlayMeleeHitClientRpc(GetTargetFacePosition());
+
     }
 
 
@@ -140,13 +152,21 @@ public class CwslMeleeMonster : CwslMonsterBase
 
     {
 
-        var dir = CwslTargetQuery.GetFlatDirection(transform.position, currentTarget.transform.position);
+        var dir = GetTargetFacePosition() - transform.position;
+
+        dir.y = 0f;
+
+        if (dir.sqrMagnitude < 0.0001f)
+
+            return;
+
+
 
         transform.rotation = Quaternion.Slerp(
 
             transform.rotation,
 
-            Quaternion.LookRotation(dir),
+            Quaternion.LookRotation(dir.normalized),
 
             Time.deltaTime * turnSpeed);
 
@@ -160,11 +180,7 @@ public class CwslMeleeMonster : CwslMonsterBase
 
     {
 
-        var visual = transform.Find("Visual");
-
-        if (visual != null)
-
-            visual.GetComponent<CwslMeleeLungeVisual>()?.PlayWindup();
+        transform.Find("Visual")?.GetComponent<CwslMeleeLungeVisual>()?.PlayWindup();
 
     }
 
@@ -176,11 +192,9 @@ public class CwslMeleeMonster : CwslMonsterBase
 
     {
 
-        var visual = transform.Find("Visual");
+        transform.Find("Visual")?.GetComponent<CwslMeleeLungeVisual>()?.PlayHit();
 
-        if (visual != null)
 
-            visual.GetComponent<CwslMeleeLungeVisual>()?.PlayHit();
 
         var hitPoint = transform.position + transform.forward * 1.15f + Vector3.up * 1.05f;
 

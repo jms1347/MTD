@@ -216,6 +216,7 @@ public static class CwslMonsterVisualBuilder
         AddWalkLegs(visualRoot.transform, trimColor);
         visualRoot.AddComponent<CwslPlayerLegWalkVisual>();
         visualRoot.AddComponent<CwslPlayerShieldWalkVisual>();
+        visualRoot.AddComponent<CwslPlayerShieldBashVisual>();
     }
 
     public static void BuildMissileTankPlayer(Transform root, Color accentColor)

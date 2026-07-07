@@ -11,7 +11,6 @@ public class CwslMissileTankSkill : CwslPlayerSkillBase
     private const float GunCooldown = 1f;
     private const float MissileSpeed = 18f;
     private const float MissileLifetime = 7f;
-    private const float MissileDamage = 1f;
 
     private enum GunSide
     {
@@ -21,6 +20,7 @@ public class CwslMissileTankSkill : CwslPlayerSkillBase
 
     private float nextRightFireTime;
     private CwslMonsterHealth focusedTarget;
+    private CwslEnemyBase focusedStructure;
     private bool lastCombatPoseActive;
     private CwslGunCombatPoseMode lastCombatPoseMode;
     private Vector3 lastSyncedAimPoint;
@@ -38,7 +38,11 @@ public class CwslMissileTankSkill : CwslPlayerSkillBase
 
     public bool HasEnemyInRange() => TryGetNearestMonsterInRange(out _);
 
-    public void ClearAttackFocus() => focusedTarget = null;
+    public void ClearAttackFocus()
+    {
+        focusedTarget = null;
+        focusedStructure = null;
+    }
 
     public override CwslSkillActivationType ActivationType => CwslSkillActivationType.Instant;
 
@@ -64,8 +68,14 @@ public class CwslMissileTankSkill : CwslPlayerSkillBase
         if (!IsServer || playerCharacter == null || playerCharacter.CharacterId != CwslCharacterId.MissileTank)
             return;
 
-        var hasTarget = TryResolveTarget(out var target);
-        var aimPoint = hasTarget ? target.GetAimPoint() : transform.position + transform.forward;
+        var hasStructure = TryResolveStructureTarget(out var structure);
+        var hasMonster = TryResolveTarget(out var target);
+        var hasTarget = hasStructure || hasMonster;
+        var aimPoint = hasStructure
+            ? structure.GetAimPoint()
+            : hasMonster
+                ? target.GetAimPoint()
+                : transform.position + transform.forward;
         var poseMode = ResolveCombatPoseMode(hasTarget);
         var inCombat = hasTarget && (combat == null || !combat.IsPureMoveMode);
 
@@ -153,6 +163,10 @@ public class CwslMissileTankSkill : CwslPlayerSkillBase
             var health = selected.GetComponent<CwslMonsterHealth>();
             if (health != null && health.IsAlive && IsInRange(selected.transform.position))
                 return true;
+
+            var enemyBase = selected.GetComponent<CwslEnemyBase>();
+            if (enemyBase != null && enemyBase.IsAlive && IsInRange(selected.transform.position))
+                return true;
         }
 
         return false;
@@ -164,7 +178,7 @@ public class CwslMissileTankSkill : CwslPlayerSkillBase
         if (!IsServer || playerCharacter == null || playerCharacter.CharacterId != CwslCharacterId.MissileTank)
             return false;
 
-        if (!TryResolveTarget(out _))
+        if (!TryResolveTarget(out _) && !TryResolveStructureTarget(out _))
             return false;
 
         return dualWieldMode ? TryFireDualWieldServer() : TryFireSingleServer();
@@ -224,41 +238,71 @@ public class CwslMissileTankSkill : CwslPlayerSkillBase
         fireDirection = transform.forward;
         shotTarget = null;
 
+        if (TryResolveStructureTarget(out var structure))
+        {
+            aimPoint = structure.GetAimPoint();
+            FaceFireDirectionServer(aimPoint - transform.position);
+            cannonAim?.SnapAimServer(aimPoint);
+            fireDirection = ResolveFireDirection(aimPoint, out _);
+            return true;
+        }
+
         if (!TryResolveTarget(out shotTarget))
             return false;
 
         aimPoint = shotTarget.GetAimPoint();
         FaceFireDirectionServer(aimPoint - transform.position);
         cannonAim?.SnapAimServer(aimPoint);
+        fireDirection = ResolveFireDirection(aimPoint, out _);
+        return true;
+    }
 
-        var muzzle = cannonAim != null
+    private Vector3 ResolveFireDirection(Vector3 aimPoint, out Vector3 muzzle)
+    {
+        muzzle = cannonAim != null
             ? cannonAim.GetMuzzlePosition()
             : transform.position + Vector3.up * 1.2f + transform.forward * 0.9f;
 
         var toAim = aimPoint - muzzle;
         if (toAim.sqrMagnitude > 0.0001f)
-            fireDirection = toAim.normalized;
-        else
+            return toAim.normalized;
+
+        var flat = aimPoint - transform.position;
+        flat.y = 0f;
+        return flat.sqrMagnitude > 0.0001f ? flat.normalized : transform.forward;
+    }
+
+    private bool TryResolveStructureTarget(out CwslEnemyBase structure)
+    {
+        structure = null;
+
+        if (selection != null &&
+            selection.TryGetSelectedTarget(out var selected) &&
+            selected != null)
         {
-            var flat = aimPoint - transform.position;
-            flat.y = 0f;
-            fireDirection = flat.sqrMagnitude > 0.0001f ? flat.normalized : transform.forward;
+            var selectedBase = selected.GetComponent<CwslEnemyBase>();
+            if (selectedBase != null &&
+                selectedBase.IsAlive &&
+                IsInRange(selected.transform.position))
+            {
+                focusedStructure = selectedBase;
+                focusedTarget = null;
+                structure = selectedBase;
+                return true;
+            }
         }
 
-        return true;
+        if (focusedStructure != null &&
+            focusedStructure.IsAlive &&
+            IsInRange(focusedStructure.transform.position))
+        {
+            structure = focusedStructure;
+            return true;
+        }
+
+        focusedStructure = null;
+        return false;
     }
-
-    private static void FaceFireDirectionServer(Transform actor, Vector3 direction)
-    {
-        direction.y = 0f;
-        if (direction.sqrMagnitude < 0.0001f)
-            return;
-
-        actor.rotation = Quaternion.LookRotation(direction.normalized, Vector3.up);
-    }
-
-    private void FaceFireDirectionServer(Vector3 direction) =>
-        FaceFireDirectionServer(transform, direction);
 
     private bool TryResolveTarget(out CwslMonsterHealth target)
     {
@@ -274,6 +318,7 @@ public class CwslMissileTankSkill : CwslPlayerSkillBase
                 IsInRange(selected.transform.position))
             {
                 focusedTarget = selectedHealth;
+                focusedStructure = null;
                 target = selectedHealth;
                 return true;
             }
@@ -292,8 +337,21 @@ public class CwslMissileTankSkill : CwslPlayerSkillBase
             return false;
 
         focusedTarget = target;
+        focusedStructure = null;
         return true;
     }
+
+    private static void FaceFireDirectionServer(Transform actor, Vector3 direction)
+    {
+        direction.y = 0f;
+        if (direction.sqrMagnitude < 0.0001f)
+            return;
+
+        actor.rotation = Quaternion.LookRotation(direction.normalized, Vector3.up);
+    }
+
+    private void FaceFireDirectionServer(Vector3 direction) =>
+        FaceFireDirectionServer(transform, direction);
 
     private bool TryGetNearestMonsterInRange(out CwslMonsterHealth target)
     {
@@ -351,12 +409,16 @@ public class CwslMissileTankSkill : CwslPlayerSkillBase
             return;
 
         var projectile = networkObject.GetComponent<CwslPlayerProjectile>();
+        var attackPower = playerCharacter != null
+            ? CwslCharacterStatCatalog.GetAttackPower(playerCharacter.CharacterId)
+            : CwslGameConstants.AttackDamage;
+
         projectile?.Configure(
             fireDirection,
             MissileSpeed,
             MissileLifetime,
             OwnerClientId,
-            MissileDamage,
+            attackPower,
             piercing,
             NetworkObject,
             homingTarget);

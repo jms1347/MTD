@@ -60,6 +60,10 @@ public class CwslPlayerSelection : NetworkBehaviour
         var monsterHealth = target.GetComponent<CwslMonsterHealth>();
         if (monsterHealth != null && !monsterHealth.IsAlive)
             DestroyIndicator();
+
+        var enemyBase = target.GetComponent<CwslEnemyBase>();
+        if (enemyBase != null && !enemyBase.IsAlive)
+            DestroyIndicator();
     }
 
     private void RefreshIndicator()
@@ -72,9 +76,12 @@ public class CwslPlayerSelection : NetworkBehaviour
             return;
 
         var isMonster = target.GetComponent<CwslMonsterHealth>() != null;
+        var isStructure = target.GetComponent<CwslEnemyBase>() != null;
         var color = isMonster
             ? new Color(1f, 0.2f, 0.12f, 0.95f)
-            : new Color(1f, 0.92f, 0.2f, 0.85f);
+            : isStructure
+                ? new Color(1f, 0.45f, 0.1f, 0.92f)
+                : new Color(1f, 0.92f, 0.2f, 0.85f);
 
         localIndicator = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
         localIndicator.name = "SelectionRing";
@@ -85,7 +92,11 @@ public class CwslPlayerSelection : NetworkBehaviour
         var yOffset = targetGrave != null && targetGrave.IsTombstoneActive ? 0.15f : 0.08f;
         localIndicator.transform.localPosition = new Vector3(0f, yOffset, 0f);
 
-        var scale = isMonster ? ResolveMonsterSelectionRingScale(target) : ResolvePlayerSelectionRingScale(target);
+        var scale = isMonster
+            ? ResolveMonsterSelectionRingScale(target)
+            : isStructure
+                ? 2.4f
+                : ResolvePlayerSelectionRingScale(target);
         localIndicator.transform.localScale = new Vector3(scale, 0.03f, scale);
 
         var renderer = localIndicator.GetComponent<Renderer>();

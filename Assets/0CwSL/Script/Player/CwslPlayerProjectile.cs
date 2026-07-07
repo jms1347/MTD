@@ -499,6 +499,19 @@ public class CwslPlayerProjectile : NetworkBehaviour, ICwslPooledNetworkObject
             return;
         }
 
+        var enemyBase = collider.GetComponentInParent<CwslEnemyBase>();
+        if (enemyBase != null && enemyBase.IsAlive)
+        {
+            enemyBase.DamageFromPlayer(ownerClientId, damage);
+            if (!pierce)
+            {
+                configured = false;
+                DespawnSelf();
+            }
+
+            return;
+        }
+
         var playerHealth = collider.GetComponentInParent<CwslPlayerHealth>();
         if (!ShouldSkipPlayerForProjectile(playerHealth))
             TryDamagePlayer(playerHealth);

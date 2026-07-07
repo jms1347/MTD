@@ -102,6 +102,7 @@ public class CwslGameAssets : ScriptableObject
     public GameObject midBossMonsterPrefab;
     public GameObject defenseBossMonsterPrefab;
     public GameObject nexusPrefab;
+    public GameObject enemyBasePrefab;
     public GameObject goldPickupPrefab;
     public GameObject pillPickupPrefab;
     public GameObject graveVisualPrefab;

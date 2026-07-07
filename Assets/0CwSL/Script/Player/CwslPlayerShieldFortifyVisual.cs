@@ -41,6 +41,9 @@ public class CwslPlayerShieldFortifyVisual : NetworkBehaviour
         if (shieldRoot == null)
             return;
 
+        if (IsTankSkillVisualAnimating())
+            return;
+
         var growing = shieldScale.Value > displayScale + 0.001f;
         var smoothTime = growing
             ? CwslGameConstants.FortifyShieldGrowSmoothTime
@@ -66,5 +69,11 @@ public class CwslPlayerShieldFortifyVisual : NetworkBehaviour
     {
         if (shieldRoot != null)
             shieldRoot.localScale = Vector3.one * scale;
+    }
+
+    private bool IsTankSkillVisualAnimating()
+    {
+        var visual = transform.Find("Visual");
+        return visual != null && visual.GetComponent<CwslTankShieldSkillVisual>()?.IsAnimating == true;
     }
 }

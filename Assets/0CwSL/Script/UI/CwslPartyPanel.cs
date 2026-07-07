@@ -165,6 +165,7 @@ public class CwslPartyPanel : MonoBehaviour
                 DisplayName = displayName,
                 CharacterId = characterId,
                 CurrentHealth = health.CurrentHealth,
+                MaxHealth = health.MaxHealth,
                 IsAlive = health.IsAlive,
                 IsDead = health.IsDead
             });
@@ -204,10 +205,11 @@ public class CwslPartyPanel : MonoBehaviour
             return;
         }
 
-        var ratio = Mathf.Clamp01(player.CurrentHealth / CwslGameConstants.PlayerMaxHealth);
+        var maxHealth = player.MaxHealth > 0f ? player.MaxHealth : CwslGameConstants.PlayerMaxHealth;
+        var ratio = Mathf.Clamp01(player.CurrentHealth / maxHealth);
         row.HpFill.fillAmount = ratio;
         row.HpFill.color = Color.Lerp(new Color(0.95f, 0.25f, 0.25f), new Color(0.3f, 0.92f, 0.45f), ratio);
-        row.HpLabel.text = $"{Mathf.CeilToInt(player.CurrentHealth)} / {CwslGameConstants.PlayerMaxHealth:0}";
+        row.HpLabel.text = $"{Mathf.CeilToInt(player.CurrentHealth)} / {maxHealth:0}";
         row.HpLabel.color = MutedTextColor;
     }
 
@@ -353,6 +355,7 @@ public class CwslPartyPanel : MonoBehaviour
         public string DisplayName;
         public CwslCharacterId CharacterId;
         public float CurrentHealth;
+        public float MaxHealth;
         public bool IsAlive;
         public bool IsDead;
     }

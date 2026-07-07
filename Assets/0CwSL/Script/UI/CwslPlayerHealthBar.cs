@@ -55,7 +55,8 @@ public class CwslPlayerHealthBar : NetworkBehaviour
             return;
 
         var current = currentHealth ?? (playerHealth != null ? playerHealth.CurrentHealth : CwslGameConstants.PlayerMaxHealth);
-        var ratio = Mathf.Clamp01(current / CwslGameConstants.PlayerMaxHealth);
+        var maxHealth = playerHealth != null ? playerHealth.MaxHealth : CwslGameConstants.PlayerMaxHealth;
+        var ratio = maxHealth > 0f ? Mathf.Clamp01(current / maxHealth) : 0f;
         fillTransform.localScale = new Vector3(BarWidth * ratio, BarHeight, 0.1f);
         fillTransform.localPosition = new Vector3(-BarWidth * 0.5f + (BarWidth * ratio * 0.5f), 0f, -0.01f);
 

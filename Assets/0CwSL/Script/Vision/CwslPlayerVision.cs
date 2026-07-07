@@ -60,16 +60,7 @@ public class CwslPlayerVision : NetworkBehaviour
         if (Local == null)
             return true;
 
-        if (Local.TryGetScryVisibility(worldPosition, isProjectile: false) > 0.01f)
-            return true;
-
-        if (Local.IsAbsoluteBlindVision)
-            return false;
-
-        var flat = worldPosition - Local.VisionOrigin;
-        flat.y = 0f;
-        var radius = Local.EffectiveVisionRadius;
-        return CwslVisionShape.GetCircularFlatDistance(Local.VisionOrigin, worldPosition) <= radius;
+        return CwslTeamVision.IsInTeamVision(worldPosition);
     }
 
     public void RevealMeteorScry(Vector3 worldCenter)

@@ -110,6 +110,7 @@ MonoBehaviour:
   midBossMonsterPrefab: {fileID: 1179032646208479811, guid: 8774500c5e509a9418988a412960aee1, type: 3}
   defenseBossMonsterPrefab: {fileID: 8572479323002272293, guid: 1428f2f3c8b4b824eabb63f83e43b59a, type: 3}
   nexusPrefab: {fileID: 5579736234828561980, guid: 3676912a60de2d545b8011699416ec8d, type: 3}
+  enemyBasePrefab: {fileID: 4021903022380138013, guid: 760c013012080ba468e41a030186c9b4, type: 3}
   goldPickupPrefab: {fileID: 8285741258449009015, guid: 5f1905539d50fc14a91e5ff699dab977, type: 3}
   pillPickupPrefab: {fileID: 531872116740505062, guid: bd2a9bb87d18f6345a31ecf6fe1eca29, type: 3}
   graveVisualPrefab: {fileID: 4056276277256171079, guid: a3df36c37be413247bb6f0bb0124a224, type: 3}

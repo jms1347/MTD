@@ -15,7 +15,8 @@ public static class CwslTmpFontUtil
 
         cachedFont = Resources.Load<TMP_FontAsset>("Fonts & Materials/NEXONLv1GothicBold SDF")
             ?? Resources.Load<TMP_FontAsset>("Fonts & Materials/esamanru Bold SDF")
-            ?? Resources.Load<TMP_FontAsset>("Fonts & Materials/PretendardVariable SDF");
+            ?? Resources.Load<TMP_FontAsset>("Fonts & Materials/PretendardVariable SDF")
+            ?? Resources.Load<TMP_FontAsset>("Fonts & Materials/LiberationSans SDF");
 
         return cachedFont;
     }

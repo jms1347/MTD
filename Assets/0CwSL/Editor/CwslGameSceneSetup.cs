@@ -41,6 +41,7 @@ public static class CwslGameSceneSetup
         var pillPickupPrefab = BuildPillPickupPrefab();
         var graveVisualPrefab = BuildGraveVisualPrefab();
         var nexusPrefab = BuildNexusPrefab();
+        var enemyBasePrefab = BuildEnemyBasePrefab();
 
         assets.playerPrefab = playerPrefab;
         assets.rangedMonsterPrefab = rangedPrefab;
@@ -55,6 +56,7 @@ public static class CwslGameSceneSetup
         assets.pillPickupPrefab = pillPickupPrefab;
         assets.graveVisualPrefab = graveVisualPrefab;
         assets.nexusPrefab = nexusPrefab;
+        assets.enemyBasePrefab = enemyBasePrefab;
         assets.darkMissileVfx = LoadPrefab(CwslVfxPaths.RangedProjectileVisual);
         assets.shadowProjectileHitVfx = LoadPrefab(CwslVfxPaths.ShadowProjectileHit);
         assets.shadowMuzzleVfx = LoadPrefab(CwslVfxPaths.ShadowMuzzleFlash);
@@ -156,6 +158,7 @@ public static class CwslGameSceneSetup
         RegisterPrefab(networkPrefabs, goldPickupPrefab);
         RegisterPrefab(networkPrefabs, pillPickupPrefab);
         RegisterPrefab(networkPrefabs, nexusPrefab);
+        RegisterPrefab(networkPrefabs, enemyBasePrefab);
         EditorUtility.SetDirty(networkPrefabs);
 
         BuildScene(assets, networkPrefabs);
@@ -391,6 +394,10 @@ public static class CwslGameSceneSetup
         root.AddComponent<CwslPlayerSkills>();
         root.AddComponent<CwslPlayerCharacter>();
         root.AddComponent<CwslTankFortifySkill>();
+        root.AddComponent<CwslTankShieldAttack>();
+        root.AddComponent<CwslTankShieldDashSkill>();
+        root.AddComponent<CwslTankShieldSlamSkill>();
+        root.AddComponent<CwslTankShieldWhirlwindSkill>();
         root.AddComponent<CwslMissileTankSkill>();
         root.AddComponent<CwslRedMageMeteorSkill>();
         root.AddComponent<CwslMomentumRammerSkill>();
@@ -510,6 +517,8 @@ public static class CwslGameSceneSetup
         root.AddComponent<NetworkObject>();
         root.AddComponent<Unity.Netcode.Components.NetworkTransform>();
         root.AddComponent<CwslMonsterHealth>();
+        root.AddComponent<CwslMonsterKnockback>();
+        root.AddComponent<CwslMonsterStun>();
         root.AddComponent(behaviourType);
         if (type == CwslMonsterType.Ranged)
             root.AddComponent<CwslRangedCannonAim>();
@@ -716,6 +725,25 @@ public static class CwslGameSceneSetup
         root.AddComponent<CwslNexusVisual>();
 
         return SavePrefab(root, $"{PrefabFolder}/CwslNexus.prefab");
+    }
+
+    private static GameObject BuildEnemyBasePrefab()
+    {
+        var root = new GameObject("CwslEnemyBase");
+
+        CwslEnemyBaseVisualBuilder.Build(root.transform);
+
+        var collider = root.AddComponent<CapsuleCollider>();
+        collider.isTrigger = true;
+        collider.direction = 1;
+        collider.center = new Vector3(0f, 1.35f, 0f);
+        collider.height = 2.7f;
+        collider.radius = 1.15f;
+
+        root.AddComponent<NetworkObject>();
+        root.AddComponent<CwslEnemyBase>();
+
+        return SavePrefab(root, $"{PrefabFolder}/CwslEnemyBase.prefab");
     }
 
     private static void UpdateBuildSettings()

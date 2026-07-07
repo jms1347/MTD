@@ -20,10 +20,10 @@ public static class CwslCharacterSkillCatalog
 
     private static readonly SkillSlotDefinition[] TankSkills =
     {
-        new("방패 강화", "Q", 20f, true),
-        new("도발", "E", 24f, false),
-        new("수호 벽", "R", 32f, false),
-        new("재생", "F", 28f, false),
+        new("방패 강화", "Q", 0f, true),
+        new("지진 강타", "E", CwslGameConstants.TankSkillStaminaCost, true),
+        new("방패 회전", "R", CwslGameConstants.TankWhirlwindStaminaCost, true),
+        new("방패 돌진", "W", CwslGameConstants.TankSkillStaminaCost, true),
     };
 
     private static readonly SkillSlotDefinition[] MissileTankSkills =
