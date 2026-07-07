@@ -8,7 +8,7 @@ public enum CwslSeniorCoachSkillKind : byte
     AceSpotlight = 1
 }
 
-/// <summary>중보스 수석 코치(이임생) — 맵 외곽 순회, 광란 오라 + 순환 스킬.</summary>
+/// <summary>중보???�석 코치(?�임?? ??�??�곽 ?�회, 광�? ?�라 + ?�환 ?�킬.</summary>
 public class CwslSeniorCoachMonster : CwslMonsterBase
 {
     private const float AuraRefreshSeconds = 0.35f;
@@ -54,7 +54,7 @@ public class CwslSeniorCoachMonster : CwslMonsterBase
         var radius = CwslGameConstants.SeniorCoachFrenzyAuraRadius;
         var radiusSq = radius * radius;
         var center = transform.position;
-        var monsters = FindObjectsByType<CwslMonsterHealth>(FindObjectsSortMode.None);
+        var monsters = CwslCombatRegistry.AliveMonsters;
 
         foreach (var monster in monsters)
         {
@@ -123,7 +123,7 @@ public class CwslSeniorCoachMonster : CwslMonsterBase
     private bool TryCastIronPotShield()
     {
         var candidates = new List<CwslMonsterHealth>();
-        var monsters = FindObjectsByType<CwslMonsterHealth>(FindObjectsSortMode.None);
+        var monsters = CwslCombatRegistry.AliveMonsters;
         foreach (var monster in monsters)
         {
             if (monster == null || !monster.IsAlive)

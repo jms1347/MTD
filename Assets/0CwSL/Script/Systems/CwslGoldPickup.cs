@@ -42,6 +42,7 @@ public class CwslGoldPickup : NetworkBehaviour, ICwslPooledNetworkObject
         spreadStartTime = Time.time;
         claimableTime = Time.time + CwslGameConstants.GoldCoinSpreadDuration + 0.05f;
         transform.position = dropCenter;
+        CwslCombatRegistry.RegisterGoldPickup(this);
     }
 
     public void ConfigureFakeServer(Vector3 center, Vector3 finalPosition)
@@ -55,6 +56,7 @@ public class CwslGoldPickup : NetworkBehaviour, ICwslPooledNetworkObject
         spreadStartTime = Time.time;
         claimableTime = Time.time + CwslGameConstants.GoldCoinSpreadDuration * 0.35f;
         transform.position = dropCenter;
+        CwslCombatRegistry.RegisterGoldPickup(this);
     }
 
     public void OnSpawnedFromPool()
@@ -66,6 +68,7 @@ public class CwslGoldPickup : NetworkBehaviour, ICwslPooledNetworkObject
 
     public void OnReturnedToPool()
     {
+        CwslCombatRegistry.UnregisterGoldPickup(this);
         claimed = false;
         magnetTargetId.Value = 0;
         pickupKind.Value = (int)CwslGoldPickupKind.Normal;

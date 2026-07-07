@@ -103,8 +103,15 @@ MonoBehaviour:
   lightningStunStrikeVfx: {fileID: 134366, guid: e138ae207292b5d46b564280936b8668, type: 3}
   lightningZoneAuraVfx: {fileID: 134696, guid: b7e5be8cde65c7c42915ee6e2273d19b, type: 3}
   redMageLightningOrbVfx: {fileID: 190666, guid: 992c31aa5088a9649851c996f2a08b7e, type: 3}
+  redMageLightningOrbRadiusVfx: {fileID: 189236, guid: 8b80f8497c25823439546e7fbb1d81a9, type: 3}
+  redMageLightningBoltVfx: {fileID: 163948, guid: 153ff601b9ac43240921bf65f009e220, type: 3}
+  redMageLightningStrikeVfx: {fileID: 123722, guid: 0e953c794d5f3f74da4bc1bc07249ea6, type: 3}
+  redMageLightningStrikeTallVfx: {fileID: 124998, guid: 16f393fea92971c4f9d155ff0adab5a5, type: 3}
   redMageLightningExplosionVfx: {fileID: 121496, guid: 5e8a137808d7d374487f34e236c723db, type: 3}
   redMageTeleportPortalVfx: {fileID: 128752, guid: 8ade55bc7f33dcc46947f3bc7d22bc3b, type: 3}
+  frozenOrbIceBallVfx: {fileID: 1243920211805428, guid: b3eac57a161dad74fbd7d2b265fd6280, type: 3}
+  frozenOrbHitAirVfx: {fileID: 100002, guid: 221679c5b25c3f741a3c3dbf2d5586ed, type: 3}
+  frozenOrbGroundTrailVfx: {fileID: 100002, guid: 39205107b28f45843a4849400d31083d, type: 3}
   hazardAcidPadVfx: {fileID: 112986, guid: e370423ba226169489d92631df31f5af, type: 3}
   hazardLavaPadVfx: {fileID: 129292, guid: d8ac9950df006754ea1bf8311f5c97bc, type: 3}
   hazardWaterPadVfx: {fileID: 130202, guid: 69650b375a92f8e4c8ac8682d63f7451, type: 3}
@@ -127,6 +134,11 @@ MonoBehaviour:
   gatherChargeLoopSound: {fileID: 8300000, guid: f5377a5e50a0a5d46b2312f05881aaf3, type: 3}
   gatherChargeEndSound: {fileID: 8300000, guid: 77dd773ebc12f094da54118ece216216, type: 3}
   skillGoldFailSound: {fileID: 8300000, guid: 1977a51030f8f024191e311f880570eb, type: 3}
+  redMageFrozenOrbCastSound: {fileID: 8300000, guid: 07532e25ab2bf0e4e9520610dfe2e0ce, type: 3}
+  redMageFrozenOrbTravelSound: {fileID: 8300000, guid: 101106cd810615041bb13f121e59a2d7, type: 3}
+  redMageLightningOrbCastSound: {fileID: 8300000, guid: 0bab18109cc0d434fa35ed3a525ef1e2, type: 3}
+  redMageLightningOrbStrikeSound: {fileID: 8300000, guid: 715780c44280b5a478739a8d5c7221ce, type: 3}
+  redMageLightningOrbImpactSound: {fileID: 8300000, guid: b1acecdf352627048b995eca86c0f8ec, type: 3}
   playerPrefab: {fileID: 6360497807503343767, guid: 5885e0e861be95e41b8318c7d2df905d, type: 3}
   rangedMonsterPrefab: {fileID: 5648177666945189405, guid: 7c47dd5b69da58e46b0228723bfc6e50, type: 3}
   inkSniperMonsterPrefab: {fileID: 7496961707958841258, guid: e956cfab686e7f5498a96fc182238940, type: 3}

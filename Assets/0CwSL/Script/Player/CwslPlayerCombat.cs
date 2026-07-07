@@ -417,7 +417,7 @@ public class CwslPlayerCombat : NetworkBehaviour
             return false;
 
         var bestDistance = float.MaxValue;
-        var monsters = FindObjectsByType<CwslMonsterHealth>(FindObjectsSortMode.None);
+        var monsters = CwslCombatRegistry.AliveMonsters;
         foreach (var monster in monsters)
         {
             if (monster == null || !monster.IsAlive)

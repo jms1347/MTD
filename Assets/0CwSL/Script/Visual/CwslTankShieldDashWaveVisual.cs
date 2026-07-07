@@ -4,16 +4,11 @@ using UnityEngine;
 /// <summary>탱커 W 돌진 — 방패 앞 SwordWaveBlue 이펙트.</summary>
 public class CwslTankShieldDashWaveVisual : MonoBehaviour
 {
-    private Transform shield;
     private GameObject waveInstance;
     private Coroutine routine;
 
     public void PlayDashWave(Vector3 direction, bool empowered, float duration)
     {
-        shield = transform.Find("Shield");
-        if (shield == null)
-            return;
-
         if (routine != null)
             StopCoroutine(routine);
 
@@ -31,7 +26,7 @@ public class CwslTankShieldDashWaveVisual : MonoBehaviour
             root.rotation = Quaternion.LookRotation(flat.normalized, Vector3.up);
 
         var scale = CwslTankShieldVfxUtil.GetShieldEffectScale(root, empowered);
-        waveInstance = CwslVfxSpawner.AttachShieldDashWave(shield, scale);
+        waveInstance = CwslVfxSpawner.AttachShieldDashWave(transform, scale, direction);
         if (waveInstance == null)
         {
             routine = null;

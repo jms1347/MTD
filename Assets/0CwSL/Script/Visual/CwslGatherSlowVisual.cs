@@ -14,8 +14,7 @@ public static class CwslGatherSlowVisual
         var radiusSqr = radius * radius;
 
         TrackMonsters(center, radiusSqr, activeIds);
-        TrackProjectiles<CwslMonsterProjectile>(center, radiusSqr, activeIds);
-        TrackProjectiles<CwslPlayerProjectile>(center, radiusSqr, activeIds);
+        TrackProjectiles(center, radiusSqr, activeIds);
 
         RemoveStale(activeIds);
     }
@@ -25,7 +24,7 @@ public static class CwslGatherSlowVisual
         foreach (var pair in vfxByTargetId)
         {
             if (pair.Value != null)
-                Object.Destroy(pair.Value);
+                CwslVfxPool.Release(pair.Value);
         }
 
         vfxByTargetId.Clear();
@@ -36,11 +35,20 @@ public static class CwslGatherSlowVisual
         // 몬스터 동상 VFX는 CwslMonsterStatusVfx(네트워크 동기화)가 담당.
     }
 
-    private static void TrackProjectiles<T>(Vector3 center, float radiusSqr, HashSet<int> activeIds)
-        where T : Component
+    private static void TrackProjectiles(Vector3 center, float radiusSqr, HashSet<int> activeIds)
     {
-        var projectiles = Object.FindObjectsByType<T>(FindObjectsSortMode.None);
-        foreach (var projectile in projectiles)
+        foreach (var projectile in CwslCombatRegistry.ActiveMonsterProjectiles)
+        {
+            if (projectile == null)
+                continue;
+
+            if (!IsInsideFlatRadius(center, projectile.transform.position, radiusSqr))
+                continue;
+
+            EnsureVfx(projectile.transform, activeIds);
+        }
+
+        foreach (var projectile in CwslCombatRegistry.ActivePlayerProjectiles)
         {
             if (projectile == null)
                 continue;
@@ -61,7 +69,7 @@ public static class CwslGatherSlowVisual
             return;
 
         if (existing != null)
-            Object.Destroy(existing);
+            CwslVfxPool.Release(existing);
 
         var anchor = target.Find("Visual") ?? target;
         vfxByTargetId[id] = CwslVfxSpawner.AttachGatherSlowEnchant(anchor);
@@ -77,7 +85,7 @@ public static class CwslGatherSlowVisual
 
             stale.Add(pair.Key);
             if (pair.Value != null)
-                Object.Destroy(pair.Value);
+                CwslVfxPool.Release(pair.Value);
         }
 
         foreach (var id in stale)

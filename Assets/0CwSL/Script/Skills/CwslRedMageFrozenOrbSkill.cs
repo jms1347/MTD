@@ -133,5 +133,6 @@ public class CwslRedMageFrozenOrbSkill : CwslPlayerSkillBase
     {
         var visual = transform.Find("Visual");
         visual?.GetComponent<CwslPlayerStaffCastVisual>()?.PlayCast();
+        CwslSkillAudioFeedback.PlayFrozenOrbCast(transform.position);
     }
 }

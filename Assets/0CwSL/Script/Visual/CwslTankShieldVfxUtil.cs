@@ -74,7 +74,8 @@ public static class CwslTankShieldVfxUtil
             return Quaternion.identity;
 
         // ETFX BodySlam 계열 — 루트 X -90° (지면용).
-        return Quaternion.LookRotation(forward.normalized, Vector3.up);
+        return Quaternion.LookRotation(forward.normalized, Vector3.up)
+               * CwslEtfxVfxOrientation.GroundSlamRotationOffset;
     }
 
     public static float GetSlamGroundHitScale(Transform playerRoot, bool empowered)
@@ -85,9 +86,45 @@ public static class CwslTankShieldVfxUtil
             : shieldScale * CwslGameConstants.TankShieldSlamSoftVfxScale;
     }
 
-    /// <summary>ETFX Sword 계열 — 방패 부착 시 로컬 회전 보정.</summary>
-    public static Quaternion GetShieldAttachLocalRotation() =>
-        CwslEtfxVfxOrientation.ShieldAttachRotation;
+    /// <summary>ETFX Sword 계열 — 돌진 파동 월드 정렬 (돌진 방향 + 프리팹 -90° X).</summary>
+    public static Quaternion GetDashWaveWorldRotation(Vector3 dashDirection)
+    {
+        var flat = dashDirection;
+        flat.y = 0f;
+        if (flat.sqrMagnitude < 0.0001f)
+            flat = Vector3.forward;
+        else
+            flat.Normalize();
+
+        return Quaternion.LookRotation(flat, Vector3.up)
+               * CwslEtfxVfxOrientation.ShieldDashWaveWorldRotationOffset;
+    }
+
+    public static Quaternion GetDashWaveLocalRotation() =>
+        CwslEtfxVfxOrientation.ShieldDashWaveAttachLocalRotation;
+
+    public static Vector3 GetDashWaveSpawnWorldPosition(Transform visualOrPlayerRoot, Vector3 dashDirection, float shieldScale)
+    {
+        var shield = FindShield(visualOrPlayerRoot);
+        var flat = dashDirection;
+        flat.y = 0f;
+        if (flat.sqrMagnitude < 0.0001f)
+            flat = shield != null ? shield.forward : visualOrPlayerRoot.forward;
+        else
+            flat.Normalize();
+
+        flat.y = 0f;
+        if (flat.sqrMagnitude < 0.0001f)
+            flat = Vector3.forward;
+        else
+            flat.Normalize();
+
+        var forwardOffset = 0.42f * shieldScale + 0.05f;
+        if (shield != null)
+            return shield.position + flat * forwardOffset;
+
+        return visualOrPlayerRoot.position + flat * 1.2f + Vector3.up * 0.9f;
+    }
 
     public static Quaternion GetShieldWhirlwindAttachLocalRotation() =>
         CwslEtfxVfxOrientation.ShieldWhirlwindAttachRotation;
@@ -95,12 +132,18 @@ public static class CwslTankShieldVfxUtil
     public static Vector3 GetDashWaveLocalOffset(float shieldScale) =>
         new Vector3(0f, 0f, 0.48f + Mathf.Max(0f, shieldScale - 1f) * 0.08f);
 
-    private static Transform FindShield(Transform playerRoot)
+    public static Transform FindShieldForVfx(Transform root) => FindShield(root);
+
+    private static Transform FindShield(Transform root)
     {
-        if (playerRoot == null)
+        if (root == null)
             return null;
 
-        var visual = playerRoot.Find("Visual");
+        var direct = root.Find("Shield");
+        if (direct != null)
+            return direct;
+
+        var visual = root.Find("Visual");
         return visual != null ? visual.Find("Shield") : null;
     }
 }

@@ -116,7 +116,7 @@ public class CwslPlayerProjectileVisual : NetworkBehaviour
     private void ClearProjectileVisual()
     {
         if (missileVisual != null)
-            Destroy(missileVisual);
+            CwslVfxPool.Release(missileVisual);
         missileVisual = null;
     }
 }

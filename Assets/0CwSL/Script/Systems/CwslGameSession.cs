@@ -37,9 +37,12 @@ public class CwslGameSession : NetworkBehaviour
                 assets.gatherChargeEndSound,
                 assets.skillGoldFailSound);
             CwslArenaAudioFeedback.Initialize(assets);
+            CwslSkillAudioFeedback.Initialize(assets);
         }
 
         CwslDamagePopupPool.EnsureReady();
+        if (assets != null)
+            CwslVfxPool.WarmFromAssets(assets);
         EnsureArenaSystems();
     }
 

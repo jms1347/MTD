@@ -9,7 +9,7 @@ public enum CwslDefenseBossSkillKind : byte
     MissileBarrage = 1
 }
 
-/// <summary>방어 모드 보스 — 1~2개 랜덤 스킬, 시전 전 텔레그래프.</summary>
+/// <summary>?? ?? ?? ??1~2????? ???, ??? ?????????</summary>
 public class CwslDefenseBoss : CwslMonsterBase
 {
     private const float MoveSpeedBase = CwslMonsterStatCatalog.DefenseBossMoveSpeed;
@@ -135,7 +135,7 @@ public class CwslDefenseBoss : CwslMonsterBase
 
     private static void DamagePlayersInRadius(Vector3 center, float radius, float damage)
     {
-        var players = FindObjectsByType<CwslPlayerHealth>(FindObjectsSortMode.None);
+        var players = CwslCombatRegistry.AlivePlayers;
         foreach (var player in players)
         {
             if (player == null || !player.IsAlive)
@@ -165,7 +165,7 @@ public class CwslDefenseBoss : CwslMonsterBase
     [ClientRpc]
     private void ShowTelegraphClientRpc(Vector3 center, float radius, float duration, int skillKind)
     {
-        var label = skillKind == 0 ? "지면 강타" : "미사일";
+        var label = skillKind == 0 ? "\uC9C0\uBA74 \uAC15\uD0C0" : "\uBBF8\uC0AC\uC77C";
         CwslSkillTelegraph.ShowCircle(center, radius, duration, label);
     }
 

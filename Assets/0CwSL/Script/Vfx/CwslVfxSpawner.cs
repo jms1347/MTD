@@ -89,6 +89,25 @@ public static class CwslVfxSpawner
         return spawned;
     }
 
+    public static GameObject AttachMissileTankPowerBoostGlow(Transform parent)
+    {
+        if (parent == null)
+            return null;
+
+        var prefab = ResolvePrefab(
+            ResolveAssets()?.missileTankPowerBoostVfx,
+            CwslVfxPaths.MissileTankPowerBoostGlow);
+        var spawned = Spawn(prefab, parent.position, Quaternion.identity, 0f, 1f);
+        if (spawned == null)
+            return null;
+
+        spawned.transform.SetParent(parent, false);
+        spawned.transform.localPosition = new Vector3(0f, 0.85f, 0f);
+        spawned.transform.localRotation = Quaternion.identity;
+        PrepareEffect(spawned);
+        return spawned;
+    }
+
     public static GameObject SpawnFortifyBlock(Vector3 position)
     {
         var spawned = Spawn(
@@ -202,7 +221,7 @@ public static class CwslVfxSpawner
         spawned.transform.SetParent(anchor, false);
         spawned.transform.localPosition = Vector3.zero;
         // ETFX 프리팹 루트가 X -90°라 별이 세로로 도는 문제 보정
-        spawned.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+        spawned.transform.localRotation = CwslEtfxVfxOrientation.HeadStatusAttachRotation;
         DisablePhysics(spawned);
         RestartParticleSystems(spawned);
         return spawned;
@@ -706,15 +725,40 @@ public static class CwslVfxSpawner
 
         spawned.transform.SetParent(parent, true);
         spawned.transform.localPosition = Vector3.up * 0.05f;
-        spawned.transform.localRotation = Quaternion.identity;
-        PrepareEffect(spawned);
+        spawned.transform.localRotation = CwslEtfxVfxOrientation.GroundSlamRotationOffset;
+        PrepareLoopingGroundEffect(spawned);
         return spawned;
+    }
+
+    public static void PrepareLoopingGroundEffect(GameObject root)
+    {
+        PrepareEffect(root);
+        if (root == null)
+            return;
+
+        foreach (var ps in root.GetComponentsInChildren<ParticleSystem>(true))
+        {
+            var main = ps.main;
+            main.loop = true;
+            ps.Play(true);
+        }
     }
 
     private static void PrepareEffect(GameObject root)
     {
+        DisableCartoonFxAutoDestruct(root);
         DisablePhysics(root);
         RestartParticleSystems(root);
+        RestartAudioSources(root);
+    }
+
+    private static void DisableCartoonFxAutoDestruct(GameObject root)
+    {
+        foreach (var autoDestruct in root.GetComponentsInChildren<CFX_AutoDestructShuriken>(true))
+            Object.Destroy(autoDestruct);
+
+        foreach (var autoDestruct in root.GetComponentsInChildren<CFX_AutodestructWhenNoChildren>(true))
+            Object.Destroy(autoDestruct);
     }
 
     private static void RestartParticleSystems(GameObject root)
@@ -725,6 +769,18 @@ public static class CwslVfxSpawner
             main.scalingMode = ParticleSystemScalingMode.Hierarchy;
             ps.Clear(true);
             ps.Play(true);
+        }
+    }
+
+    private static void RestartAudioSources(GameObject root)
+    {
+        foreach (var source in root.GetComponentsInChildren<AudioSource>(true))
+        {
+            if (source.clip == null)
+                continue;
+
+            source.Stop();
+            source.Play();
         }
     }
 
@@ -1003,20 +1059,178 @@ public static class CwslVfxSpawner
 
     public static GameObject SpawnLightningMissile(Vector3 origin, Vector3 target)
     {
+        return SpawnMissile(
+            CwslGameSession.Instance?.Assets?.lightningMissileVfx,
+            origin,
+            target,
+            0f,
+            0.95f);
+    }
+
+    public static GameObject SpawnMissile(
+        GameObject prefab,
+        Vector3 origin,
+        Vector3 target,
+        float lifetime,
+        float scale)
+    {
+        if (prefab == null)
+            return null;
+
         var flat = target - origin;
         flat.y = 0f;
         var rotation = flat.sqrMagnitude > 0.01f
             ? Quaternion.LookRotation(flat.normalized, Vector3.up)
             : Quaternion.identity;
 
-        var spawned = Spawn(
-            CwslGameSession.Instance?.Assets?.lightningMissileVfx,
-            origin,
-            rotation,
-            0f,
-            0.95f);
+        var spawned = Spawn(prefab, origin, rotation, lifetime, scale);
         if (spawned != null)
-            RestartParticleSystems(spawned);
+            PrepareEffect(spawned);
+        return spawned;
+    }
+
+    public static void PlayLightningBolt(
+        Vector3 origin,
+        Vector3 target,
+        float speed,
+        GameObject missilePrefab = null,
+        GameObject strikePrefab = null,
+        bool randomRedMageStrike = false)
+    {
+        var runner = new GameObject("CwslLightningBolt");
+        runner.transform.position = origin;
+        runner.AddComponent<CwslLightningMissileRunner>()
+            .Play(origin, target, speed, missilePrefab, strikePrefab, randomRedMageStrike);
+    }
+
+    public static void PlayRedMageLightningBolt(Vector3 orbPosition, Vector3 targetPoint)
+    {
+        var assets = ResolveAssets();
+        PlayLightningBolt(
+            orbPosition,
+            targetPoint,
+            CwslGameConstants.LightningMissileSpeed,
+            assets?.redMageLightningBoltVfx,
+            null,
+            randomRedMageStrike: true);
+    }
+
+    public static GameObject SpawnRedMageLightningStrike(Vector3 strikePoint)
+    {
+        var assets = ResolveAssets();
+        var useTall = Random.value >= 0.5f;
+        var prefab = useTall
+            ? ResolvePrefab(
+                assets?.redMageLightningStrikeTallVfx,
+                CwslVfxPaths.RedMageLightningStrikeTall)
+              ?? ResolvePrefab(
+                  assets?.redMageLightningStrikeVfx,
+                  CwslVfxPaths.RedMageLightningStrike)
+            : ResolvePrefab(
+                  assets?.redMageLightningStrikeVfx,
+                  CwslVfxPaths.RedMageLightningStrike)
+              ?? ResolvePrefab(
+                  assets?.redMageLightningStrikeTallVfx,
+                  CwslVfxPaths.RedMageLightningStrikeTall);
+
+        if (prefab == null)
+            return SpawnLightningStrike(strikePoint);
+
+        var spawned = Spawn(
+            prefab,
+            strikePoint + Vector3.up * 0.08f,
+            Quaternion.identity,
+            1.25f,
+            1f);
+        if (spawned == null)
+            CwslSimpleVfx.SpawnBurst(strikePoint, new Color(0.45f, 0.75f, 1f), 1.1f, 0.3f);
+        else
+            PrepareEffect(spawned);
+        return spawned;
+    }
+
+    public static GameObject AttachRedMageLightningOrbGroundRadius(Transform parent, float radius)
+    {
+        if (parent == null)
+            return null;
+
+        var prefab = ResolvePrefab(
+            ResolveAssets()?.redMageLightningOrbRadiusVfx,
+            CwslVfxPaths.RedMageLightningOrbRadius);
+        if (prefab == null)
+            return null;
+
+        var diameter = Mathf.Max(0.5f, radius * 2f);
+        var scale = diameter / CwslGameConstants.RedMageLightningOrbGroundRadiusVfxDiameterDivisor;
+        var spawned = Spawn(prefab, parent.position, Quaternion.identity, 0f, scale);
+        if (spawned == null)
+            return null;
+
+        spawned.transform.SetParent(parent, false);
+        spawned.transform.localPosition = Vector3.zero;
+        spawned.transform.localRotation = CwslEtfxVfxOrientation.GroundSlamRotationOffset;
+        PrepareLoopingGroundEffect(spawned);
+        return spawned;
+    }
+
+    public static GameObject AttachFrozenOrbIceBall(Transform parent, float scale)
+    {
+        if (parent == null)
+            return null;
+
+        var prefab = ResolvePrefab(
+            ResolveAssets()?.frozenOrbIceBallVfx,
+            CwslVfxPaths.FrozenOrbIceBall);
+        if (prefab == null)
+            return null;
+
+        var spawned = Spawn(prefab, parent.position, Quaternion.identity, 0f, scale);
+        if (spawned == null)
+            return null;
+
+        spawned.transform.SetParent(parent, false);
+        spawned.transform.localPosition = Vector3.zero;
+        spawned.transform.localRotation = Quaternion.identity;
+        spawned.transform.localScale = Vector3.one;
+        PrepareEffect(spawned);
+        return spawned;
+    }
+
+    public static GameObject SpawnFrozenOrbHitAir(Vector3 hitPoint)
+    {
+        var prefab = ResolvePrefab(
+            ResolveAssets()?.frozenOrbHitAirVfx,
+            CwslVfxPaths.FrozenOrbHitAir);
+        var spawned = Spawn(
+            prefab,
+            hitPoint + Vector3.up * 0.45f,
+            Quaternion.identity,
+            1.4f,
+            1f);
+        if (spawned == null)
+            CwslSimpleVfx.SpawnBurst(hitPoint, new Color(0.65f, 0.9f, 1f), 0.9f, 0.35f);
+        else
+            PrepareEffect(spawned);
+        return spawned;
+    }
+
+    public static GameObject SpawnFrozenOrbGroundTrail(Vector3 groundPoint)
+    {
+        var prefab = ResolvePrefab(
+            ResolveAssets()?.frozenOrbGroundTrailVfx,
+            CwslVfxPaths.FrozenOrbGroundTrail);
+        var point = groundPoint;
+        point.y = CwslTankShieldVfxUtil.VisualGroundY;
+        var spawned = Spawn(
+            prefab,
+            point,
+            CwslCfx3VfxOrientation.GroundHitLocalRotation,
+            1.6f,
+            1f);
+        if (spawned == null)
+            CwslSimpleVfx.SpawnBurst(point, new Color(0.55f, 0.85f, 1f), 0.75f, 0.28f);
+        else
+            PrepareEffect(spawned);
         return spawned;
     }
 
@@ -1031,7 +1245,7 @@ public static class CwslVfxSpawner
         if (spawned == null)
             CwslSimpleVfx.SpawnBurst(strikePoint, new Color(0.55f, 0.75f, 1f), 1.1f, 0.3f);
         else
-            RestartParticleSystems(spawned);
+            PrepareEffect(spawned);
         return spawned;
     }
 
@@ -1126,23 +1340,28 @@ public static class CwslVfxSpawner
         return spawned;
     }
 
-    public static GameObject AttachShieldDashWave(Transform shield, float scale)
+    public static GameObject AttachShieldDashWave(Transform visualRoot, float scale, Vector3 dashDirection)
     {
+        if (visualRoot == null)
+            return null;
+
+        var shield = CwslTankShieldVfxUtil.FindShieldForVfx(visualRoot);
         if (shield == null)
             return null;
 
+        var origin = CwslTankShieldVfxUtil.GetDashWaveSpawnWorldPosition(visualRoot, dashDirection, scale);
+        var worldRotation = CwslTankShieldVfxUtil.GetDashWaveWorldRotation(dashDirection);
+
         var spawned = Spawn(
             ResolveAssets()?.shieldDashWaveVfx,
-            shield.position,
-            shield.rotation,
+            origin,
+            worldRotation,
             0f,
             scale);
         if (spawned == null)
             return null;
 
-        spawned.transform.SetParent(shield, false);
-        spawned.transform.localPosition = CwslTankShieldVfxUtil.GetDashWaveLocalOffset(scale);
-        spawned.transform.localRotation = CwslTankShieldVfxUtil.GetShieldAttachLocalRotation();
+        spawned.transform.SetParent(shield, true);
         PrepareEffect(spawned);
         return spawned;
     }
@@ -1172,7 +1391,8 @@ public static class CwslVfxSpawner
         GameObject prefab,
         Transform parent,
         Vector3 localPosition,
-        float scale)
+        float scale,
+        Quaternion localRotation)
     {
         if (prefab == null || parent == null)
             return null;
@@ -1183,12 +1403,24 @@ public static class CwslVfxSpawner
 
         spawned.transform.SetParent(parent, false);
         spawned.transform.localPosition = localPosition;
-        spawned.transform.localRotation = Quaternion.identity;
+        spawned.transform.localRotation = localRotation;
         PrepareEffect(spawned);
         return spawned;
     }
 
+    public static GameObject AttachMonsterStatusEffect(
+        GameObject prefab,
+        Transform parent,
+        Vector3 localPosition,
+        float scale)
+    {
+        return AttachMonsterStatusEffect(prefab, parent, localPosition, scale, Quaternion.identity);
+    }
+
     public static CwslGameAssets GetAssets() => ResolveAssets();
+
+    private static GameObject ResolvePrefab(GameObject assigned, string assetPath) =>
+        CwslVfxPrefabResolver.Resolve(assigned, assetPath);
 
     private static CwslGameAssets ResolveAssets() =>
         CwslGameSession.Instance?.Assets ?? CwslVisualTestAssetsContext.Assets;

@@ -3,8 +3,8 @@ using UnityEngine;
 using UnityEngine.AI;
 
 /// <summary>
-/// 총잡이 전투.
-/// 어택/추적/선택 적 — 1초 쿨 자동 사격 / Q — 골드 2 이상 시 양손 동시(쿨 무시)
+/// ???????.
+/// ???/??/??? ????1??????? ??? / Q ???? 2 ??? ????? ???(????)
 /// </summary>
 public class CwslMissileTankSkill : CwslPlayerSkillBase
 {
@@ -176,7 +176,7 @@ public class CwslMissileTankSkill : CwslPlayerSkillBase
         return false;
     }
 
-    /// <param name="dualWieldMode">false=오른쪽 총, true=Q 양손 동시(골드2, 쿨 무시)</param>
+    /// <param name="dualWieldMode">false=??????? true=Q ??? ???(??2, ????)</param>
     public bool TryFireAttackServer(bool dualWieldMode)
     {
         if (!IsServer || playerCharacter == null || playerCharacter.CharacterId != CwslCharacterId.MissileTank)
@@ -366,7 +366,7 @@ public class CwslMissileTankSkill : CwslPlayerSkillBase
     {
         target = null;
         var bestDistance = float.MaxValue;
-        var monsters = FindObjectsByType<CwslMonsterHealth>(FindObjectsSortMode.None);
+        var monsters = CwslCombatRegistry.AliveMonsters;
         foreach (var monster in monsters)
         {
             if (monster == null || !monster.IsAlive)
@@ -400,16 +400,16 @@ public class CwslMissileTankSkill : CwslPlayerSkillBase
         FireProjectileServer(
             fireDirection,
             useLeftMuzzle: false,
-            homingTarget: null,
+            lockedTarget: null,
             forceSmokeBomb: true);
     }
 
     private float ResolveGunCooldown()
     {
-        var multiplier = powerBoostSkill != null && powerBoostSkill.IsActive
-            ? CwslGameConstants.MissileTankPowerBoostFireCooldownMultiplier
-            : 1f;
-        return GunCooldown * multiplier;
+        if (powerBoostSkill != null && powerBoostSkill.IsActive)
+            return 0f;
+
+        return GunCooldown;
     }
 
     private int ResolveMaxPierceHits()
@@ -426,7 +426,7 @@ public class CwslMissileTankSkill : CwslPlayerSkillBase
     private void FireProjectileServer(
         Vector3 fireDirection,
         bool useLeftMuzzle,
-        CwslMonsterHealth homingTarget,
+        CwslMonsterHealth lockedTarget,
         bool forceSmokeBomb = false)
     {
         var session = CwslGameSession.Instance;
@@ -438,7 +438,7 @@ public class CwslMissileTankSkill : CwslPlayerSkillBase
         if (fireDirection.sqrMagnitude < 0.0001f)
             fireDirection = transform.forward;
 
-        var spawnOffset = ResolveSpawnOffset(muzzle, homingTarget);
+        var spawnOffset = ResolveSpawnOffset(muzzle, lockedTarget);
         var spawnPosition = muzzle + fireDirection.normalized * spawnOffset;
 
         var networkObject = CwslNetworkPoolService.Instance?.Get(
@@ -461,7 +461,7 @@ public class CwslMissileTankSkill : CwslPlayerSkillBase
             OwnerClientId,
             attackPower,
             NetworkObject,
-            homingTarget,
+            lockedTarget,
             ammo,
             forceSmokeBomb ? 0 : ResolveMaxPierceHits(),
             forceSmokeBomb);

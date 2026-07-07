@@ -2,7 +2,7 @@ using System.Collections;
 using Unity.Netcode;
 using UnityEngine;
 
-/// <summary>미사일 탱커 W — 10초 강화: 관통5, 이동속도 2배, 연사 50% 감소.</summary>
+/// <summary>총잡이 W — 10초 버프: 관통, 이동속도 2배, 평타 쿨타임 제거.</summary>
 public class CwslMissileTankPowerBoostSkill : CwslPlayerSkillBase
 {
     public const int BoundSlotIndex = 3;
@@ -111,17 +111,7 @@ public class CwslMissileTankPowerBoostSkill : CwslPlayerSkillBase
         if (visual == null)
             return;
 
-        var prefab = CwslGameSession.Instance?.Assets?.missileTankPowerBoostVfx;
-        if (prefab == null)
-            return;
-
-        attachedGlow = CwslVfxSpawner.TryInstantiate(prefab, visual.position, Quaternion.identity);
-        if (attachedGlow == null)
-            return;
-
-        attachedGlow.transform.SetParent(visual, false);
-        attachedGlow.transform.localPosition = Vector3.up * 0.9f;
-        attachedGlow.transform.localRotation = Quaternion.identity;
+        attachedGlow = CwslVfxSpawner.AttachMissileTankPowerBoostGlow(visual);
     }
 
     private void OnDisable()

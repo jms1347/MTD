@@ -121,7 +121,13 @@ public class CwslPlayerInput : NetworkBehaviour
             UseSkillSlotServerRpc(1, slamPoint);
         }
         if (Input.GetKeyDown(KeyCode.R))
-            UseSkillSlotServerRpc(2);
+        {
+            var skillPoint = transform.position + transform.forward * 5f;
+            if (playerCamera != null && CwslMouseGround.TryGetGroundPoint(playerCamera, out var point, out _))
+                skillPoint = point;
+
+            UseSkillSlotServerRpc(2, skillPoint);
+        }
         if (Input.GetKeyDown(KeyCode.F) && characterId != CwslCharacterId.Tank && characterId != CwslCharacterId.MissileTank && characterId != CwslCharacterId.RedMage)
             UseSkillSlotServerRpc(3);
     }

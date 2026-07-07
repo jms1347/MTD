@@ -27,7 +27,10 @@ public class CwslPlayerProjectile : NetworkBehaviour, ICwslPooledNetworkObject
     private int piercesRemaining;
     private CwslMissileTankAmmoKind ammoKind = CwslMissileTankAmmoKind.Basic;
     private bool smokeBomb;
-    private CwslMonsterHealth homingTarget;
+    /// <summary>
+    /// 발사 시 잠근 1차 타겟(보스 집중 사격·스폰 오프셋용). 비행 중 유도는 하지 않는다.
+    /// </summary>
+    private CwslMonsterHealth lockedTarget;
 
     public byte VisualKind => networkVisualKind.Value;
 
@@ -78,12 +81,13 @@ public class CwslPlayerProjectile : NetworkBehaviour, ICwslPooledNetworkObject
         smokeBomb = spawnSmokeZone;
         piercesRemaining = Mathf.Max(0, maxPierceHits);
         pierce = piercesRemaining > 0;
-        homingTarget = target;
+        lockedTarget = target;
         configured = true;
         hitMonsterIds.Clear();
         hitPlayerIds.Clear();
         networkVisualKind.Value = ResolveVisualKind(kind, spawnSmokeZone);
         transform.rotation = Quaternion.LookRotation(direction, Vector3.up);
+        CwslCombatRegistry.RegisterPlayerProjectile(this);
     }
 
     private static byte ResolveVisualKind(CwslMissileTankAmmoKind kind, bool spawnSmokeZone)
@@ -104,7 +108,7 @@ public class CwslPlayerProjectile : NetworkBehaviour, ICwslPooledNetworkObject
         smokeBomb = false;
         ammoKind = CwslMissileTankAmmoKind.Basic;
         networkVisualKind.Value = 0;
-        homingTarget = null;
+        lockedTarget = null;
         spawnTime = 0f;
         ownerNetworkObject = null;
         hitMonsterIds.Clear();
@@ -113,13 +117,14 @@ public class CwslPlayerProjectile : NetworkBehaviour, ICwslPooledNetworkObject
 
     public void OnReturnedToPool()
     {
+        CwslCombatRegistry.UnregisterPlayerProjectile(this);
         configured = false;
         pierce = false;
         piercesRemaining = 0;
         smokeBomb = false;
         ammoKind = CwslMissileTankAmmoKind.Basic;
         networkVisualKind.Value = 0;
-        homingTarget = null;
+        lockedTarget = null;
         ownerNetworkObject = null;
         hitMonsterIds.Clear();
         hitPlayerIds.Clear();
@@ -137,7 +142,6 @@ public class CwslPlayerProjectile : NetworkBehaviour, ICwslPooledNetworkObject
         }
 
         var step = speed * (GetComponent<CwslSlowModifier>()?.SpeedMultiplier ?? 1f) * Time.deltaTime;
-        ApplyTargetHoming();
         var from = transform.position;
         var to = from + direction * step;
 
@@ -284,7 +288,7 @@ public class CwslPlayerProjectile : NetworkBehaviour, ICwslPooledNetworkObject
         if (monsterHealth == null || !monsterHealth.IsBoss)
             return false;
 
-        return homingTarget != null && homingTarget != monsterHealth;
+        return lockedTarget != null && lockedTarget != monsterHealth;
     }
 
     private void TryHitMonstersAt(Vector3 position)
@@ -344,7 +348,7 @@ public class CwslPlayerProjectile : NetworkBehaviour, ICwslPooledNetworkObject
 
     private void TryHitPlayersByDistance(Vector3 position)
     {
-        var players = FindObjectsByType<CwslPlayerHealth>(FindObjectsSortMode.None);
+        var players = CwslCombatRegistry.AlivePlayers;
         foreach (var playerHealth in players)
         {
             if (ShouldSkipPlayerForProjectile(playerHealth))
@@ -392,7 +396,7 @@ public class CwslPlayerProjectile : NetworkBehaviour, ICwslPooledNetworkObject
         var reach = segmentFlatLen + CwslGameConstants.PlayerBulletHitRadius;
         var hitRadius = CwslGameConstants.PlayerBulletHitRadius;
 
-        var players = FindObjectsByType<CwslPlayerHealth>(FindObjectsSortMode.None);
+        var players = CwslCombatRegistry.AlivePlayers;
         foreach (var playerHealth in players)
         {
             if (ShouldSkipPlayerForProjectile(playerHealth))
@@ -432,23 +436,6 @@ public class CwslPlayerProjectile : NetworkBehaviour, ICwslPooledNetworkObject
         return lateralSq <= lateralSlop * lateralSlop;
     }
 
-    private void ApplyTargetHoming()
-    {
-        if (homingTarget == null || !homingTarget.IsAlive)
-            return;
-
-        var aimPoint = homingTarget.GetAimPoint();
-        var desired = aimPoint - transform.position;
-        if (desired.sqrMagnitude < 0.0001f)
-            return;
-
-        direction = Vector3.Slerp(
-            direction,
-            desired.normalized,
-            Time.deltaTime * CwslGameConstants.PlayerBulletHomingStrength).normalized;
-        transform.rotation = Quaternion.LookRotation(direction, Vector3.up);
-    }
-
     /// <summary>
     /// 쿼터뷰 사격: XZ 방향이 맞으면 Y 높이 차이와 무관하게 적중.
     /// </summary>
@@ -473,7 +460,7 @@ public class CwslPlayerProjectile : NetworkBehaviour, ICwslPooledNetworkObject
         var reach = segmentFlatLen + CwslGameConstants.PlayerBulletHitRadius;
         var hitRadius = CwslGameConstants.PlayerBulletHitRadius;
 
-        var monsters = FindObjectsByType<CwslMonsterHealth>(FindObjectsSortMode.None);
+        var monsters = CwslCombatRegistry.AliveMonsters;
         foreach (var monster in monsters)
         {
             if (monster == null || !monster.IsAlive || ShouldSkipMonsterForProjectile(monster))

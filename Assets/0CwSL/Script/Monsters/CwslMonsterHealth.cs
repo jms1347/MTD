@@ -111,10 +111,13 @@ public class CwslMonsterHealth : NetworkBehaviour, ICwslPooledNetworkObject
 
         if (IsServer && !IsBoss)
             health.Value = maxHealth;
+
+        CwslCombatRegistry.RegisterMonster(this);
     }
 
     public override void OnNetworkDespawn()
     {
+        CwslCombatRegistry.UnregisterMonster(this);
         syncedMonsterType.OnValueChanged -= HandleSyncedMonsterTypeChanged;
         base.OnNetworkDespawn();
     }

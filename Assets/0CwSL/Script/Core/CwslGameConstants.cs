@@ -97,8 +97,7 @@ public static class CwslGameConstants
     public const float MissileTankRange = 24f;
     public const float MissileTankPowerBoostDuration = 10f;
     public const float MissileTankPowerBoostSpeedMultiplier = 2f;
-    public const float MissileTankPowerBoostFireCooldownMultiplier = 2f;
-    public const int MissileTankPowerBoostMaxPierce = 5;
+    public const int MissileTankPowerBoostMaxPierce = 99;
     public const float MissileTankSmokeDashDistance = 4.2f;
     public const float MissileTankSmokeDashDuration = 0.24f;
     public const float MissileTankSmokeZoneRadius = 3.6f;
@@ -129,6 +128,16 @@ public static class CwslGameConstants
     public const int RedMageFrozenOrbFrostStacks = 2;
     public const float RedMageFrozenOrbFrostDuration = 2.5f;
 
+    public const float RedMageFrozenOrbHitRadius = 0.62f;
+    public const float RedMageFrozenOrbGroundTrailInterval = 0.2f;
+    public const float RedMageFrozenOrbGroundTrailMinDistance = 0.42f;
+    public const float RedMageLightningOrbVisualScale = 1.9f;
+    public const float RedMageLightningOrbTravelSpeed = 4.5f;
+    public const float RedMageLightningOrbTravelDistance = 15f;
+    public const float RedMageLightningOrbStrikeInterval = 0.35f;
+    public const float RedMageLightningOrbStrikeRadius = 3.4f;
+    public const float RedMageLightningOrbGroundRadiusVfxDiameterDivisor = 8f;
+    public const float RedMageLightningOrbStrikeDamageRatio = 0.42f;
     public const float RedMageLightningOrbForwardDistance = 3.2f;
     public const float RedMageLightningOrbHeight = 1.4f;
     public const float RedMageLightningOrbLifetime = 1.2f;
@@ -141,7 +150,7 @@ public static class CwslGameConstants
     public const float RedMageTeleportDistance = 7f;
     public const float RedMageTeleportCastDuration = 0.35f;
     public const float RedMageTeleportArrivalDelay = 0.2f;
-    public const float RedMageTeleportDepartPortalLifetime = 1f;
+    public const float RedMageTeleportDepartPortalLifetime = 0.3f;
     public const float RedMageTeleportArrivePortalLifetime = 0.55f;
     public const float PlayerArrowSpawnForwardOffset = 0.55f;
     public const float PlayerBulletSpawnMinOffset = 0.02f;
@@ -162,17 +171,20 @@ public static class CwslGameConstants
     public const float FortifyEmpoweredAttackDamageMultiplier = 3f;
     public const float FortifyEmpoweredAttackRadius = 3.2f;
 
+    public const float TankShieldDashRaiseTime = 0.14f;
+    public const float TankShieldDashSlamDownTime = 0.11f;
+    public const float TankShieldDashRecoverTime = 0.22f;
     public const float TankShieldDashDistance = 5.5f;
     public const float TankShieldDashDuration = 0.24f;
     public const float TankShieldDashCastDuration = 1f;
     public const float TankShieldDashSpeed = 24f;
-    public const float TankShieldDashPushRadius = 0.95f;
-    public const float TankShieldDashPushDistance = 2.6f;
-    public const float TankShieldDashPushDuration = 0.34f;
-    public const float TankShieldDashEmpoweredPushDistance = 4.2f;
-    public const float TankShieldDashEmpoweredPushDuration = 0.42f;
-    public const float TankShieldDashShieldPushDistance = 3.8f;
-    public const float TankShieldDashShieldPushDuration = 0.4f;
+    public const float TankShieldDashPushRadius = 1.2f;
+    public const float TankShieldDashPushDistance = 6.5f;
+    public const float TankShieldDashPushDuration = 0.3f;
+    public const float TankShieldDashEmpoweredPushDistance = 9.5f;
+    public const float TankShieldDashEmpoweredPushDuration = 0.38f;
+    public const float TankShieldDashShieldPushDistance = 6.8f;
+    public const float TankShieldDashShieldPushDuration = 0.36f;
 
     public const float TankSkillEmpowerRadiusMultiplier = 3f;
     public const float TankSkillEmpowerPowerMultiplier = 3f;
@@ -180,11 +192,17 @@ public static class CwslGameConstants
     public const float TankShieldSlamRadius = 3.2f;
     public const float TankShieldSlamStunDuration = 2f;
     public const float TankShieldSlamWindup = 0.52f;
+    public const float TankShieldSlamSlamDownTime = 0.12f;
     public const float TankShieldSlamRaiseHeight = 0.88f;
     public const float TankShieldSlamRaiseHeightEmpowered = 1.12f;
+    public const float TankShieldSlamBodyJumpLift = 0.34f;
+    public const float TankShieldSlamBodyJumpLiftEmpowered = 0.44f;
+    public const float TankShieldSlamBodySlamDip = -0.03f;
+    public const float TankShieldSlamBodySlamDipEmpowered = -0.05f;
+    public const float TankShieldSlamBodySlamForward = 0.14f;
     public static readonly Vector3 TankShieldSlamVerticalHoldOffset = new(0f, 1.16f, -0.6f);
     public static readonly Vector3 TankShieldSlamVerticalHoldEmpoweredOffset = new(0f, 0.42f, -0.04f);
-    public static readonly Vector3 TankShieldSlamVerticalLocalEuler = new(-88f, 0f, 0f);
+    public static readonly Vector3 TankShieldSlamVerticalLocalEuler = new(-90f, 0f, 0f);
     public const float TankShieldSlamSoftVfxScale = 0.68f;
     public const float TankShieldSlamCartoonyVfxScale = 1.45f;
     public const float TankShieldSlamCastDuration = 0.91f;
@@ -198,8 +216,8 @@ public static class CwslGameConstants
     public const float MeteorCastDuration = 0.55f;
     public const int MeteorGroundFirePatchCountMin = 5;
     public const int MeteorGroundFirePatchCountMax = 9;
-    public const float MeteorGroundFireLifetimeMin = 1f;
-    public const float MeteorGroundFireLifetimeMax = 3f;
+    public const float MeteorGroundFireLifetimeMin = 2f;
+    public const float MeteorGroundFireLifetimeMax = 4f;
     public const float MonsterBurnDuration = 3f;
     public const float MonsterBurnTotalDamage = 18f;
     public const float MonsterShockDuration = 1.4f;

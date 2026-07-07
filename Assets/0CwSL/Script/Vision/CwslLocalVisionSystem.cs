@@ -49,14 +49,17 @@ public class CwslLocalVisionSystem : MonoBehaviour
 
     private void RefreshMonsters()
     {
-        var monsters = FindObjectsByType<CwslMonsterBase>(FindObjectsSortMode.None);
-        foreach (var monster in monsters)
+        var monsters = CwslCombatRegistry.AliveMonsters;
+        foreach (var health in monsters)
         {
+            if (health == null)
+                continue;
+
+            var monster = health.GetComponent<CwslMonsterBase>();
             if (monster == null)
                 continue;
 
-            var health = monster.GetComponent<CwslMonsterHealth>();
-            if (health != null && !health.IsAlive)
+            if (!health.IsAlive)
             {
                 SetOccludeeVisibility(monster.gameObject, 0f);
                 continue;
@@ -69,7 +72,7 @@ public class CwslLocalVisionSystem : MonoBehaviour
 
     private void RefreshGold()
     {
-        var pickups = FindObjectsByType<CwslGoldPickup>(FindObjectsSortMode.None);
+        var pickups = CwslCombatRegistry.ActiveGoldPickups;
         foreach (var pickup in pickups)
         {
             if (pickup == null)
@@ -82,7 +85,7 @@ public class CwslLocalVisionSystem : MonoBehaviour
 
     private void RefreshPills()
     {
-        var pickups = FindObjectsByType<CwslPillPickup>(FindObjectsSortMode.None);
+        var pickups = CwslCombatRegistry.ActivePillPickups;
         foreach (var pickup in pickups)
         {
             if (pickup == null)
@@ -95,7 +98,7 @@ public class CwslLocalVisionSystem : MonoBehaviour
 
     private void RefreshOtherPlayers()
     {
-        var players = FindObjectsByType<CwslPlayerHealth>(FindObjectsSortMode.None);
+        var players = CwslCombatRegistry.AlivePlayers;
         foreach (var health in players)
         {
             if (health == null || health.transform == transform)
@@ -107,7 +110,7 @@ public class CwslLocalVisionSystem : MonoBehaviour
 
     private void RefreshProjectiles()
     {
-        var projectiles = FindObjectsByType<CwslMonsterProjectile>(FindObjectsSortMode.None);
+        var projectiles = CwslCombatRegistry.ActiveMonsterProjectiles;
         foreach (var projectile in projectiles)
         {
             if (projectile == null)

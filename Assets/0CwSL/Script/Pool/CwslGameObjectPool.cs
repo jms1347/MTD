@@ -40,7 +40,17 @@ public class CwslGameObjectPool
         instance.transform.SetParent(poolRoot, false);
         instance.transform.localPosition = Vector3.zero;
         instance.transform.localRotation = Quaternion.identity;
+        instance.transform.localScale = Vector3.one;
         available.Enqueue(instance);
+    }
+
+    public void Prewarm(int additionalCount)
+    {
+        if (additionalCount <= 0)
+            return;
+
+        for (var i = 0; i < additionalCount; i++)
+            available.Enqueue(CreateInstance());
     }
 
     private GameObject CreateInstance()

@@ -1,22 +1,39 @@
 using System.Collections;
 using UnityEngine;
 
-/// <summary>라이트닝 오브 → 플레이어 LightningMissilePink 연출.</summary>
+/// <summary>라이트닝 오브 → 대상 번개 투사체 연출.</summary>
 public class CwslLightningMissileRunner : MonoBehaviour
 {
     private const float HitDistance = 0.35f;
 
     public void Play(Vector3 origin, Vector3 target, float speed)
     {
-        StartCoroutine(Run(origin, target, Mathf.Max(8f, speed)));
+        Play(origin, target, speed, null, null);
     }
 
-    private IEnumerator Run(Vector3 origin, Vector3 target, float speed)
+    public void Play(
+        Vector3 origin,
+        Vector3 target,
+        float speed,
+        GameObject missilePrefab,
+        GameObject strikePrefab,
+        bool randomRedMageStrike = false)
     {
-        var missile = CwslVfxSpawner.SpawnLightningMissile(origin, target);
+        StartCoroutine(Run(origin, target, Mathf.Max(8f, speed), missilePrefab, strikePrefab, randomRedMageStrike));
+    }
+
+    private IEnumerator Run(
+        Vector3 origin,
+        Vector3 target,
+        float speed,
+        GameObject missilePrefab,
+        GameObject strikePrefab,
+        bool randomRedMageStrike)
+    {
+        var missile = SpawnMissile(origin, target, missilePrefab);
         if (missile == null)
         {
-            CwslVfxSpawner.SpawnLightningStrike(target);
+            SpawnStrike(target, strikePrefab, randomRedMageStrike);
             Destroy(gameObject);
             yield break;
         }
@@ -40,9 +57,39 @@ public class CwslLightningMissileRunner : MonoBehaviour
         }
 
         if (missile != null)
-            Destroy(missile);
+            CwslVfxPool.Release(missile);
+
+        SpawnStrike(target, strikePrefab, randomRedMageStrike);
+        Destroy(gameObject);
+    }
+
+    private static GameObject SpawnMissile(Vector3 origin, Vector3 target, GameObject missilePrefab)
+    {
+        if (missilePrefab != null)
+            return CwslVfxSpawner.SpawnMissile(missilePrefab, origin, target, 0f, 0.95f);
+
+        return CwslVfxSpawner.SpawnLightningMissile(origin, target);
+    }
+
+    private static void SpawnStrike(Vector3 target, GameObject strikePrefab, bool randomRedMageStrike)
+    {
+        if (randomRedMageStrike)
+        {
+            CwslVfxSpawner.SpawnRedMageLightningStrike(target);
+            return;
+        }
+
+        if (strikePrefab != null)
+        {
+            CwslVfxSpawner.Spawn(
+                strikePrefab,
+                target + Vector3.up * 0.08f,
+                Quaternion.identity,
+                1.1f,
+                1f);
+            return;
+        }
 
         CwslVfxSpawner.SpawnLightningStrike(target);
-        Destroy(gameObject);
     }
 }

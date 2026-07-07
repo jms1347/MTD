@@ -38,7 +38,7 @@ public static class CwslCharacterSkillCatalog
         new("연속 사격", "Q", 18f, 0.35f, true),
         new("연막 대시", "E", 26f, CwslGameConstants.MissileTankSmokeDashDuration, true),
         new("탄환 교체", "R", 30f, 0.2f, true),
-        new("강화 사격", "W", 34f, CwslGameConstants.MissileTankPowerBoostDuration, true),
+        new("강화 버프", "W", 34f, CwslGameConstants.MissileTankPowerBoostDuration, true),
     };
 
     private static readonly SkillSlotDefinition[] RedMageSkills =

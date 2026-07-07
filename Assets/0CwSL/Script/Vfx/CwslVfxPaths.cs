@@ -117,6 +117,21 @@ public static class CwslVfxPaths
     public const string BossWatchStartSound =
         "Assets/Game/0Sound/boss-watch-start.mp3";
 
+    public const string RedMageFrozenOrbCastSound =
+        "Assets/Epic Toon FX/Sound/etfx_shoot_frost.wav";
+
+    public const string RedMageFrozenOrbTravelSound =
+        "Assets/Epic Toon FX/Sound/etfx_shoot_magic.wav";
+
+    public const string RedMageLightningOrbCastSound =
+        "Assets/Epic Toon FX/Sound/etfx_shoot_lightning2.wav";
+
+    public const string RedMageLightningOrbStrikeSound =
+        "Assets/Epic Toon FX/Sound/etfx_shoot_lightning.wav";
+
+    public const string RedMageLightningOrbImpactSound =
+        "Assets/Epic Toon FX/Sound/etfx_explosion_lightning.wav";
+
     public const string FortifyAura =
         "Assets/Epic Toon FX/Prefabs/Combat/Shield/ShieldSoftBlue.prefab";
 
@@ -307,11 +322,32 @@ public static class CwslVfxPaths
     public const string RedMageLightningOrb =
         "Assets/Epic Toon FX/Prefabs/Environment/Lightning/Sharp/LightningOrbSharpBlue.prefab";
 
+    public const string RedMageLightningOrbRadius =
+        "Assets/Epic Toon FX/Prefabs/Combat/Nova/Lightning/NovaLightningBlue.prefab";
+
+    public const string RedMageLightningBolt =
+        "Assets/Epic Toon FX/Prefabs/Combat/Missiles/Lightning/LightningMissileBlue.prefab";
+
+    public const string RedMageLightningStrike =
+        "Assets/Epic Toon FX/Prefabs/Environment/Lightning/Sharp/LightningStrikeSharpBlue.prefab";
+
+    public const string RedMageLightningStrikeTall =
+        "Assets/Epic Toon FX/Prefabs/Environment/Lightning/Sharp/LightningStrikeSharpTallBlue.prefab";
+
     public const string RedMageLightningExplosion =
         "Assets/Epic Toon FX/Prefabs/Combat/Explosions/LightningExplosion/LightningExplosionBlue.prefab";
 
     public const string RedMageTeleportPortal =
         "Assets/Epic Toon FX/Prefabs/Interactive/Portals/SpinPortal/SpinPortalGold.prefab";
+
+    public const string FrozenOrbIceBall =
+        "Assets/JMO Assets/Cartoon FX/CFX3 Prefabs/Ice/CFX3_IceBall_B.prefab";
+
+    public const string FrozenOrbHitAir =
+        "Assets/JMO Assets/Cartoon FX/CFX3 Prefabs/Ice/Color Variants/CFX3_Hit_Ice_A_Air (White).prefab";
+
+    public const string FrozenOrbGroundTrail =
+        "Assets/JMO Assets/Cartoon FX/CFX3 Prefabs/Ice/Color Variants/CFX3_Hit_Ice_A_Ground (White).prefab";
 
     public const string OffsideHornSound =
         "Assets/Game/0Sound/boss-phase-shift.mp3";

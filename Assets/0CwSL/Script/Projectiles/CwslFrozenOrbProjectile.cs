@@ -40,10 +40,30 @@ public class CwslFrozenOrbProjectile : NetworkBehaviour, ICwslPooledNetworkObjec
     public float FrostDuration => frostDuration;
     public int FrostStacks => frostStacks;
 
+    public event System.Action OnVisualKindChanged;
+
     private void Awake()
     {
         defaultLocalScale = transform.localScale;
         emitter = GetComponent<CwslFrozenOrbEmitter>();
+    }
+
+    public override void OnNetworkSpawn()
+    {
+        networkIsShard.OnValueChanged += HandleShardKindChanged;
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        networkIsShard.OnValueChanged -= HandleShardKindChanged;
+    }
+
+    private void HandleShardKindChanged(bool previousValue, bool newValue)
+    {
+        if (previousValue == newValue)
+            return;
+
+        OnVisualKindChanged?.Invoke();
     }
 
     public void ConfigureAsOrb(
@@ -62,9 +82,10 @@ public class CwslFrozenOrbProjectile : NetworkBehaviour, ICwslPooledNetworkObjec
         frostStacks = frostStackCount;
         flightScaleMultiplier = 1f;
         ApplyCommonConfig(fireDirection, projectileSpeed, maxLifetime, attackerClientId, projectileDamage, owner);
+        ApplyOrbColliderRadius();
         transform.localScale = defaultLocalScale;
-        if (IsServer)
-            GetComponent<CwslFrozenOrbVisual>()?.EnsureBuilt();
+        GetComponent<CwslFrozenOrbVisual>()?.EnsureBuilt();
+        OnVisualKindChanged?.Invoke();
 
         emitter?.OnOrbLaunched(this);
     }
@@ -86,9 +107,24 @@ public class CwslFrozenOrbProjectile : NetworkBehaviour, ICwslPooledNetworkObjec
         frostStacks = frostStackCount;
         flightScaleMultiplier = Mathf.Clamp(visualScale, 0.4f, 0.85f);
         ApplyCommonConfig(fireDirection, projectileSpeed, maxLifetime, attackerClientId, projectileDamage, owner);
+        ApplyShardColliderRadius();
         transform.localScale = defaultLocalScale * flightScaleMultiplier;
-        if (IsServer)
-            GetComponent<CwslFrozenOrbVisual>()?.EnsureBuilt();
+        GetComponent<CwslFrozenOrbVisual>()?.EnsureBuilt();
+        OnVisualKindChanged?.Invoke();
+    }
+
+    private void ApplyOrbColliderRadius()
+    {
+        var collider = GetComponent<SphereCollider>();
+        if (collider != null)
+            collider.radius = CwslGameConstants.RedMageFrozenOrbHitRadius;
+    }
+
+    private void ApplyShardColliderRadius()
+    {
+        var collider = GetComponent<SphereCollider>();
+        if (collider != null)
+            collider.radius = CwslGameConstants.RedMageFrozenOrbHitRadius * 0.55f;
     }
 
     private void ApplyCommonConfig(
@@ -131,6 +167,7 @@ public class CwslFrozenOrbProjectile : NetworkBehaviour, ICwslPooledNetworkObjec
         hitPlayerIds.Clear();
         transform.localScale = defaultLocalScale;
         emitter?.OnOrbEnded();
+        OnVisualKindChanged?.Invoke();
     }
 
     public void OnReturnedToPool()
@@ -143,6 +180,7 @@ public class CwslFrozenOrbProjectile : NetworkBehaviour, ICwslPooledNetworkObjec
         hitPlayerIds.Clear();
         transform.localScale = defaultLocalScale;
         emitter?.OnOrbEnded();
+        OnVisualKindChanged?.Invoke();
     }
 
     private void Update()
@@ -232,7 +270,7 @@ public class CwslFrozenOrbProjectile : NetworkBehaviour, ICwslPooledNetworkObjec
         {
             var hits = Physics.SphereCastAll(
                 from,
-                CwslGameConstants.PlayerBulletHitRadius,
+                GetHitRadius(),
                 delta.normalized,
                 distance,
                 monsterMask,
@@ -263,7 +301,7 @@ public class CwslFrozenOrbProjectile : NetworkBehaviour, ICwslPooledNetworkObjec
         var monsterMask = monsterLayerMask != 0 ? monsterLayerMask : ~0;
         var hits = Physics.OverlapSphere(
             position,
-            CwslGameConstants.PlayerBulletHitRadius,
+            GetHitRadius(),
             monsterMask,
             QueryTriggerInteraction.Collide);
 
@@ -286,7 +324,7 @@ public class CwslFrozenOrbProjectile : NetworkBehaviour, ICwslPooledNetworkObjec
         var mask = playerLayerMask != 0 ? playerLayerMask : ~0;
         var hits = Physics.OverlapSphere(
             position,
-            CwslGameConstants.PlayerBulletHitRadius,
+            GetHitRadius(),
             mask,
             QueryTriggerInteraction.Collide);
 
@@ -335,6 +373,7 @@ public class CwslFrozenOrbProjectile : NetworkBehaviour, ICwslPooledNetworkObjec
             ownerClientId,
             frostDuration,
             frostStacks);
+        PlayMonsterHitClientRpc(monsterHealth.GetFlatHitPoint());
 
         if (!pierce)
         {
@@ -360,9 +399,22 @@ public class CwslFrozenOrbProjectile : NetworkBehaviour, ICwslPooledNetworkObjec
         }
     }
 
+    private float GetHitRadius()
+    {
+        return IsShard
+            ? CwslGameConstants.RedMageFrozenOrbHitRadius * 0.55f
+            : CwslGameConstants.RedMageFrozenOrbHitRadius;
+    }
+
     private void DespawnSelf()
     {
         if (NetworkObject != null && NetworkObject.IsSpawned)
             CwslNetworkPoolService.Instance?.Release(NetworkObject);
+    }
+
+    [ClientRpc]
+    private void PlayMonsterHitClientRpc(Vector3 hitPoint)
+    {
+        CwslVfxSpawner.SpawnFrozenOrbHitAir(hitPoint);
     }
 }

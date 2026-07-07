@@ -43,6 +43,7 @@ public class CwslMonsterProjectile : NetworkBehaviour, ICwslPooledNetworkObject
         configured = true;
         transform.rotation = Quaternion.LookRotation(direction, Vector3.up);
         GetComponent<CwslProjectileVisual>()?.RefreshVisual();
+        CwslCombatRegistry.RegisterMonsterProjectile(this);
     }
 
     public void OnSpawnedFromPool()
@@ -56,6 +57,7 @@ public class CwslMonsterProjectile : NetworkBehaviour, ICwslPooledNetworkObject
 
     public void OnReturnedToPool()
     {
+        CwslCombatRegistry.UnregisterMonsterProjectile(this);
         configured = false;
     }
 
@@ -160,7 +162,7 @@ public class CwslMonsterProjectile : NetworkBehaviour, ICwslPooledNetworkObject
 
     private void TryHitPlayersByDistance()
     {
-        var players = FindObjectsByType<CwslPlayerHealth>(FindObjectsSortMode.None);
+        var players = CwslCombatRegistry.AlivePlayers;
         foreach (var playerHealth in players)
         {
             if (playerHealth == null || !playerHealth.IsAlive)

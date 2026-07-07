@@ -32,6 +32,7 @@ public class CwslPlayerSkills : NetworkBehaviour
         EnsureTankDashSkill();
         EnsureTankSlamSkill();
         EnsureTankWhirlwindSkill();
+        EnsureRedMageFrozenOrbSkill();
         crowdGatherSkill = GetComponent<CwslCrowdGatherSkill>();
         foreach (var skill in skills)
         {
@@ -189,7 +190,7 @@ public class CwslPlayerSkills : NetworkBehaviour
             ? playerCharacter.CharacterId
             : CwslCharacterId.Tank;
 
-        // 탱커 Q는 미사일 막을 때마다 스태미너 1 소모 — 홀드 시 선차감 없음
+        // ??? Q???????? ?????????? 1 ??? ????????????????
         if (characterId == CwslCharacterId.Tank)
             return true;
 
@@ -201,7 +202,7 @@ public class CwslPlayerSkills : NetworkBehaviour
         if (!IsServer || BlocksSkillUseServer(senderClientId))
             return;
 
-        // 빨간 마법사 메테오 (프리팹에 스킬 컴포넌트가 없어도 동작)
+        // ?? ????????(?????? ??? ?????? ????????)
         if (playerCharacter != null && playerCharacter.CharacterId == CwslCharacterId.RedMage)
         {
             TryCastMeteor(senderClientId, worldPoint);
@@ -263,7 +264,7 @@ public class CwslPlayerSkills : NetworkBehaviour
     {
         yield return new WaitForSeconds(MeteorFallDuration);
 
-        var monsters = FindObjectsByType<CwslMonsterHealth>(FindObjectsSortMode.None);
+        var monsters = CwslCombatRegistry.AliveMonsters;
         var radiusSqr = MeteorRadius * MeteorRadius;
         foreach (var monster in monsters)
         {
@@ -341,6 +342,15 @@ public class CwslPlayerSkills : NetworkBehaviour
         skills.Add(whirl);
     }
 
+    private void EnsureRedMageFrozenOrbSkill()
+    {
+        if (GetComponent<CwslRedMageFrozenOrbSkill>() != null)
+            return;
+
+        var frozenOrb = gameObject.AddComponent<CwslRedMageFrozenOrbSkill>();
+        skills.Add(frozenOrb);
+    }
+
     private bool BlocksSkillUseServer(ulong senderClientId)
     {
         return senderClientId == OwnerClientId && CwslBossWatchState.BlocksSkills(senderClientId);
@@ -416,7 +426,7 @@ public class CwslPlayerSkills : NetworkBehaviour
         if (!IsOwner)
             return;
 
-        CwslSkillGoldFeedback.ShowMessage($"{skillName} — 준비 중");
+        CwslSkillGoldFeedback.ShowMessage($"{skillName} (\uC900\uBE44 \uC911)");
     }
 
     [ClientRpc]

@@ -94,8 +94,15 @@ public class CwslGameAssets : ScriptableObject
     public GameObject lightningStunStrikeVfx;
     public GameObject lightningZoneAuraVfx;
     public GameObject redMageLightningOrbVfx;
+    public GameObject redMageLightningOrbRadiusVfx;
+    public GameObject redMageLightningBoltVfx;
+    public GameObject redMageLightningStrikeVfx;
+    public GameObject redMageLightningStrikeTallVfx;
     public GameObject redMageLightningExplosionVfx;
     public GameObject redMageTeleportPortalVfx;
+    public GameObject frozenOrbIceBallVfx;
+    public GameObject frozenOrbHitAirVfx;
+    public GameObject frozenOrbGroundTrailVfx;
     public GameObject hazardAcidPadVfx;
     public GameObject hazardLavaPadVfx;
     public GameObject hazardWaterPadVfx;
@@ -118,6 +125,11 @@ public class CwslGameAssets : ScriptableObject
     public AudioClip gatherChargeLoopSound;
     public AudioClip gatherChargeEndSound;
     public AudioClip skillGoldFailSound;
+    public AudioClip redMageFrozenOrbCastSound;
+    public AudioClip redMageFrozenOrbTravelSound;
+    public AudioClip redMageLightningOrbCastSound;
+    public AudioClip redMageLightningOrbStrikeSound;
+    public AudioClip redMageLightningOrbImpactSound;
 
     public GameObject playerPrefab;
     public GameObject rangedMonsterPrefab;

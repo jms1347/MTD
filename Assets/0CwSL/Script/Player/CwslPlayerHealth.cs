@@ -51,10 +51,12 @@ public class CwslPlayerHealth : NetworkBehaviour
             ResetHealthServer();
 
         ApplyAliveVisual(!isDead.Value);
+        CwslCombatRegistry.RegisterPlayer(this);
     }
 
     public override void OnNetworkDespawn()
     {
+        CwslCombatRegistry.UnregisterPlayer(this);
         health.OnValueChanged -= HandleHealthChanged;
         isDead.OnValueChanged -= HandleDeadStateChanged;
 

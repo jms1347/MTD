@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
-/// <summary>빨간 마법사 W — 전방 라이트닝 구슬 + 체인 번개(최대 5회) + 감전.</summary>
+/// <summary>??? W ? ???? ??? ???? ?? ? ??? ?? ??.</summary>
 public class CwslRedMageLightningOrbSkill : CwslPlayerSkillBase
 {
     public const int BoundSlotIndex = 3;
@@ -13,6 +13,7 @@ public class CwslRedMageLightningOrbSkill : CwslPlayerSkillBase
     private CwslPlayerStun playerStun;
     private CwslPlayerSkillCooldowns skillCooldowns;
     private Coroutine castRoutine;
+    private static readonly List<CwslMonsterHealth> strikeTargets = new(24);
 
     public override CwslSkillActivationType ActivationType => CwslSkillActivationType.Instant;
 
@@ -76,73 +77,93 @@ public class CwslRedMageLightningOrbSkill : CwslPlayerSkillBase
 
     private IEnumerator CastRoutine(Vector3 direction)
     {
-        var orbPosition = ResolveOrbPosition(direction);
-        PlayLightningOrbClientRpc(orbPosition);
+        var flatDirection = direction;
+        flatDirection.y = 0f;
+        if (flatDirection.sqrMagnitude < 0.0001f)
+            flatDirection = transform.forward;
+        flatDirection.Normalize();
+
+        var startPosition = ResolveOrbPosition(flatDirection);
+        var travelDistance = CwslGameConstants.RedMageLightningOrbTravelDistance;
+        var travelSpeed = CwslGameConstants.RedMageLightningOrbTravelSpeed;
+        var travelDuration = travelDistance / travelSpeed;
+        var strikeInterval = CwslGameConstants.RedMageLightningOrbStrikeInterval;
+        var strikeRadius = CwslGameConstants.RedMageLightningOrbStrikeRadius;
+
+        PlayLightningOrbTravelClientRpc(
+            startPosition,
+            flatDirection,
+            travelDuration,
+            CwslGameConstants.RedMageLightningOrbVisualScale,
+            strikeRadius);
 
         yield return new WaitForSeconds(CwslGameConstants.RedMageLightningOrbChargeSeconds);
 
         var damage = playerCharacter != null
             ? CwslCharacterStatCatalog.GetAttackPower(playerCharacter.CharacterId)
             : CwslGameConstants.AttackDamage;
+        var shockDuration = CwslGameConstants.RedMageLightningShockDuration;
+        var strikeDamage = damage * CwslGameConstants.RedMageLightningOrbStrikeDamageRatio;
 
-        ExecuteChainLightningServer(orbPosition, damage);
+        var elapsed = 0f;
+        var strikeTimer = strikeInterval;
+        while (elapsed < travelDuration)
+        {
+            elapsed += Time.deltaTime;
+            strikeTimer += Time.deltaTime;
+
+            var orbPosition = startPosition + flatDirection * (travelDistance * Mathf.Clamp01(elapsed / travelDuration));
+
+            if (strikeTimer >= strikeInterval)
+            {
+                strikeTimer -= strikeInterval;
+                StrikeMonstersNearOrbServer(orbPosition, strikeRadius, strikeDamage, shockDuration);
+            }
+
+            yield return null;
+        }
+
+        var endPosition = startPosition + flatDirection * travelDistance;
+        StrikeMonstersNearOrbServer(endPosition, strikeRadius, strikeDamage, shockDuration);
+        PlayLightningOrbImpactClientRpc(endPosition);
         castRoutine = null;
     }
 
-    private void ExecuteChainLightningServer(Vector3 startPoint, float damage)
-    {
-        var hitIds = new HashSet<ulong>();
-        var chainPoint = startPoint;
-        var chainRadius = CwslGameConstants.RedMageLightningChainRadius;
-        var maxHits = CwslGameConstants.RedMageLightningChainMaxHits;
-        var shockDuration = CwslGameConstants.RedMageLightningShockDuration;
-
-        for (var i = 0; i < maxHits; i++)
-        {
-            var target = FindNearestMonster(chainPoint, chainRadius, hitIds);
-            if (target == null)
-                break;
-
-            var hitPoint = target.GetFlatHitPoint();
-            if (target.NetworkObject != null)
-                hitIds.Add(target.NetworkObject.NetworkObjectId);
-
-            target.DamageFromPlayer(OwnerClientId, damage);
-            CwslMonsterStatusController.Ensure(target)?.ApplyShockServer(shockDuration);
-            PlayChainExplosionClientRpc(hitPoint);
-            chainPoint = hitPoint;
-        }
-    }
-
-    private static CwslMonsterHealth FindNearestMonster(
-        Vector3 origin,
+    private void StrikeMonstersNearOrbServer(
+        Vector3 center,
         float radius,
-        HashSet<ulong> excludeIds)
+        float strikeDamage,
+        float shockDuration)
     {
-        CwslMonsterHealth best = null;
-        var bestDistance = float.MaxValue;
         var radiusSq = radius * radius;
-        var monsters = Object.FindObjectsByType<CwslMonsterHealth>(FindObjectsSortMode.None);
+        var monsters = CwslCombatRegistry.AliveMonsters;
+        strikeTargets.Clear();
 
-        foreach (var monster in monsters)
+        for (var i = 0; i < monsters.Count; i++)
         {
+            var monster = monsters[i];
             if (monster == null || !monster.IsAlive)
                 continue;
 
-            if (monster.NetworkObject != null && excludeIds.Contains(monster.NetworkObject.NetworkObjectId))
-                continue;
-
-            var flat = monster.GetFlatHitPoint() - origin;
+            var flat = monster.GetFlatHitPoint() - center;
             flat.y = 0f;
-            var distanceSq = flat.sqrMagnitude;
-            if (distanceSq > radiusSq || distanceSq >= bestDistance)
+            if (flat.sqrMagnitude > radiusSq)
                 continue;
 
-            bestDistance = distanceSq;
-            best = monster;
+            strikeTargets.Add(monster);
         }
 
-        return best;
+        for (var i = 0; i < strikeTargets.Count; i++)
+        {
+            var monster = strikeTargets[i];
+            if (monster == null || !monster.IsAlive)
+                continue;
+
+            var hitPoint = monster.GetFlatHitPoint();
+            monster.DamageFromPlayer(OwnerClientId, strikeDamage);
+            CwslMonsterStatusController.Ensure(monster)?.ApplyShockServer(shockDuration);
+            PlayLightningStrikeClientRpc(hitPoint);
+        }
     }
 
     private Vector3 ResolveDirection(Vector3 worldPoint)
@@ -176,33 +197,45 @@ public class CwslRedMageLightningOrbSkill : CwslPlayerSkillBase
     {
         var visual = transform.Find("Visual");
         visual?.GetComponent<CwslPlayerStaffCastVisual>()?.PlayCast();
+        CwslSkillAudioFeedback.PlayLightningOrbCast(transform.position);
     }
 
     [ClientRpc]
-    private void PlayLightningOrbClientRpc(Vector3 orbPosition)
+    private void PlayLightningOrbTravelClientRpc(
+        Vector3 startPosition,
+        Vector3 direction,
+        float travelDuration,
+        float scale,
+        float strikeRadius)
     {
-        var prefab = CwslGameSession.Instance?.Assets?.redMageLightningOrbVfx;
-        if (prefab == null)
-            return;
-
-        CwslVfxSpawner.Spawn(
-            prefab,
-            orbPosition,
-            Quaternion.identity,
-            CwslGameConstants.RedMageLightningOrbLifetime,
-            0.85f);
+        var runnerObject = new GameObject("RedMageLightningOrbTravel");
+        runnerObject.AddComponent<CwslRedMageLightningOrbTravelVisual>()
+            .Play(startPosition, direction, travelDuration, scale, strikeRadius);
     }
 
     [ClientRpc]
-    private void PlayChainExplosionClientRpc(Vector3 hitPoint)
+    private void PlayLightningStrikeClientRpc(Vector3 hitPoint)
+    {
+        CwslVfxSpawner.SpawnRedMageLightningStrike(hitPoint);
+        CwslSkillAudioFeedback.PlayLightningOrbStrike(hitPoint);
+    }
+
+    [ClientRpc]
+    private void PlayLightningOrbImpactClientRpc(Vector3 hitPoint)
     {
         var prefab = CwslGameSession.Instance?.Assets?.redMageLightningExplosionVfx;
         if (prefab != null)
         {
-            CwslVfxSpawner.Spawn(prefab, hitPoint + Vector3.up * 0.2f, Quaternion.identity, 1.4f, 0.9f);
+            CwslVfxSpawner.Spawn(
+                prefab,
+                hitPoint + Vector3.up * 0.2f,
+                Quaternion.identity,
+                1.6f,
+                CwslGameConstants.RedMageLightningOrbVisualScale * 0.85f);
             return;
         }
 
-        CwslSimpleVfx.SpawnBurst(hitPoint, new Color(0.45f, 0.75f, 1f), 1.2f, 0.35f);
+        CwslSimpleVfx.SpawnBurst(hitPoint, new Color(0.45f, 0.75f, 1f), 1.4f, 0.4f);
+        CwslSkillAudioFeedback.PlayLightningOrbImpact(hitPoint);
     }
 }

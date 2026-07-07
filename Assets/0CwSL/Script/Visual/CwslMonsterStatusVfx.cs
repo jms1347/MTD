@@ -86,7 +86,11 @@ public class CwslMonsterStatusVfx : MonoBehaviour
         if (headPrefab != null)
         {
             bundle.Head = CwslVfxSpawner.AttachMonsterStatusEffect(
-                headPrefab, transform, new Vector3(0f, headY * scaleY, 0f), 1f);
+                headPrefab,
+                transform,
+                new Vector3(0f, headY * scaleY, 0f),
+                1f,
+                CwslEtfxVfxOrientation.HeadStatusAttachRotation);
         }
 
         if (bodyPrefab != null)

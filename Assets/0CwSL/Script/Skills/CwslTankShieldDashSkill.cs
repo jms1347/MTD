@@ -3,7 +3,7 @@ using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.AI;
 
-/// <summary>탱커 W — 전방 돌진. Q 방패 강화 중이면 방패 반경만큼 광역 넉백.</summary>
+/// <summary>??? W ????? ???. Q ?? ?? ?????? ???? ?? ???.</summary>
 public class CwslTankShieldDashSkill : CwslPlayerSkillBase
 {
     public const int BoundSlotIndex = 3;
@@ -176,7 +176,7 @@ public class CwslTankShieldDashSkill : CwslPlayerSkillBase
     private void ApplyShieldAreaPushServer()
     {
         var radius = CwslGameConstants.FortifyShieldBlockRadius;
-        var monsters = FindObjectsByType<CwslMonsterHealth>(FindObjectsSortMode.None);
+        var monsters = CwslCombatRegistry.AliveMonsters;
         foreach (var monster in monsters)
         {
             if (monster == null || !monster.IsAlive)
@@ -204,7 +204,7 @@ public class CwslTankShieldDashSkill : CwslPlayerSkillBase
         Vector3 dashDirection,
         bool empowered)
     {
-        var monsters = FindObjectsByType<CwslMonsterHealth>(FindObjectsSortMode.None);
+        var monsters = CwslCombatRegistry.AliveMonsters;
         var radiusSq = radius * radius;
         var pushDistance = empowered
             ? CwslGameConstants.TankShieldDashEmpoweredPushDistance
@@ -225,7 +225,7 @@ public class CwslTankShieldDashSkill : CwslPlayerSkillBase
 
             var direction = flat.sqrMagnitude < 0.0001f
                 ? dashDirection
-                : Vector3.Lerp(dashDirection, flat.normalized, empowered ? 0.35f : 0.15f).normalized;
+                : Vector3.Lerp(dashDirection, flat.normalized, empowered ? 0.25f : 0.1f).normalized;
             ApplyKnockbackToMonster(monster, direction, pushDistance, pushDuration);
         }
     }
@@ -244,23 +244,17 @@ public class CwslTankShieldDashSkill : CwslPlayerSkillBase
             knockback = monster.gameObject.AddComponent<CwslMonsterKnockback>();
 
         knockback.ApplyKnockbackServer(direction, distance, duration);
+        monster.NotifyHitFlinchServer(direction, distance * 0.22f);
     }
 
     [ClientRpc]
     private void PlayDashClientRpc(Vector3 direction, bool empowered)
     {
         var visual = transform.Find("Visual");
-        var bash = visual?.GetComponent<CwslPlayerShieldBashVisual>();
-        if (bash == null)
-            return;
-
-        var target = transform.position + direction * CwslGameConstants.TankShieldDashDistance;
-        bash.PlayWindup(target);
-
-        var waveVisual = visual.GetComponent<CwslTankShieldDashWaveVisual>();
-        if (waveVisual == null)
-            waveVisual = visual.gameObject.AddComponent<CwslTankShieldDashWaveVisual>();
-        waveVisual.PlayDashWave(direction, empowered, CwslGameConstants.TankShieldDashDuration);
+        var dashWave = visual?.GetComponent<CwslTankShieldDashWaveVisual>();
+        if (dashWave == null && visual != null)
+            dashWave = visual.gameObject.AddComponent<CwslTankShieldDashWaveVisual>();
+        dashWave?.PlayDashWave(direction, empowered, CwslGameConstants.TankShieldDashDuration);
 
         if (empowered)
             CwslVfxSpawner.SpawnFortifyBlock(transform.position + Vector3.up * 0.9f);

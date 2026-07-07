@@ -47,8 +47,10 @@ public class CwslNetworkPoolService : MonoBehaviour
         RegisterPool(assets.playerMissilePrefab, high, highExpand);
         RegisterPool(assets.frozenOrbPrefab, high, highExpand);
         RegisterPool(assets.rangedMonsterPrefab, high, highExpand);
+        RegisterPool(assets.inkSniperMonsterPrefab, high, highExpand);
         RegisterPool(assets.suicideMonsterPrefab, high, highExpand);
         RegisterPool(assets.meleeMonsterPrefab, high, highExpand);
+        RegisterPool(assets.nexusMeleeMonsterPrefab, high, highExpand);
         RegisterPool(assets.koreaUniversitySoldierPrefab, high, highExpand);
         RegisterPool(assets.stickySuicideMonsterPrefab, high, highExpand);
         RegisterPool(assets.midBossMonsterPrefab, high, highExpand);

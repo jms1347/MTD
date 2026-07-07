@@ -95,7 +95,7 @@ public class CwslSuicideMonster : CwslMonsterBase, ICwslPooledNetworkObject
 
     protected static void DamagePlayersInRadius(Vector3 center, float damage, float radius)
     {
-        foreach (var playerHealth in Object.FindObjectsByType<CwslPlayerHealth>(FindObjectsSortMode.None))
+        foreach (var playerHealth in CwslCombatRegistry.AlivePlayers)
         {
             if (playerHealth == null || !playerHealth.IsAlive)
                 continue;

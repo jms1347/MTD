@@ -31,6 +31,7 @@ public class CwslPillPickup : NetworkBehaviour, ICwslPooledNetworkObject
         spreadStartTime = Time.time;
         claimableTime = Time.time + CwslGameConstants.GoldCoinSpreadDuration + 0.05f;
         transform.position = dropCenter;
+        CwslCombatRegistry.RegisterPillPickup(this);
     }
 
     public void OnSpawnedFromPool()
@@ -42,6 +43,7 @@ public class CwslPillPickup : NetworkBehaviour, ICwslPooledNetworkObject
 
     public void OnReturnedToPool()
     {
+        CwslCombatRegistry.UnregisterPillPickup(this);
         claimed = false;
         magnetTargetId.Value = 0;
         pillTypeValue.Value = (int)CwslPillType.Blue;

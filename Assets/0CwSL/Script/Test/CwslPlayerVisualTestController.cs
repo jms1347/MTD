@@ -199,11 +199,10 @@ public class CwslPlayerVisualTestController : MonoBehaviour
             return;
 
         var direction = previewRoot.forward;
-        visual.GetComponent<CwslPlayerShieldBashVisual>()?.PlayWindup(previewRoot.position + direction * 4f);
-        var wave = visual.GetComponent<CwslTankShieldDashWaveVisual>();
-        if (wave == null)
-            wave = visual.gameObject.AddComponent<CwslTankShieldDashWaveVisual>();
-        wave.PlayDashWave(direction, fortifyActive, CwslGameConstants.TankShieldDashDuration);
+        var dashWave = visual.GetComponent<CwslTankShieldDashWaveVisual>();
+        if (dashWave == null)
+            dashWave = visual.gameObject.AddComponent<CwslTankShieldDashWaveVisual>();
+        dashWave.PlayDashWave(direction, fortifyActive, CwslGameConstants.TankShieldDashDuration);
         StartCoroutine(SimulateDashMove(direction));
     }
 

@@ -3,7 +3,7 @@ using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.AI;
 
-/// <summary>빨간 마법사 R — 지정 방향 순간이동 + 골드 포털 연출.</summary>
+/// <summary>빨간 마법사 R — 마우스 지정 지점 순간이동 + 골드 포털 연출.</summary>
 public class CwslRedMageTeleportSkill : CwslPlayerSkillBase
 {
     public const int BoundSlotIndex = 2;
@@ -118,15 +118,23 @@ public class CwslRedMageTeleportSkill : CwslPlayerSkillBase
 
     private Vector3 ResolveTeleportPosition(Vector3 worldPoint)
     {
-        var direction = worldPoint - transform.position;
-        direction.y = 0f;
-        if (direction.sqrMagnitude < 0.15f)
-            direction = transform.forward;
-
-        direction.Normalize();
         var bodyRadius = GetComponent<CwslPlayerBodyCollider>()?.Radius
             ?? CwslGameConstants.PlayerBodyColliderRadiusDefault;
-        var target = transform.position + direction * CwslGameConstants.RedMageTeleportDistance;
+
+        var flatToMouse = worldPoint - transform.position;
+        flatToMouse.y = 0f;
+        if (flatToMouse.sqrMagnitude < 0.15f)
+        {
+            var fallback = transform.forward;
+            fallback.y = 0f;
+            if (fallback.sqrMagnitude < 0.0001f)
+                fallback = Vector3.forward;
+
+            worldPoint = transform.position + fallback.normalized * CwslGameConstants.RedMageTeleportDistance;
+        }
+
+        var target = worldPoint;
+        target.y = transform.position.y;
         return CwslArenaUtility.ClampToPlayArea(target, bodyRadius);
     }
 

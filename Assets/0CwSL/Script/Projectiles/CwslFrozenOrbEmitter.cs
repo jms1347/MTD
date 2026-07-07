@@ -35,15 +35,7 @@ public class CwslFrozenOrbEmitter : MonoBehaviour
         if (orbVisual != null)
         {
             orbVisual.gameObject.SetActive(true);
-            orbVisual.localScale = Vector3.one * 1.15f;
-
-            var core = orbVisual.Find("OrbCore");
-            if (core != null)
-                core.localScale = Vector3.one * 0.95f;
-
-            var aura = orbVisual.Find("OrbAura");
-            if (aura != null)
-                aura.localScale = Vector3.one * 0.42f;
+            orbVisual.localScale = Vector3.one * (1.35f * orbBodyScale);
         }
 
         ApplyOrbBodyScale();
@@ -57,10 +49,7 @@ public class CwslFrozenOrbEmitter : MonoBehaviour
 
         if (orbVisual != null)
         {
-            orbVisual.localScale = Vector3.one;
-            var aura = orbVisual.Find("OrbAura");
-            if (aura != null)
-                aura.localScale = Vector3.one * 0.42f;
+            orbVisual.localScale = Vector3.one * 1.35f;
             orbVisual.gameObject.SetActive(false);
         }
     }

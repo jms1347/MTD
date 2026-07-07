@@ -50,7 +50,7 @@ public class CwslMeteorEffectRunner : MonoBehaviour
         }
 
         if (fallVisual != null)
-            Destroy(fallVisual);
+            CwslVfxPool.Release(fallVisual);
 
         var impact = SpawnVisual(assets?.meteorImpactVfx, impactPoint, ImpactRotation, impactScale);
         if (impact == null)
@@ -59,7 +59,7 @@ public class CwslMeteorEffectRunner : MonoBehaviour
         }
         else
         {
-            Destroy(impact, 5f);
+            CwslVfxPool.ScheduleRelease(impact, 5f);
         }
 
         SpawnRandomGroundFires(impactPoint, areaRadius, assets);

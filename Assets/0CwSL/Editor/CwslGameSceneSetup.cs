@@ -154,8 +154,15 @@ public static class CwslGameSceneSetup
         assets.lightningStunStrikeVfx = LoadPrefab(CwslVfxPaths.LightningStunStrike);
         assets.lightningZoneAuraVfx = LoadPrefab(CwslVfxPaths.LightningZoneAura);
         assets.redMageLightningOrbVfx = LoadPrefab(CwslVfxPaths.RedMageLightningOrb);
+        assets.redMageLightningOrbRadiusVfx = LoadPrefab(CwslVfxPaths.RedMageLightningOrbRadius);
+        assets.redMageLightningBoltVfx = LoadPrefab(CwslVfxPaths.RedMageLightningBolt);
+        assets.redMageLightningStrikeVfx = LoadPrefab(CwslVfxPaths.RedMageLightningStrike);
+        assets.redMageLightningStrikeTallVfx = LoadPrefab(CwslVfxPaths.RedMageLightningStrikeTall);
         assets.redMageLightningExplosionVfx = LoadPrefab(CwslVfxPaths.RedMageLightningExplosion);
         assets.redMageTeleportPortalVfx = LoadPrefab(CwslVfxPaths.RedMageTeleportPortal);
+        assets.frozenOrbIceBallVfx = LoadPrefab(CwslVfxPaths.FrozenOrbIceBall);
+        assets.frozenOrbHitAirVfx = LoadPrefab(CwslVfxPaths.FrozenOrbHitAir);
+        assets.frozenOrbGroundTrailVfx = LoadPrefab(CwslVfxPaths.FrozenOrbGroundTrail);
         assets.hazardAcidPadVfx = LoadPrefab(CwslVfxPaths.HazardAcidPad);
         assets.hazardLavaPadVfx = LoadPrefab(CwslVfxPaths.HazardLavaPad);
         assets.hazardWaterPadVfx = LoadPrefab(CwslVfxPaths.HazardWaterPad);
@@ -187,6 +194,11 @@ public static class CwslGameSceneSetup
         assets.gatherChargeLoopSound = AssetDatabase.LoadAssetAtPath<AudioClip>(CwslVfxPaths.GatherChargeLoopSound);
         assets.gatherChargeEndSound = AssetDatabase.LoadAssetAtPath<AudioClip>(CwslVfxPaths.GatherChargeEndSound);
         assets.skillGoldFailSound = AssetDatabase.LoadAssetAtPath<AudioClip>(CwslVfxPaths.SkillGoldFailSound);
+        assets.redMageFrozenOrbCastSound = AssetDatabase.LoadAssetAtPath<AudioClip>(CwslVfxPaths.RedMageFrozenOrbCastSound);
+        assets.redMageFrozenOrbTravelSound = AssetDatabase.LoadAssetAtPath<AudioClip>(CwslVfxPaths.RedMageFrozenOrbTravelSound);
+        assets.redMageLightningOrbCastSound = AssetDatabase.LoadAssetAtPath<AudioClip>(CwslVfxPaths.RedMageLightningOrbCastSound);
+        assets.redMageLightningOrbStrikeSound = AssetDatabase.LoadAssetAtPath<AudioClip>(CwslVfxPaths.RedMageLightningOrbStrikeSound);
+        assets.redMageLightningOrbImpactSound = AssetDatabase.LoadAssetAtPath<AudioClip>(CwslVfxPaths.RedMageLightningOrbImpactSound);
         assets.offsideHornSound = AssetDatabase.LoadAssetAtPath<AudioClip>(CwslVfxPaths.OffsideHornSound);
         EditorUtility.SetDirty(assets);
 
