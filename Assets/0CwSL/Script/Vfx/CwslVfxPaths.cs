@@ -132,6 +132,28 @@ public static class CwslVfxPaths
     public const string RedMageLightningOrbImpactSound =
         "Assets/Epic Toon FX/Sound/etfx_explosion_lightning.wav";
 
+    public const string RedMageTeleportCastSound =
+        "Assets/Game/0Sound/freesound_community-teleport-90137.mp3";
+
+    // --- 탱커 스킬 사운드 ---
+    public const string TankShieldSlamGroundImpactSound =
+        "Assets/Game/0Sound/universfield-ground-impact-352053.mp3";
+
+    public const string TankShieldWhirlwindFanLoopSound =
+        "Assets/Game/0Sound/freesound_community-large-fan-38268.mp3";
+
+    public const string TankShieldWhirlwindPowerPunchSound =
+        "Assets/Game/0Sound/universfield-power-punch-192118.mp3";
+
+    public const string TankShieldDashImpactSound =
+        "Assets/Game/0Sound/audiopapkin-sound-design-elements-impact-sfx-ps-139-500887.mp3";
+
+    public const string TankShieldFortifyQSound =
+        "Assets/Game/0Sound/freesound_community-stone-push-37412.mp3";
+
+    public const string BarricadeJumpPadSound =
+        "Assets/Game/0Sound/universfield-cartoon-spring-229137.mp3";
+
     public const string FortifyAura =
         "Assets/Epic Toon FX/Prefabs/Combat/Shield/ShieldSoftBlue.prefab";
 
@@ -200,6 +222,57 @@ public static class CwslVfxPaths
 
     public const string GatherSlowEnchant =
         "Assets/Epic Toon FX/Prefabs/Combat/Magic/Enchant/MagicEnchantBlue.prefab";
+
+    public const string GathererMissileVisual =
+        "Assets/Epic Toon FX/Prefabs/Combat/Missiles/Mystic/MysticMissilePurple.prefab";
+
+    public const string GathererYankBurst =
+        "Assets/Epic Toon FX/Prefabs/Interactive/Zone/SpinZone/SpinZoneBlue.prefab";
+
+    public const string GathererSwapPortal =
+        "Assets/Epic Toon FX/Prefabs/Interactive/Portals/WavePortal/WavePortalBlue.prefab";
+
+    public const string GathererBlackHole =
+        "Assets/Epic Toon FX/Prefabs/Environment/Weather/Whirlwind.prefab";
+
+    public const string BarricadeDetonateExplosion =
+        "Assets/Epic Toon FX/Prefabs/Combat/Explosions/NukeExplosion/NukeExplosionFire.prefab";
+
+    public const string BarricadeJumpPadAura =
+        "Assets/Epic Toon FX/Prefabs/Interactive/Zone/BasicZone/BasicZoneYellow.prefab";
+
+    public const string BarricadeRepairSparks =
+        "Assets/Epic Toon FX/Prefabs/Interactive/Sparkle/SparkleArea/SparkleAreaYellow.prefab";
+
+    public const string HealerMissileVisual =
+        "Assets/Epic Toon FX/Prefabs/Combat/Missiles/Magic/MagicMissileGreen.prefab";
+
+    public const string HealerHealPad =
+        "Assets/Epic Toon FX/Prefabs/Interactive/Healing/HealField.prefab";
+
+    public const string HealerHealBurst =
+        "Assets/Epic Toon FX/Prefabs/Interactive/Healing/HealNova.prefab";
+
+    public const string HealerPoisonPad =
+        "Assets/Epic Toon FX/Prefabs/Environment/Smoke/StinkyCloud.prefab";
+
+    public const string HealerHasteBuff =
+        "Assets/Epic Toon FX/Prefabs/Interactive/Powerups/PowerupActivate/PowerupActivateYellow.prefab";
+
+    public const string RammerBrakeBurst =
+        "Assets/Epic Toon FX/Prefabs/Combat/Explosions/MysticExplosion/MysticExplosionWhite.prefab";
+
+    public const string RammerRopeAttach =
+        "Assets/Epic Toon FX/Prefabs/Combat/Magic/Enchant/MagicEnchantBlue.prefab";
+
+    public const string RammerRopeFling =
+        "Assets/Epic Toon FX/Prefabs/Combat/Sword/Hit/SwordHitMini/SwordHitMiniBlue.prefab";
+
+    public const string RammerFireTrail =
+        "Assets/Epic Toon FX/Prefabs/Environment/Fire/Trails/SoftFireTrail.prefab";
+
+    public const string RammerFireTrailZone =
+        "Assets/Epic Toon FX/Prefabs/Environment/Fire/Soft/SoftFireAB/SoftFireABYellow.prefab";
 
     // --- 아레나 기믹 / 홍명보 보스 ---
     public const string BossTeleportDepart =

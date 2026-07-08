@@ -8,6 +8,7 @@ public class CwslPlayerCombat : NetworkBehaviour
     private CwslPlayerSelection selection;
     private CwslPlayerCharacter playerCharacter;
     private CwslMissileTankSkill missileTankSkill;
+    private CwslGathererMissileAttack gathererMissileAttack;
     private CwslTankShieldAttack tankShieldAttack;
     private CwslPlayerMovement movement;
 
@@ -51,6 +52,7 @@ public class CwslPlayerCombat : NetworkBehaviour
         selection = GetComponent<CwslPlayerSelection>();
         playerCharacter = GetComponent<CwslPlayerCharacter>();
         missileTankSkill = GetComponent<CwslMissileTankSkill>();
+        gathererMissileAttack = GetComponent<CwslGathererMissileAttack>();
         tankShieldAttack = GetComponent<CwslTankShieldAttack>();
         movement = GetComponent<CwslPlayerMovement>();
     }
@@ -79,6 +81,8 @@ public class CwslPlayerCombat : NetworkBehaviour
         {
             if (playerCharacter != null && playerCharacter.CharacterId == CwslCharacterId.MissileTank)
                 UpdateMissileTankChaseStructure(enemyBase);
+            else if (playerCharacter != null && playerCharacter.CharacterId == CwslCharacterId.CrowdGatherer)
+                UpdateGathererChaseStructure(enemyBase);
             else
                 UpdateMeleeChaseStructure(enemyBase);
             return;
@@ -93,6 +97,8 @@ public class CwslPlayerCombat : NetworkBehaviour
 
         if (playerCharacter != null && playerCharacter.CharacterId == CwslCharacterId.MissileTank)
             UpdateMissileTankChase(monsterHealth);
+        else if (playerCharacter != null && playerCharacter.CharacterId == CwslCharacterId.CrowdGatherer)
+            UpdateGathererChase(monsterHealth);
         else
             UpdateMeleeChase(monsterHealth);
     }
@@ -109,6 +115,34 @@ public class CwslPlayerCombat : NetworkBehaviour
 
         movement?.StopMovement();
         missileTankSkill?.TryFireAttackServer(dualWieldMode: false);
+    }
+
+    private void UpdateGathererChase(CwslMonsterHealth monsterHealth)
+    {
+        var range = gathererMissileAttack != null ? gathererMissileAttack.AttackRange : CwslGameConstants.GathererMissileRange;
+        var distance = Vector3.Distance(transform.position, monsterHealth.transform.position);
+        if (distance > range)
+        {
+            movement?.RequestMoveTo(monsterHealth.transform.position);
+            return;
+        }
+
+        movement?.StopMovement();
+        gathererMissileAttack?.TryFireServer();
+    }
+
+    private void UpdateGathererChaseStructure(CwslEnemyBase enemyBase)
+    {
+        var range = gathererMissileAttack != null ? gathererMissileAttack.AttackRange : CwslGameConstants.GathererMissileRange;
+        var distance = Vector3.Distance(transform.position, enemyBase.transform.position);
+        if (distance > range)
+        {
+            movement?.RequestMoveTo(enemyBase.transform.position);
+            return;
+        }
+
+        movement?.StopMovement();
+        gathererMissileAttack?.TryFireServer();
     }
 
     private void UpdateMeleeChaseStructure(CwslEnemyBase enemyBase)
@@ -190,6 +224,12 @@ public class CwslPlayerCombat : NetworkBehaviour
             return;
         }
 
+        if (playerCharacter != null && playerCharacter.CharacterId == CwslCharacterId.CrowdGatherer)
+        {
+            UpdateGathererAttackMove();
+            return;
+        }
+
         AttackSelectedTarget(dualWieldMode: false);
 
         if (HasReachedAttackMoveDestination())
@@ -205,6 +245,20 @@ public class CwslPlayerCombat : NetworkBehaviour
         {
             missileTankSkill.TryFireAttackServer(dualWieldMode: false);
 
+            if (movement != null && movement.IsMoving)
+                return;
+        }
+
+        movement?.RequestMoveTo(attackMoveDestination);
+    }
+
+    private void UpdateGathererAttackMove()
+    {
+        if (gathererMissileAttack == null)
+            return;
+
+        if (gathererMissileAttack.TryFireServer())
+        {
             if (movement != null && movement.IsMoving)
                 return;
         }
@@ -254,6 +308,25 @@ public class CwslPlayerCombat : NetworkBehaviour
                 return;
             }
 
+            if (playerCharacter != null && playerCharacter.CharacterId == CwslCharacterId.CrowdGatherer)
+            {
+                var range = gathererMissileAttack != null
+                    ? gathererMissileAttack.AttackRange
+                    : CwslGameConstants.GathererMissileRange;
+                var distance = Vector3.Distance(transform.position, target.transform.position);
+                if (distance > range)
+                {
+                    chaseAttackTarget = target;
+                    movement?.RequestMoveTo(target.transform.position);
+                    return;
+                }
+
+                chaseAttackTarget = null;
+                movement?.StopMovement();
+                gathererMissileAttack?.TryFireServer();
+                return;
+            }
+
             var structureRange = GetAttackRange(target);
             var structureDistance = Vector3.Distance(transform.position, target.transform.position);
             if (structureDistance > structureRange)
@@ -290,6 +363,25 @@ public class CwslPlayerCombat : NetworkBehaviour
             return;
         }
 
+        if (playerCharacter != null && playerCharacter.CharacterId == CwslCharacterId.CrowdGatherer)
+        {
+            var range = gathererMissileAttack != null
+                ? gathererMissileAttack.AttackRange
+                : CwslGameConstants.GathererMissileRange;
+            var distance = Vector3.Distance(transform.position, target.transform.position);
+            if (distance > range)
+            {
+                chaseAttackTarget = target;
+                movement?.RequestMoveTo(target.transform.position);
+                return;
+            }
+
+            chaseAttackTarget = null;
+            movement?.StopMovement();
+            gathererMissileAttack?.TryFireServer();
+            return;
+        }
+
         var meleeRange = GetAttackRange(target);
         var meleeDistance = Vector3.Distance(transform.position, target.transform.position);
         if (meleeDistance > meleeRange)
@@ -312,6 +404,24 @@ public class CwslPlayerCombat : NetworkBehaviour
         if (playerCharacter != null && playerCharacter.CharacterId == CwslCharacterId.MissileTank)
         {
             missileTankSkill?.TryFireAttackServer(dualWieldMode);
+            return;
+        }
+
+        if (playerCharacter != null && playerCharacter.CharacterId == CwslCharacterId.CrowdGatherer)
+        {
+            gathererMissileAttack?.TryFireServer();
+            return;
+        }
+
+        if (playerCharacter != null && playerCharacter.CharacterId == CwslCharacterId.Healer)
+        {
+            GetComponent<CwslHealerMissileAttack>()?.TryFireServer();
+            return;
+        }
+
+        if (playerCharacter != null && playerCharacter.CharacterId == CwslCharacterId.Barricade)
+        {
+            GetComponent<CwslBarricadeMeleeAttack>()?.TryAttackServer();
             return;
         }
 

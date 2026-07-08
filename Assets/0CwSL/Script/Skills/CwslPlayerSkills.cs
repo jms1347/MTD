@@ -33,6 +33,11 @@ public class CwslPlayerSkills : NetworkBehaviour
         EnsureTankSlamSkill();
         EnsureTankWhirlwindSkill();
         EnsureRedMageFrozenOrbSkill();
+        EnsureRammerExtraSkills();
+        EnsureGathererExtraSkills();
+        EnsureBarricadeExtraSkills();
+        EnsureHealerExtraSkills();
+        RefreshSkillList();
         crowdGatherSkill = GetComponent<CwslCrowdGatherSkill>();
         foreach (var skill in skills)
         {
@@ -202,10 +207,46 @@ public class CwslPlayerSkills : NetworkBehaviour
         if (!IsServer || BlocksSkillUseServer(senderClientId))
             return;
 
-        // ?? ????????(?????? ??? ?????? ????????)
+        // 빨간 마법사 Q(메테오) / 힐러 Q(힐 장판)
         if (playerCharacter != null && playerCharacter.CharacterId == CwslCharacterId.RedMage)
         {
             TryCastMeteor(senderClientId, worldPoint);
+            return;
+        }
+
+        if (playerCharacter != null && playerCharacter.CharacterId == CwslCharacterId.Healer)
+        {
+            if (skillCooldowns != null && !skillCooldowns.IsReady(0))
+                return;
+
+            var canCast = false;
+            foreach (var skill in skills)
+            {
+                if (!IsSkillActiveForCharacter(skill) || skill.SkillSlotIndex != 0)
+                    continue;
+
+                if (!skill.CanUseSkillSlotServer(senderClientId, 0, worldPoint))
+                    return;
+
+                canCast = true;
+                break;
+            }
+
+            if (!canCast)
+                return;
+
+            if (!TrySpendStaminaForSlot(0))
+                return;
+
+            foreach (var skill in skills)
+            {
+                if (!IsSkillActiveForCharacter(skill) || skill.SkillSlotIndex != 0)
+                    continue;
+
+                if (skill.TryUseSkillSlotServer(senderClientId, 0, worldPoint))
+                    return;
+            }
+
             return;
         }
 
@@ -307,6 +348,8 @@ public class CwslPlayerSkills : NetworkBehaviour
         NotifyStaminaInsufficientClientRpc();
     }
 
+    public bool BlocksSkillUseForOwner() => BlocksSkillUseServer(OwnerClientId);
+
     private bool IsSkillActiveForCharacter(CwslPlayerSkillBase skill)
     {
         var characterId = playerCharacter != null
@@ -349,6 +392,56 @@ public class CwslPlayerSkills : NetworkBehaviour
 
         var frozenOrb = gameObject.AddComponent<CwslRedMageFrozenOrbSkill>();
         skills.Add(frozenOrb);
+    }
+
+    private void EnsureRammerExtraSkills()
+    {
+        EnsureSkillComponent<CwslRammerBrakeSkill>();
+        EnsureSkillComponent<CwslRammerRopeSkill>();
+        EnsureSkillComponent<CwslRammerFireTrailSkill>();
+    }
+
+    private void EnsureGathererExtraSkills()
+    {
+        EnsureSkillComponent<CwslGathererYankSkill>();
+        EnsureSkillComponent<CwslGathererSwapSkill>();
+        EnsureSkillComponent<CwslGathererBlackHoleSkill>();
+        if (GetComponent<CwslGathererMissileAttack>() == null)
+            gameObject.AddComponent<CwslGathererMissileAttack>();
+    }
+
+    private void EnsureBarricadeExtraSkills()
+    {
+        EnsureSkillComponent<CwslBarricadeWallSkill>();
+        EnsureSkillComponent<CwslBarricadeJumpPadSkill>();
+        EnsureSkillComponent<CwslBarricadeRepairSkill>();
+        EnsureSkillComponent<CwslBarricadeDetonateSkill>();
+        if (GetComponent<CwslBarricadeMeleeAttack>() == null)
+            gameObject.AddComponent<CwslBarricadeMeleeAttack>();
+    }
+
+    private void EnsureHealerExtraSkills()
+    {
+        EnsureSkillComponent<CwslHealerHealPadSkill>();
+        EnsureSkillComponent<CwslHealerPoisonPadSkill>();
+        EnsureSkillComponent<CwslHealerBurstHealSkill>();
+        EnsureSkillComponent<CwslHealerHasteBuffSkill>();
+        if (GetComponent<CwslHealerMissileAttack>() == null)
+            gameObject.AddComponent<CwslHealerMissileAttack>();
+    }
+
+    private void EnsureSkillComponent<T>() where T : CwslPlayerSkillBase
+    {
+        if (GetComponent<T>() != null)
+            return;
+
+        skills.Add(gameObject.AddComponent<T>());
+    }
+
+    private void RefreshSkillList()
+    {
+        skills.Clear();
+        skills.AddRange(GetComponents<CwslPlayerSkillBase>());
     }
 
     private bool BlocksSkillUseServer(ulong senderClientId)

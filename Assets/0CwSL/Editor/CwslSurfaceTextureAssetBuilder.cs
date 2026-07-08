@@ -5,17 +5,6 @@ using UnityEngine;
 
 public static class CwslSurfaceTextureAssetBuilder
 {
-    [MenuItem("Tools/CwSL/Generate Surface Textures", false, 11)]
-    public static void GenerateFromMenu()
-    {
-        EnsureGenerated(force: true);
-        EditorUtility.DisplayDialog(
-            "표면 텍스처",
-            "폭탄 도색·낡은 금속 스크래치 텍스처를 생성했습니다.\n" +
-            CwslSurfaceTexturePaths.Folder,
-            "확인");
-    }
-
     public static void EnsureGenerated(bool force = false)
     {
         if (!AssetDatabase.IsValidFolder("Assets/0CwSL/Data"))

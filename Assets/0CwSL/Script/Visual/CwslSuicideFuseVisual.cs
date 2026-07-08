@@ -49,6 +49,9 @@ public class CwslSuicideFuseVisual : MonoBehaviour
 
     public void SetBurningActive(bool active)
     {
+        if (!isActiveAndEnabled)
+            return;
+
         if (!active)
         {
             DestroyInstance();
@@ -64,6 +67,9 @@ public class CwslSuicideFuseVisual : MonoBehaviour
 
     private void DestroyEmbeddedFuseChildren()
     {
+        if (this == null || transform == null)
+            return;
+
         for (var i = transform.childCount - 1; i >= 0; i--)
         {
             var child = transform.GetChild(i);

@@ -53,6 +53,37 @@ public class CwslTankShieldSkillVisual : MonoBehaviour
         routine = StartCoroutine(WhirlwindRoutine(duration, empowered));
     }
 
+    public void PlayDash(Vector3 worldDirection, float duration)
+    {
+        CacheParts();
+        if (shield == null)
+            return;
+
+        RefreshShieldBase();
+
+        if (routine != null)
+            StopCoroutine(routine);
+
+        ResetShieldPoseForSkill();
+        routine = StartCoroutine(DashRoutine(duration));
+    }
+
+    /// <summary>다른 스킬 시작 전 방패 자세를 기본 전방으로 즉시 복구.</summary>
+    public void ResetShieldPoseImmediate()
+    {
+        CacheParts();
+        if (shield == null)
+            return;
+
+        if (routine != null)
+        {
+            StopCoroutine(routine);
+            routine = null;
+        }
+
+        ResetShieldPoseForSkill();
+    }
+
     private void CacheParts()
     {
         if (shield != null)
@@ -71,6 +102,11 @@ public class CwslTankShieldSkillVisual : MonoBehaviour
 
     private void RefreshShieldBase()
     {
+        // R(E/R) 중간에 코루틴이 끊기면 shield.localScale이 이미 확장된 상태일 수 있습니다.
+        // 이때 base를 덮어쓰면 다음 R부터 scale이 계속 커지므로, 애니메이션 중에는 갱신하지 않습니다.
+        if (routine != null)
+            return;
+
         if (shield == null)
             return;
 
@@ -93,6 +129,52 @@ public class CwslTankShieldSkillVisual : MonoBehaviour
 
         ClearWhirlwindFx();
         IsAnimating = false;
+    }
+
+    private IEnumerator DashRoutine(float duration)
+    {
+        IsAnimating = true;
+
+        var startPos = shield.localPosition;
+        var startRot = shield.localRotation;
+        var dashRot = shieldBaseLocalRotation;
+        var dashPos = shieldBaseLocalPosition + new Vector3(0f, 0.1f, 0.22f);
+
+        var timer = 0f;
+        const float armTime = 0.08f;
+        while (timer < armTime)
+        {
+            timer += Time.deltaTime;
+            var t = Mathf.SmoothStep(0f, 1f, timer / armTime);
+            shield.localRotation = Quaternion.Slerp(startRot, dashRot, t);
+            shield.localPosition = Vector3.Lerp(startPos, dashPos, t);
+            yield return null;
+        }
+
+        timer = 0f;
+        while (timer < duration)
+        {
+            timer += Time.deltaTime;
+            shield.localRotation = dashRot;
+            shield.localPosition = dashPos;
+            yield return null;
+        }
+
+        timer = 0f;
+        const float recover = 0.18f;
+        while (timer < recover)
+        {
+            timer += Time.deltaTime;
+            var t = timer / recover;
+            shield.localRotation = Quaternion.Slerp(dashRot, shieldBaseLocalRotation, t);
+            shield.localPosition = Vector3.Lerp(dashPos, shieldBaseLocalPosition, t);
+            yield return null;
+        }
+
+        shield.localRotation = shieldBaseLocalRotation;
+        shield.localPosition = shieldBaseLocalPosition;
+        IsAnimating = false;
+        routine = null;
     }
 
     private IEnumerator SlamRoutine(bool empowered)

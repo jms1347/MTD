@@ -82,6 +82,22 @@ public class CwslNexus : NetworkBehaviour
             OnDestroyed?.Invoke();
     }
 
+    public void HealServer(float amount)
+    {
+        if (!IsServer || !IsAlive || amount <= 0f)
+            return;
+
+        if (health.Value >= MaxHealth)
+            return;
+
+        var healed = Mathf.Min(amount, MaxHealth - health.Value);
+        if (healed <= 0f)
+            return;
+
+        health.Value += healed;
+        CwslDamageFeedback.PlayFromServer(GetDamagePopupAnchor(), healed, CwslDamagePopupKind.Heal);
+    }
+
     public float GetOuterRadius()
     {
         var capsule = GetComponent<CapsuleCollider>();

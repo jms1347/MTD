@@ -61,8 +61,8 @@ public static class CwslGameConstants
     public const float ReviveProximityRadius = 2.6f;
 
     public const float BaseMoveSpeed = 6.5f;
-    public const float RammerMaxSpeed = 17f;
-    public const float RammerAccelPerSecond = 4.1f;
+    public const float RammerMaxSpeed = 28f;
+    public const float RammerAccelPerSecond = 4.6f;
     public const float RammerDecelPerSecond = 8.2f;
     public const float RammerSteerTurnRateHigh = 390f;
     public const float RammerSteerTurnRateLow = 62f;
@@ -76,9 +76,9 @@ public static class CwslGameConstants
     public const float RammerCollisionCooldown = 0.45f;
     public const float RammerWingSpreadMaxScale = 2.8f;
     public const float RammerWingSpreadGrowSeconds = 1.55f;
-    public const int RammerWingSpreadStartGoldCost = 3;
+    public const int RammerWingSpreadStartGoldCost = 0;
     public const float RammerWingSpreadGoldIntervalSeconds = 0.5f;
-    public const int RammerWingSpreadTickGoldCost = 1;
+    public const int RammerWingSpreadTickGoldCost = 0;
     public const float RammerWingSpreadBaseRadius = 0.72f;
     public const float RammerWingSpreadDamage = 1f;
     public const float RammerWingSpreadHitCooldown = 0.38f;
@@ -86,11 +86,112 @@ public static class CwslGameConstants
     public const float RammerWallStunDuration = 2f;
     public const float RammerWallStunMinSpeed = 5f;
     public const float RammerAllyStunCooldown = 1.2f;
+
+    public const float RammerBrakeMinSpeed = 6f;
+    public const float RammerBrakeDamagePerSpeed = 1.1f;
+    public const float RammerBrakeRadius = 4.2f;
+    public const float RammerBrakeKnockDistance = 5.5f;
+    public const float RammerBrakeKnockDuration = 0.34f;
+    public const float RammerBrakeCastDuration = 0.35f;
+    public const float RammerBrakeSlideDuration = 0.28f;
+    public const float RammerBrakeSlideDistanceMultiplier = 0.32f;
+    public const float RammerBrakeRadiusMultiplier = 2f;
+    public const float RammerBrakeVfxScaleMultiplier = 2f;
+
+    public const float RammerRopeMaxDistance = 14f;
+    public const float RammerRopeLinkRadius = 2.4f;
+    public const float RammerRopePullStrength = 9.5f;
+    public const float RammerRopeFlingDistance = 8.5f;
+    public const float RammerRopeFlingDuration = 0.42f;
+    public const float RammerRopeCastDuration = 0.2f;
+    public const float RammerRopePullDamagePerSpeed = 0.9f;
+    public const float RammerRopeDamageTickInterval = 0.2f;
+    public const float RammerRopeSpinDuration = 1.35f;
+    public const float RammerRopeSpinAngularSpeed = 960f;
+    public const float RammerRopeSpinRadiusMin = 2.2f;
+    public const float RammerRopeSpinRadiusMax = 4.8f;
+    public const float RammerRopeSpinHitRadius = 1.25f;
+    public const float RammerRopeSpinStunDuration = 1.4f;
+    public const float RammerRopeDeadLaunchDistance = 9.5f;
+    public const float RammerRopeDeadLaunchDuration = 0.38f;
+
+    public const float RammerFireTrailDuration = 6f;
+    public const float RammerFireTrailZoneLifetime = 4f;
+    public const float RammerFireTrailDropInterval = 0.1f;
+    public const float RammerFireTrailZoneRadius = 1.55f;
+    public const float RammerFireTrailCastDuration = 0.25f;
+    public const float RammerFireTrailActivationSpeedMultiplier = 2.6f;
+    public const int RammerFireTrailDropBurstCount = 4;
+    public const float RammerFireTrailDropBurstRadius = 0.95f;
+
+    public const float GathererMissileCooldown = 2f;
+    public const float GathererMissileRange = 18f;
+    public const float GathererMissileSpeed = 14f;
+    public const float GathererMissileLifetime = 5f;
+
+    public const float GathererYankMaxDistance = 16f;
+    public const float GathererYankPullSeconds = 0.35f;
+    public const float GathererYankCastDuration = 0.3f;
+
+    public const float GathererSwapMaxDistance = 16f;
+    public const float GathererSwapCastDuration = 0.25f;
+
+    public const float GathererBlackHoleRadius = 6.5f;
+    public const float GathererBlackHoleDuration = 10f;
+    public const float GathererBlackHolePullSpeed = 4.2f;
+    public const float GathererBlackHoleCastDuration = 0.4f;
+
+    public const float BarricadeMeleeCooldown = 0.85f;
+    public const float BarricadeMeleeRange = 2.6f;
+    public const float BarricadeWallMaxHealth = 420f;
+    public const float BarricadeWallHeight = 2.1f;
+    public const float BarricadeWallThickness = 0.55f;
+    public const float BarricadeWallMinLength = 1.4f;
+    public const float BarricadeWallMaxLength = 10f;
+    public const float BarricadeWallCastDuration = 0.35f;
+    public const float BarricadeJumpPadRadius = 1.6f;
+    public const float BarricadeJumpPadLifetime = 12f;
+    public const float BarricadeJumpHeight = 5f;
+    public const float BarricadeJumpDuration = 1.15f;
+    public const float BarricadeJumpPadCastDuration = 0.25f;
+    public const float BarricadeRepairRange = 4.5f;
+    public const float BarricadeRepairStaminaCost = 28f;
+    public const float BarricadeRepairAmount = 450f;
+    public const float BarricadeRepairDuration = 1.15f;
+    public const float BarricadeDetonateRadius = 3.4f;
+    public const float BarricadeDetonateBlastDamage = 85f;
+    public const float BarricadeDetonateBurnDuration = 3.5f;
+    public const float BarricadeDetonateBurnDamage = 28f;
+    public const float BarricadeDetonateCastDuration = 0.3f;
+
+    public const float HealerMissileCooldown = 3f;
+    public const float HealerMissileRange = 16f;
+    public const float HealerMissileSpeed = 13f;
+    public const float HealerMissileLifetime = 5f;
+    public const float HealerHealPadRadius = 4.2f;
+    public const float HealerHealPadDuration = 8f;
+    public const float HealerHealPadHealPerSecond = 22f;
+    public const float HealerHealPadCastDuration = 0.35f;
+    public const float HealerPoisonPadRadius = 12f;
+    public const float HealerPoisonPadDuration = 8f;
+    public const float HealerPoisonDuration = 3f;
+    public const float HealerPoisonTickDamage = 8f;
+    public const float HealerPoisonArmorPerStack = 4f;
+    public const float HealerPoisonPadCastDuration = 0.35f;
+    public const float HealerBurstHealRadius = 6f;
+    public const float HealerBurstHealRatio = 0.3f;
+    public const float HealerBurstHealCastDuration = 0.35f;
+    public const float HealerHasteBuffRadius = 7f;
+    public const float HealerHasteBuffDuration = 7f;
+    public const float HealerHasteMoveMultiplier = 2f;
+    public const float HealerHasteAttackMultiplier = 2f;
+    public const float HealerHasteBuffCastDuration = 0.3f;
+
     public const float GatherReferenceRadius = 4.8f;
     public const float GatherMaxRadius = GatherReferenceRadius * 2f;
     public const float GatherMinRadius = 1.4f;
     public const float GatherChargeSeconds = 1.35f;
-    public const int GatherStartGoldCost = 5;
+    public const int GatherStartGoldCost = 0;
     public const float GatherPullSeconds = 0.48f;
     public const float GatherCooldown = 4f;
     public const float GatherSlowMultiplier = 0.32f;
@@ -182,13 +283,13 @@ public static class CwslGameConstants
     public const float TankShieldDashDuration = 0.24f;
     public const float TankShieldDashCastDuration = 1f;
     public const float TankShieldDashSpeed = 24f;
-    public const float TankShieldDashPushRadius = 1.2f;
-    public const float TankShieldDashPushDistance = 6.5f;
-    public const float TankShieldDashPushDuration = 0.3f;
-    public const float TankShieldDashEmpoweredPushDistance = 9.5f;
-    public const float TankShieldDashEmpoweredPushDuration = 0.38f;
-    public const float TankShieldDashShieldPushDistance = 6.8f;
-    public const float TankShieldDashShieldPushDuration = 0.36f;
+    public const float TankShieldDashPushRadius = 2f;
+    public const float TankShieldDashPushDistance = 11f;
+    public const float TankShieldDashPushDuration = 0.2f;
+    public const float TankShieldDashEmpoweredPushDistance = 15f;
+    public const float TankShieldDashEmpoweredPushDuration = 0.24f;
+    public const float TankShieldDashShieldPushDistance = 12f;
+    public const float TankShieldDashShieldPushDuration = 0.22f;
 
     public const float TankSkillEmpowerRadiusMultiplier = 3f;
     public const float TankSkillEmpowerPowerMultiplier = 3f;

@@ -38,7 +38,24 @@ GameObject:
   - component: {fileID: 7084628157354698897}
   - component: {fileID: 2018258705124117138}
   - component: {fileID: 9123456789012345678}
+  - component: {fileID: 4274406628730562932}
+  - component: {fileID: 635976588233170693}
+  - component: {fileID: 6164369638737623690}
   - component: {fileID: 8347261593847561029}
+  - component: {fileID: 2801859885601498390}
+  - component: {fileID: 2586713715498408055}
+  - component: {fileID: 7248932030620819926}
+  - component: {fileID: 8332040827993198239}
+  - component: {fileID: 4731824546877250792}
+  - component: {fileID: 1907049604155334956}
+  - component: {fileID: 8811487179953184301}
+  - component: {fileID: 814099901372494024}
+  - component: {fileID: 4002775071221719954}
+  - component: {fileID: 5966380292298577762}
+  - component: {fileID: 8048582379738863696}
+  - component: {fileID: 5588754818947138097}
+  - component: {fileID: 4985317948701112239}
+  - component: {fileID: 7239821492774390974}
   - component: {fileID: 9081726354455667788}
   - component: {fileID: 7711223344556677889}
   - component: {fileID: 4445350762902779960}
@@ -521,6 +538,45 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CwslMomentumRammerSkill
   ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &4274406628730562932
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6360497807503343767}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 57071a7540254a74887e1fc8c2c424cb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CwslRammerBrakeSkill
+  ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &635976588233170693
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6360497807503343767}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 69d0a8727f45afd498f2e252df96090a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CwslRammerRopeSkill
+  ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &6164369638737623690
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6360497807503343767}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a5c1a52db247a514fa6cad247ae8f6bc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CwslRammerFireTrailSkill
+  ShowTopMostFoldoutHeaderGroup: 1
 --- !u!114 &8347261593847561029
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -533,6 +589,188 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3eb60157a46749aaaf1cf37020ff97ef, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CwslCrowdGatherSkill
+  ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &2801859885601498390
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6360497807503343767}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cc41b472a3041e14a97fb35512b8a315, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CwslGathererYankSkill
+  ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &2586713715498408055
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6360497807503343767}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f63c58ac6274ef429bb52ca0f14cb94, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CwslGathererSwapSkill
+  ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &7248932030620819926
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6360497807503343767}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f3a159602c952e40850c09b7ed02b94, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CwslGathererBlackHoleSkill
+  ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &8332040827993198239
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6360497807503343767}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2bc5a0d693f9a79469f9bceba28665cc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CwslGathererMissileAttack
+  ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &4731824546877250792
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6360497807503343767}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ea751d228ebf6d84281226d4aff8d444, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CwslBarricadeWallSkill
+  ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &1907049604155334956
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6360497807503343767}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a46fa57dc6aaaaa41bb12e4129df59ea, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CwslBarricadeJumpPadSkill
+  ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &8811487179953184301
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6360497807503343767}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c0a4078c8878b924885160e2930407d5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CwslBarricadeRepairSkill
+  ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &814099901372494024
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6360497807503343767}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1e4b5db6013e32438dd40498b1e87ae, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CwslBarricadeDetonateSkill
+  ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &4002775071221719954
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6360497807503343767}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a2404323080403d4ca70a1952acb8742, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CwslBarricadeMeleeAttack
+  ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &5966380292298577762
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6360497807503343767}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cf2339d99624bfe4782718d69323b961, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CwslHealerHealPadSkill
+  ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &8048582379738863696
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6360497807503343767}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4f22a8c938e6df34299ce8a6822ad8f0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CwslHealerPoisonPadSkill
+  ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &5588754818947138097
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6360497807503343767}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c9daf9634a8ab8745b3f58f4f8402eb2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CwslHealerBurstHealSkill
+  ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &4985317948701112239
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6360497807503343767}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c911226de23c5da4ebabea3c466a201a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CwslHealerHasteBuffSkill
+  ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &7239821492774390974
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6360497807503343767}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c5b526378a694164c8e249026511d86f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CwslHealerMissileAttack
   ShowTopMostFoldoutHeaderGroup: 1
 --- !u!114 &9081726354455667788
 MonoBehaviour:

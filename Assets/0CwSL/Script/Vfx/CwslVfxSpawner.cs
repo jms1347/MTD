@@ -289,8 +289,11 @@ public static class CwslVfxSpawner
         if (parent == null)
             return null;
 
+        var prefab = ResolvePrefab(
+            ResolveAssets()?.gatherChargeCircleVfx,
+            CwslVfxPaths.GatherChargeCircle);
         var spawned = Spawn(
-            CwslGameSession.Instance?.Assets?.gatherChargeCircleVfx,
+            prefab,
             parent.position,
             Quaternion.identity,
             0f,
@@ -781,6 +784,27 @@ public static class CwslVfxSpawner
 
             source.Stop();
             source.Play();
+        }
+    }
+
+    private static void TintParticleSystems(GameObject root, Color tint)
+    {
+        foreach (var ps in root.GetComponentsInChildren<ParticleSystem>(true))
+        {
+            var main = ps.main;
+            var current = main.startColor;
+            if (current.mode == ParticleSystemGradientMode.Color)
+            {
+                main.startColor = tint;
+                continue;
+            }
+
+            if (current.mode == ParticleSystemGradientMode.TwoColors)
+            {
+                main.startColor = new ParticleSystem.MinMaxGradient(
+                    current.colorMin * tint,
+                    current.colorMax * tint);
+            }
         }
     }
 
@@ -1345,23 +1369,19 @@ public static class CwslVfxSpawner
         if (visualRoot == null)
             return null;
 
-        var shield = CwslTankShieldVfxUtil.FindShieldForVfx(visualRoot);
-        if (shield == null)
-            return null;
-
-        var origin = CwslTankShieldVfxUtil.GetDashWaveSpawnWorldPosition(visualRoot, dashDirection, scale);
-        var worldRotation = CwslTankShieldVfxUtil.GetDashWaveWorldRotation(dashDirection);
-
         var spawned = Spawn(
             ResolveAssets()?.shieldDashWaveVfx,
-            origin,
-            worldRotation,
+            visualRoot.position,
+            Quaternion.identity,
             0f,
             scale);
         if (spawned == null)
             return null;
 
-        spawned.transform.SetParent(shield, true);
+        // 플레이어 전방(이동 방향) 기준으로 부착 — 방패 로컬 회전 오차(90° 등) 영향 제거.
+        spawned.transform.SetParent(visualRoot, false);
+        spawned.transform.localPosition = CwslTankShieldVfxUtil.GetDashWaveLocalOffset(scale) + Vector3.up * 0.42f;
+        spawned.transform.localRotation = CwslTankShieldVfxUtil.GetDashWaveLocalRotation();
         PrepareEffect(spawned);
         return spawned;
     }
@@ -1415,6 +1435,237 @@ public static class CwslVfxSpawner
         float scale)
     {
         return AttachMonsterStatusEffect(prefab, parent, localPosition, scale, Quaternion.identity);
+    }
+
+    public static GameObject SpawnRammerBrakeBurst(Vector3 position, float scale)
+    {
+        var prefab = ResolvePrefab(ResolveAssets()?.rammerBrakeBurstVfx, CwslVfxPaths.RammerBrakeBurst);
+        var spawned = Spawn(prefab, position + Vector3.up * 0.2f, Quaternion.identity, 2f, scale);
+        if (spawned == null)
+            CwslSimpleVfx.SpawnBurst(position, new Color(1f, 0.75f, 0.25f), 1.4f * scale, 0.4f);
+        else
+            PrepareEffect(spawned);
+        return spawned;
+    }
+
+    public static GameObject SpawnRammerRopeAttach(Vector3 position)
+    {
+        var prefab = ResolvePrefab(ResolveAssets()?.rammerRopeAttachVfx, CwslVfxPaths.RammerRopeAttach);
+        var spawned = Spawn(prefab, position + Vector3.up * 0.8f, Quaternion.identity, 1.4f, 1.1f);
+        if (spawned != null)
+            PrepareEffect(spawned);
+        return spawned;
+    }
+
+    public static GameObject SpawnRammerRopeFling(Vector3 position, Vector3 direction)
+    {
+        var rotation = direction.sqrMagnitude > 0.0001f
+            ? Quaternion.LookRotation(direction.normalized, Vector3.up)
+            : Quaternion.identity;
+        var prefab = ResolvePrefab(ResolveAssets()?.rammerRopeFlingVfx, CwslVfxPaths.RammerRopeFling);
+        var spawned = Spawn(prefab, position + Vector3.up * 0.7f, rotation, 1.2f, 1.3f);
+        if (spawned != null)
+            PrepareEffect(spawned);
+        return spawned;
+    }
+
+    public static GameObject AttachRammerFireTrail(Transform parent)
+    {
+        if (parent == null)
+            return null;
+
+        ClearRammerFireTrail(parent);
+        var prefab = ResolvePrefab(ResolveAssets()?.rammerFireTrailVfx, CwslVfxPaths.RammerFireTrail);
+        var spawned = Spawn(prefab, parent.position, Quaternion.identity, 0f, 1.15f);
+        if (spawned == null)
+            return null;
+
+        spawned.name = "RammerFireTrailVfx";
+        spawned.transform.SetParent(parent, false);
+        spawned.transform.localPosition = Vector3.up * 0.2f;
+        PrepareEffect(spawned);
+        Object.Destroy(spawned, CwslGameConstants.RammerFireTrailDuration + 0.4f);
+        return spawned;
+    }
+
+    public static void ClearRammerFireTrail(Transform parent)
+    {
+        if (parent == null)
+            return;
+
+        var existing = parent.Find("RammerFireTrailVfx");
+        if (existing != null)
+            Object.Destroy(existing.gameObject);
+    }
+
+    public static GameObject SpawnRammerFireTrailZone(Vector3 position)
+    {
+        var prefab = ResolvePrefab(
+            ResolveAssets()?.rammerFireTrailZoneVfx ?? ResolveAssets()?.meteorGroundFireSoftAbVfx,
+            CwslVfxPaths.RammerFireTrailZone);
+        var spawned = Spawn(
+            prefab,
+            position,
+            Quaternion.identity,
+            CwslGameConstants.RammerFireTrailZoneLifetime + 0.2f,
+            0.85f);
+        if (spawned != null)
+            PrepareEffect(spawned);
+        return spawned;
+    }
+
+    public static GameObject SpawnGathererYank(Vector3 from, Vector3 to)
+    {
+        var mid = (from + to) * 0.5f;
+        mid.y = 0.2f;
+        var prefab = ResolvePrefab(
+            ResolveAssets()?.gathererYankBurstVfx ?? ResolveAssets()?.gatherPullVortexVfx,
+            CwslVfxPaths.GathererYankBurst);
+        var spawned = Spawn(prefab, mid, Quaternion.identity, 1.2f, 1.35f);
+        if (spawned != null)
+            PrepareEffect(spawned);
+        return spawned;
+    }
+
+    public static GameObject SpawnGathererSwap(Vector3 position)
+    {
+        var prefab = ResolvePrefab(
+            ResolveAssets()?.gathererSwapPortalVfx,
+            CwslVfxPaths.GathererSwapPortal);
+        var spawned = Spawn(prefab, position + Vector3.up * 0.1f, Quaternion.identity, 1.1f, 1.1f);
+        if (spawned != null)
+            PrepareEffect(spawned);
+        return spawned;
+    }
+
+    public static GameObject SpawnGathererBlackHole(Vector3 center, float radius, float duration)
+    {
+        var root = new GameObject("GathererBlackHoleVfx");
+        root.transform.position = center;
+        var prefab = ResolvePrefab(
+            ResolveAssets()?.gathererBlackHoleVfx ?? ResolveAssets()?.blackHoleVortexVfx,
+            CwslVfxPaths.GathererBlackHole);
+        var spawned = Spawn(prefab, center, Quaternion.identity, 0f, radius / 3.2f);
+        if (spawned != null)
+        {
+            spawned.transform.SetParent(root.transform, true);
+            PrepareEffect(spawned);
+        }
+
+        Object.Destroy(root, duration + 0.1f);
+        return root;
+    }
+
+    public static GameObject SpawnGathererMuzzle(Vector3 position)
+    {
+        var prefab = ResolvePrefab(ResolveAssets()?.gathererMissileVfx, CwslVfxPaths.GathererMissileVisual);
+        var spawned = Spawn(prefab, position, Quaternion.identity, 0.6f, 0.55f);
+        if (spawned != null)
+            PrepareEffect(spawned);
+        return spawned;
+    }
+
+    public static GameObject SpawnBarricadeDetonate(Vector3 position)
+    {
+        var prefab = ResolvePrefab(
+            ResolveAssets()?.barricadeDetonateExplosionVfx,
+            CwslVfxPaths.BarricadeDetonateExplosion);
+        var spawned = Spawn(prefab, position + Vector3.up * 0.2f, Quaternion.identity, 2.2f, 1.2f);
+        if (spawned == null)
+            CwslSimpleVfx.SpawnBurst(position, new Color(1f, 0.4f, 0.1f), 1.6f, 0.45f);
+        else
+            PrepareEffect(spawned);
+        return spawned;
+    }
+
+    public static GameObject SpawnBarricadeJumpPad(Vector3 position, float radius, float duration)
+    {
+        var prefab = ResolvePrefab(
+            ResolveAssets()?.barricadeJumpPadAuraVfx,
+            CwslVfxPaths.BarricadeJumpPadAura);
+        var spawned = Spawn(prefab, position, Quaternion.identity, duration, radius / 3.5f);
+        if (spawned != null)
+            PrepareEffect(spawned);
+        PlayBarricadeJumpPadSound(position);
+        return spawned;
+    }
+
+    private static void PlayBarricadeJumpPadSound(Vector3 position)
+    {
+        var clip = ResolveAssets()?.barricadeJumpPadSound;
+#if UNITY_EDITOR
+        if (clip == null)
+            clip = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>(CwslVfxPaths.BarricadeJumpPadSound);
+#endif
+        if (clip != null)
+            AudioSource.PlayClipAtPoint(clip, position, 0.95f);
+    }
+
+    public static GameObject SpawnBarricadeRepair(Vector3 position)
+    {
+        var prefab = ResolvePrefab(
+            ResolveAssets()?.barricadeRepairSparksVfx,
+            CwslVfxPaths.BarricadeRepairSparks);
+        var spawned = Spawn(prefab, position, Quaternion.identity, 1.2f, 1.1f);
+        if (spawned != null)
+            PrepareEffect(spawned);
+        return spawned;
+    }
+
+    public static GameObject SpawnBarricadeBuildDust(Vector3 position)
+    {
+        return SpawnBarricadeRepair(position);
+    }
+
+    public static GameObject SpawnHealerHealPad(Vector3 position, float radius, float duration)
+    {
+        var prefab = ResolvePrefab(ResolveAssets()?.healerHealPadVfx, CwslVfxPaths.HealerHealPad);
+        var spawned = Spawn(prefab, position, CwslEtfxVfxOrientation.GroundSlamRotationOffset, duration, radius / 3.8f);
+        if (spawned != null)
+            PrepareEffect(spawned);
+        return spawned;
+    }
+
+    public static GameObject SpawnHealerHealBurst(Vector3 position, Color? tint = null)
+    {
+        var prefab = ResolvePrefab(ResolveAssets()?.healerHealBurstVfx, CwslVfxPaths.HealerHealBurst);
+        var spawned = Spawn(prefab, position + Vector3.up * 0.8f, CwslEtfxVfxOrientation.GroundSlamRotationOffset, 1.6f, 1.15f);
+        if (spawned != null)
+        {
+            PrepareEffect(spawned);
+            if (tint.HasValue)
+                TintParticleSystems(spawned, tint.Value);
+        }
+        return spawned;
+    }
+
+    public static GameObject SpawnHealerPoisonPad(Vector3 position, float radius, float duration)
+    {
+        var prefab = ResolvePrefab(ResolveAssets()?.healerPoisonPadVfx, CwslVfxPaths.HealerPoisonPad);
+        var spawned = Spawn(prefab, position + Vector3.up * 0.4f, CwslEtfxVfxOrientation.GroundSlamRotationOffset, duration, radius / 3.5f);
+        if (spawned != null)
+            PrepareEffect(spawned);
+        return spawned;
+    }
+
+    public static GameObject AttachHealerHasteBuff(Transform parent, float duration)
+    {
+        if (parent == null)
+            return null;
+
+        // R 버프는 항상 노란 계열 프리팹 경로를 우선 사용해 색상을 고정한다.
+        var prefab = ResolvePrefab(null, CwslVfxPaths.HealerHasteBuff)
+                     ?? ResolvePrefab(ResolveAssets()?.healerHasteBuffVfx, CwslVfxPaths.HealerHasteBuff);
+        var spawned = Spawn(prefab, parent.position + Vector3.up * 0.9f, Quaternion.identity, 0f, 1.35f);
+        if (spawned == null)
+            return null;
+
+        spawned.transform.SetParent(parent, false);
+        spawned.transform.localPosition = Vector3.up * 0.9f;
+        spawned.transform.localRotation = CwslEtfxVfxOrientation.HeadStatusAttachRotation;
+        PrepareEffect(spawned);
+        Object.Destroy(spawned, duration + 0.05f);
+        return spawned;
     }
 
     public static CwslGameAssets GetAssets() => ResolveAssets();

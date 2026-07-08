@@ -31,8 +31,6 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
     private CwslPlayerCharacter playerCharacter;
     private CwslPlayerHealth playerHealth;
     private CwslPlayerStun playerStun;
-    private CwslPlayerGold playerGold;
-    private CwslPlayerPillBuff pillBuff;
     private CwslPlayerBodyCollider bodyCollider;
 
     private Vector3 moveDirection = Vector3.forward;
@@ -41,7 +39,6 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
     private bool steerHeld;
     private bool momentumActive;
     private float wingSpreadStartTime;
-    private float nextGoldSpendTime;
     private CwslPlayerSkillCooldowns skillCooldowns;
 
     public float CurrentSpeed => syncedSpeed.Value;
@@ -61,8 +58,6 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
         playerCharacter = GetComponent<CwslPlayerCharacter>();
         playerHealth = GetComponent<CwslPlayerHealth>();
         playerStun = GetComponent<CwslPlayerStun>();
-        playerGold = GetComponent<CwslPlayerGold>();
-        pillBuff = GetComponent<CwslPlayerPillBuff>();
         bodyCollider = GetComponent<CwslPlayerBodyCollider>();
         skillCooldowns = GetComponent<CwslPlayerSkillCooldowns>();
         moveDirection = transform.forward.sqrMagnitude > 0.0001f ? transform.forward : Vector3.forward;
@@ -141,8 +136,7 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
                (playerHealth == null || playerHealth.IsAlive) &&
                !IsStunned &&
                !isWingSpreadActive.Value &&
-               (skillCooldowns == null || skillCooldowns.IsReady(0)) &&
-               CanAffordSkillGold(CwslGameConstants.RammerWingSpreadStartGoldCost);
+               (skillCooldowns == null || skillCooldowns.IsReady(0));
     }
 
     public override void OnSkillPressedServer(ulong senderClientId)
@@ -157,17 +151,9 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
         if (skillCooldowns != null && !skillCooldowns.IsReady(0))
             return;
 
-        if (!TrySpendSkillGold(CwslGameConstants.RammerWingSpreadStartGoldCost, playSpendEffect: false))
-        {
-            GetComponent<CwslPlayerSkills>()?.NotifyGoldInsufficientServer();
-            return;
-        }
-
         isWingSpreadActive.Value = true;
         wingSpreadStartTime = Time.time;
-        nextGoldSpendTime = Time.time + CwslGameConstants.RammerWingSpreadGoldIntervalSeconds;
         syncedBladeScale.Value = 1f;
-        PlayWingGoldSpendClientRpc(transform.position, CwslGameConstants.RammerWingSpreadStartGoldCost);
     }
 
     public override void OnSkillReleasedServer(ulong senderClientId)
@@ -200,18 +186,6 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
             1f,
             CwslGameConstants.RammerWingSpreadMaxScale,
             Mathf.Clamp01(elapsed / CwslGameConstants.RammerWingSpreadGrowSeconds));
-
-        if (Time.time >= nextGoldSpendTime)
-        {
-            nextGoldSpendTime = Time.time + CwslGameConstants.RammerWingSpreadGoldIntervalSeconds;
-            if (!TrySpendSkillGold(CwslGameConstants.RammerWingSpreadTickGoldCost, playSpendEffect: false))
-            {
-                StopWingSpreadServer();
-                return;
-            }
-
-            PlayWingGoldSpendClientRpc(transform.position, CwslGameConstants.RammerWingSpreadTickGoldCost);
-        }
 
         if (syncedBladeScale.Value >= CwslGameConstants.RammerWingSpreadMinScaleForDamage)
             TickWingSpreadDamageServer();
@@ -691,12 +665,6 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
         }
     }
 
-    [ClientRpc]
-    private void PlayWingGoldSpendClientRpc(Vector3 position, int amount)
-    {
-        CwslGoldFeedback.PlaySpend(position + Vector3.up * 0.9f, amount);
-    }
-
     private void EnableNavMeshAgent()
     {
         if (agent == null)
@@ -710,25 +678,4 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
         }
     }
 
-    private bool CanAffordSkillGold(int amount)
-    {
-        if (!CwslGameConstants.SkillsConsumeGold)
-            return true;
-
-        if (pillBuff != null && pillBuff.CanAffordSkillGold(playerGold, amount))
-            return true;
-
-        return playerGold != null && playerGold.Gold >= amount;
-    }
-
-    private bool TrySpendSkillGold(int amount, bool playSpendEffect = true)
-    {
-        if (!CwslGameConstants.SkillsConsumeGold)
-            return true;
-
-        if (pillBuff != null && pillBuff.TrySpendSkillGold(playerGold, amount, playSpendEffect))
-            return true;
-
-        return playerGold != null && playerGold.TrySpendGoldServer(amount, playSpendEffect);
-    }
 }

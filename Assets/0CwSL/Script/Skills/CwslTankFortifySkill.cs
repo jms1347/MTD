@@ -140,7 +140,17 @@ public class CwslTankFortifySkill : CwslPlayerSkillBase
         if (isShieldActive.Value == active)
             return;
 
+        var wasActive = isShieldActive.Value;
         isShieldActive.Value = active;
         shieldFortifyVisual?.SetFortifyServer(active);
+
+        if (!wasActive && active)
+            PlayFortifyQActivatedClientRpc();
+    }
+
+    [ClientRpc]
+    private void PlayFortifyQActivatedClientRpc()
+    {
+        CwslSkillAudioFeedback.PlayTankShieldFortifyQ(transform.position);
     }
 }

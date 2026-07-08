@@ -19,6 +19,26 @@ public class CwslRangedMonster : CwslMonsterBase
 
     protected override void TickServerAI()
     {
+        if (IsValidWallTarget(currentWallTarget))
+        {
+            var wallStand = GetCombatStandDistance();
+            var wallDistance = GetFlatDistanceToCombatPosition();
+            if (wallDistance > wallStand)
+                MoveToward(GetTargetMovePosition());
+            else
+            {
+                FaceTarget(GetTargetFacePosition());
+                fireTimer -= Time.deltaTime;
+                if (fireTimer <= 0f)
+                {
+                    fireTimer = GetFireCooldown();
+                    currentWallTarget.DamageServer(GetScaledDamage(CwslMonsterStatCatalog.RangedProjectileDamage));
+                }
+            }
+
+            return;
+        }
+
         if (!IsValidTarget(currentTarget))
             return;
 

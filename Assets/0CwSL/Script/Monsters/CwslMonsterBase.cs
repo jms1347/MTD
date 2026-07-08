@@ -7,6 +7,7 @@ public abstract class CwslMonsterBase : NetworkBehaviour
 
     protected CwslMonsterHealth health;
     protected NetworkObject currentTarget;
+    protected CwslBarricadeWall currentWallTarget;
     protected float targetRefreshTimer;
     protected CwslMonsterTargetingMode targetingMode = CwslMonsterTargetingMode.Nearest;
     protected float localDamageMultiplier = 1f;
@@ -156,13 +157,16 @@ public abstract class CwslMonsterBase : NetworkBehaviour
             return;
 
         targetRefreshTimer -= Time.deltaTime;
-        if (targetRefreshTimer <= 0f || !IsValidTarget(currentTarget))
+        if (targetRefreshTimer <= 0f || (!IsValidTarget(currentTarget) && !IsValidWallTarget(currentWallTarget)))
         {
             targetRefreshTimer = 0.35f;
             RefreshTarget();
         }
 
-        if (!IsValidTarget(currentTarget))
+        // 이동 중 벽 충돌이면 벽 우선 타겟
+        TryAcquireBlockingWallAlongPath();
+
+        if (!IsValidTarget(currentTarget) && !IsValidWallTarget(currentWallTarget))
             return;
 
         TickServerAI();
@@ -172,6 +176,8 @@ public abstract class CwslMonsterBase : NetworkBehaviour
 
     protected void RefreshTarget()
     {
+        currentWallTarget = null;
+
         var forcedComponent = GetComponent<CwslMonsterForcedTarget>();
         if (forcedComponent != null && forcedComponent.TryGetTarget(out var localForced))
         {
@@ -198,7 +204,28 @@ public abstract class CwslMonsterBase : NetworkBehaviour
             currentTarget = target;
         else
             currentTarget = null;
+
+        TryAcquireBlockingWallAlongPath();
     }
+
+    protected void TryAcquireBlockingWallAlongPath()
+    {
+        if (!IsValidTarget(currentTarget))
+            return;
+
+        var desired = GetPrimaryMovePosition();
+        if (!CwslBarricadeWallRegistry.TryGetNearestBlockingWall(
+                transform.position,
+                desired,
+                out var wall,
+                out _))
+            return;
+
+        currentWallTarget = wall;
+    }
+
+    protected static bool IsValidWallTarget(CwslBarricadeWall wall) =>
+        wall != null && wall.IsAlive;
 
     protected static bool TryGetNexusTarget(out NetworkObject nexusObject)
     {
@@ -234,7 +261,7 @@ public abstract class CwslMonsterBase : NetworkBehaviour
         return baseDamage * managerMult * localDamageMultiplier * runtimeMult;
     }
 
-    protected Vector3 GetTargetMovePosition()
+    protected Vector3 GetPrimaryMovePosition()
     {
         if (currentTarget == null)
             return transform.position;
@@ -246,8 +273,19 @@ public abstract class CwslMonsterBase : NetworkBehaviour
         return currentTarget.transform.position;
     }
 
+    protected Vector3 GetTargetMovePosition()
+    {
+        if (IsValidWallTarget(currentWallTarget))
+            return currentWallTarget.GetMeleeApproachPoint(transform.position, GetMovementClampRadius());
+
+        return GetPrimaryMovePosition();
+    }
+
     protected Vector3 GetTargetFacePosition()
     {
+        if (IsValidWallTarget(currentWallTarget))
+            return currentWallTarget.GetAimPoint();
+
         if (currentTarget == null)
             return transform.position + transform.forward;
 
@@ -264,6 +302,9 @@ public abstract class CwslMonsterBase : NetworkBehaviour
 
     protected float GetCombatStandDistance()
     {
+        if (IsValidWallTarget(currentWallTarget))
+            return 1.15f;
+
         return currentTarget != null && currentTarget.GetComponent<CwslNexus>() != null ? 1.2f : 1.05f;
     }
 
@@ -301,6 +342,17 @@ public abstract class CwslMonsterBase : NetworkBehaviour
 
         var step = flat.normalized * (LastWalkSpeed * Time.deltaTime);
         var next = transform.position + step;
+
+        if (CwslBarricadeWallRegistry.TryGetNearestBlockingWall(
+                transform.position,
+                next,
+                out var wall,
+                out var hitPoint))
+        {
+            currentWallTarget = wall;
+            next = hitPoint;
+        }
+
         transform.position = CwslArenaUtility.ClampToPlayArea(next, GetMovementClampRadius());
         transform.rotation = Quaternion.Slerp(
             transform.rotation,
@@ -320,6 +372,17 @@ public abstract class CwslMonsterBase : NetworkBehaviour
 
     protected bool TryDamageCurrentTargetMelee(float baseDamage, float maxDistance, Vector3 hitPointOffset)
     {
+        var damage = GetScaledDamage(baseDamage);
+
+        if (IsValidWallTarget(currentWallTarget))
+        {
+            if (GetFlatDistanceToCombatPosition() > maxDistance)
+                return false;
+
+            currentWallTarget.DamageServer(damage);
+            return true;
+        }
+
         if (!IsValidTarget(currentTarget))
             return false;
 
@@ -329,7 +392,6 @@ public abstract class CwslMonsterBase : NetworkBehaviour
         if (distance > maxDistance)
             return false;
 
-        var damage = GetScaledDamage(baseDamage);
         var nexus = currentTarget.GetComponent<CwslNexus>();
         if (nexus != null)
         {

@@ -36,6 +36,25 @@ public static class CwslMouseGround
         return TryIntersectArenaGround(ray, out point);
     }
 
+    /// <summary>스킬 지면 미리보기/시전 — 마우스 아래 바닥(y=0)을 우선해 유닛 위에서도 원이 따라온다.</summary>
+    public static bool TryGetSkillGroundPoint(Camera camera, out Vector3 point)
+    {
+        point = default;
+        if (camera == null)
+            return false;
+
+        var ray = camera.ScreenPointToRay(Input.mousePosition);
+        if (TryIntersectArenaGround(ray, out point))
+            return true;
+
+        if (!Physics.Raycast(ray, out var hit, 500f, ~0, QueryTriggerInteraction.Ignore))
+            return false;
+
+        point = hit.point;
+        point.y = 0f;
+        return ClampGroundPoint(ref point);
+    }
+
     private static bool ShouldUseBlindGroundPlanePick()
     {
         return CwslPlayerVision.Local != null && CwslPlayerVision.Local.IsBlindVision;
@@ -48,6 +67,12 @@ public static class CwslMouseGround
             return false;
 
         point = ray.GetPoint(distance);
+        point.y = 0f;
+        return ClampGroundPoint(ref point);
+    }
+
+    private static bool ClampGroundPoint(ref Vector3 point)
+    {
         point.y = 0f;
 
         if (CwslDefensePrepUtility.IsPrepBoundaryActive())

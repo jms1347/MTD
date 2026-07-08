@@ -149,6 +149,7 @@ public class CwslRedMageTeleportSkill : CwslPlayerSkillBase
     private void PlayDepartPortalClientRpc(Vector3 position)
     {
         SpawnPortal(position, CwslGameConstants.RedMageTeleportDepartPortalLifetime);
+        CwslSkillAudioFeedback.PlayRedMageTeleportCast(position);
     }
 
     [ClientRpc]

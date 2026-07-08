@@ -28,7 +28,6 @@ public class CwslSuicideMonster : CwslMonsterBase, ICwslPooledNetworkObject
     {
         detonated = false;
         ResetSuicideState();
-        GetComponent<CwslSuicideFuseController>()?.ResetForPool();
     }
 
     private void EnsureFuseController()

@@ -48,14 +48,26 @@ public static class CwslCharacterCatalog
         new(
             CwslCharacterId.MomentumRammer,
             "질주자",
-            "임시 밸런스: HP/공격/방어/시야 동일 · Q/E/R/F 스킬 4개 · 스테미너 소모",
-            "우클릭 홀드 조향 | 좌클릭 적선택 | A+클릭 어택 | Q/E/R/F 스킬 | G 골드 선물",
+            "임시 밸런스: HP/공격/방어/시야 동일 · Q/E/R/W 스킬 4개 · 스테미너 소모",
+            "우클릭 홀드 조향 | 좌클릭 적선택 | A+클릭 어택 | Q/E/R/W 스킬 | G 골드 선물",
             CwslGameConstants.PlayerVisionRadius),
         new(
             CwslCharacterId.CrowdGatherer,
             "끌모",
-            "임시 밸런스: HP/공격/방어/시야 동일 · Q/E/R/F 스킬 4개 · 스테미너 소모",
-            "우클릭 이동 | 좌클릭 적선택 | A+클릭 어택 | Q/E/R/F 스킬 | G 골드 선물",
+            "임시 밸런스: HP/공격/방어/시야 동일 · Q/E/R/W 스킬 4개 · 스테미너 소모",
+            "우클릭 이동 | 좌클릭 적선택 | A+클릭 어택 | Q/E/R/W 스킬 | G 골드 선물",
+            CwslGameConstants.PlayerVisionRadius),
+        new(
+            CwslCharacterId.Barricade,
+            "바리케이드",
+            "벽돌 인간 · 벽/발판/수리/폭파 · Q/E/R/W 스킬",
+            "우클릭 이동 | 좌클릭 적선택 | A+클릭 어택 | Q 드래그로 벽 · E/R/W 스킬 | G 골드 선물",
+            CwslGameConstants.PlayerVisionRadius),
+        new(
+            CwslCharacterId.Healer,
+            "힐러",
+            "요정 프리스트 · 힐/독/버프 · Q/E/R/W 스킬",
+            "우클릭 이동 | 좌클릭 적선택 | A+클릭 어택 | Q 힐장판 · E/R/W 스킬 | G 골드 선물",
             CwslGameConstants.PlayerVisionRadius)
     };
 

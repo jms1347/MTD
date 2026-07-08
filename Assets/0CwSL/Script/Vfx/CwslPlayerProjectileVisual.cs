@@ -73,6 +73,8 @@ public class CwslPlayerProjectileVisual : NetworkBehaviour
             2 => assets.missileTankPoisonAmmoVfx ?? assets.playerMissileVfx,
             3 => assets.missileTankLightningAmmoVfx ?? assets.playerMissileVfx,
             4 => assets.missileTankSmokeBombVfx ?? assets.playerMissileVfx,
+            5 => assets.gathererMissileVfx ?? assets.playerMissileVfx,
+            6 => assets.healerMissileVfx ?? assets.playerMissileVfx,
             _ => assets.playerMissileVfx,
         };
     }
@@ -96,6 +98,8 @@ public class CwslPlayerProjectileVisual : NetworkBehaviour
             2 => new Color(0.35f, 0.95f, 0.25f),
             3 => new Color(1f, 0.92f, 0.2f),
             4 => new Color(0.45f, 0.95f, 0.35f),
+            5 => new Color(0.55f, 0.28f, 0.95f),
+            6 => new Color(0.35f, 0.95f, 0.45f),
             _ => new Color(0.55f, 0.72f, 0.95f),
         };
         CwslMaterialUtil.ApplyColor(bullet.GetComponent<Renderer>(), color);

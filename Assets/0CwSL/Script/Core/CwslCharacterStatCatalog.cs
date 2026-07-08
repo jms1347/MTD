@@ -27,6 +27,8 @@ public static class CwslCharacterStatCatalog
             CwslCharacterId.RedMage => new Entry(120f, 60f, 0f, 5f),
             CwslCharacterId.MomentumRammer => new Entry(350f, 25f, 8f, 7f),
             CwslCharacterId.CrowdGatherer => new Entry(250f, 18f, 5f, 5f),
+            CwslCharacterId.Barricade => new Entry(480f, 20f, 12f, 4.2f),
+            CwslCharacterId.Healer => new Entry(160f, 22f, 1f, 5.2f),
             _ => new Entry(600f, 15f, 15f, 4.5f)
         };
     }
@@ -41,6 +43,9 @@ public static class CwslCharacterStatCatalog
         return id switch
         {
             CwslCharacterId.Tank => 3f,
+            CwslCharacterId.CrowdGatherer => CwslGameConstants.GathererMissileCooldown,
+            CwslCharacterId.Barricade => CwslGameConstants.BarricadeMeleeCooldown,
+            CwslCharacterId.Healer => CwslGameConstants.HealerMissileCooldown,
             _ => CwslGameConstants.AttackCooldown
         };
     }

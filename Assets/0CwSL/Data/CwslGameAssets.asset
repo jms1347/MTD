@@ -61,6 +61,23 @@ MonoBehaviour:
   gatherPullVortexVfx: {fileID: 124416, guid: 9b95de169c5cf5b46b404f6f2bed4afb, type: 3}
   gatherPullBurstVfx: {fileID: 124416, guid: 9b95de169c5cf5b46b404f6f2bed4afb, type: 3}
   gatherSlowEnchantVfx: {fileID: 164592, guid: 5423bfc84896575469c1270496ce5a32, type: 3}
+  gathererMissileVfx: {fileID: 121954, guid: c849c99816049e5458f41c3e3ccf118c, type: 3}
+  gathererYankBurstVfx: {fileID: 124416, guid: 9b95de169c5cf5b46b404f6f2bed4afb, type: 3}
+  gathererSwapPortalVfx: {fileID: 1414887181323416, guid: aef81f0abc923284db4c90166664a2e7, type: 3}
+  gathererBlackHoleVfx: {fileID: 185918, guid: e83fb83871ed1ac4d978b22b0f2a4d71, type: 3}
+  rammerBrakeBurstVfx: {fileID: 120778, guid: 632339e29e2ddd64aab6f9dd68facc82, type: 3}
+  rammerRopeAttachVfx: {fileID: 164592, guid: 5423bfc84896575469c1270496ce5a32, type: 3}
+  rammerRopeFlingVfx: {fileID: 1090678147105552, guid: bac6010fd61d72b419fb265a96000090, type: 3}
+  rammerFireTrailVfx: {fileID: 185338, guid: c39f135b5ead72a49b86bcf04496181d, type: 3}
+  rammerFireTrailZoneVfx: {fileID: 1681286073628092, guid: 7ce1cf2537abade4bae7a6789ca2223f, type: 3}
+  barricadeDetonateExplosionVfx: {fileID: 130346, guid: 07bf9ced87963e24299c2c2a22bfeeb6, type: 3}
+  barricadeJumpPadAuraVfx: {fileID: 183362, guid: 3f97cdb2dde8d7f44a37ce3a93c2bf69, type: 3}
+  barricadeRepairSparksVfx: {fileID: 153838, guid: 80c6b5d330112ef41800a729a58d22e7, type: 3}
+  healerMissileVfx: {fileID: 146404, guid: 41fc6e40715949e47aa61f8001df94fe, type: 3}
+  healerHealPadVfx: {fileID: 108808, guid: 5128d0fb523fca6439fa131a1063c074, type: 3}
+  healerHealBurstVfx: {fileID: 185744, guid: b88a52d0de3924c4db6011de30ecccd0, type: 3}
+  healerPoisonPadVfx: {fileID: 167252, guid: e7c3a9353c0302b4cb1fab702e1db14f, type: 3}
+  healerHasteBuffVfx: {fileID: 134348, guid: 491da4be801efb948b57d5aa03918aa6, type: 3}
   bossTeleportDepartVfx: {fileID: 1414887181323416, guid: aef81f0abc923284db4c90166664a2e7, type: 3}
   bossTeleportArriveVfx: {fileID: 1216923556492372, guid: cf0aeef6718bb3c47b97edde031754db, type: 3}
   bossPhaseTransitionVfx: {fileID: 120778, guid: 632339e29e2ddd64aab6f9dd68facc82, type: 3}
@@ -139,6 +156,13 @@ MonoBehaviour:
   redMageLightningOrbCastSound: {fileID: 8300000, guid: 0bab18109cc0d434fa35ed3a525ef1e2, type: 3}
   redMageLightningOrbStrikeSound: {fileID: 8300000, guid: 715780c44280b5a478739a8d5c7221ce, type: 3}
   redMageLightningOrbImpactSound: {fileID: 8300000, guid: b1acecdf352627048b995eca86c0f8ec, type: 3}
+  redMageTeleportCastSound: {fileID: 8300000, guid: 45c2b17214ab69c4e977c1c3dd1fbaf7, type: 3}
+  tankShieldSlamGroundImpactSound: {fileID: 8300000, guid: ad2c1c615b013d94b810f48566c4ba00, type: 3}
+  tankShieldWhirlwindFanLoopSound: {fileID: 8300000, guid: 875701cd9546a3e4fabc2512b7b1645b, type: 3}
+  tankShieldWhirlwindPowerPunchSound: {fileID: 8300000, guid: bc6435bcef785cc42bb0c2b7ae5ebb14, type: 3}
+  tankShieldDashImpactSound: {fileID: 8300000, guid: 63f5297c4626c9f43ba0b3212c20aca8, type: 3}
+  tankShieldFortifyQSound: {fileID: 8300000, guid: d18f8bca1c6af5c41b9eb2122e900b9a, type: 3}
+  barricadeJumpPadSound: {fileID: 8300000, guid: 6d814b058ab0d9b4bbc1cd97ca0af12c, type: 3}
   playerPrefab: {fileID: 6360497807503343767, guid: 5885e0e861be95e41b8318c7d2df905d, type: 3}
   rangedMonsterPrefab: {fileID: 5648177666945189405, guid: 7c47dd5b69da58e46b0228723bfc6e50, type: 3}
   inkSniperMonsterPrefab: {fileID: 7496961707958841258, guid: e956cfab686e7f5498a96fc182238940, type: 3}

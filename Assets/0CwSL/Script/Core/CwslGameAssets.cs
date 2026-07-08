@@ -52,6 +52,23 @@ public class CwslGameAssets : ScriptableObject
     public GameObject gatherPullVortexVfx;
     public GameObject gatherPullBurstVfx;
     public GameObject gatherSlowEnchantVfx;
+    public GameObject gathererMissileVfx;
+    public GameObject gathererYankBurstVfx;
+    public GameObject gathererSwapPortalVfx;
+    public GameObject gathererBlackHoleVfx;
+    public GameObject rammerBrakeBurstVfx;
+    public GameObject rammerRopeAttachVfx;
+    public GameObject rammerRopeFlingVfx;
+    public GameObject rammerFireTrailVfx;
+    public GameObject rammerFireTrailZoneVfx;
+    public GameObject barricadeDetonateExplosionVfx;
+    public GameObject barricadeJumpPadAuraVfx;
+    public GameObject barricadeRepairSparksVfx;
+    public GameObject healerMissileVfx;
+    public GameObject healerHealPadVfx;
+    public GameObject healerHealBurstVfx;
+    public GameObject healerPoisonPadVfx;
+    public GameObject healerHasteBuffVfx;
     public GameObject bossTeleportDepartVfx;
     public GameObject bossTeleportArriveVfx;
     public GameObject bossPhaseTransitionVfx;
@@ -130,6 +147,14 @@ public class CwslGameAssets : ScriptableObject
     public AudioClip redMageLightningOrbCastSound;
     public AudioClip redMageLightningOrbStrikeSound;
     public AudioClip redMageLightningOrbImpactSound;
+    public AudioClip redMageTeleportCastSound;
+
+    public AudioClip tankShieldSlamGroundImpactSound;
+    public AudioClip tankShieldWhirlwindFanLoopSound;
+    public AudioClip tankShieldWhirlwindPowerPunchSound;
+    public AudioClip tankShieldDashImpactSound;
+    public AudioClip tankShieldFortifyQSound;
+    public AudioClip barricadeJumpPadSound;
 
     public GameObject playerPrefab;
     public GameObject rangedMonsterPrefab;

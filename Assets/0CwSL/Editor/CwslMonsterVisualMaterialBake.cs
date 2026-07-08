@@ -79,10 +79,34 @@ public static class CwslMonsterVisualMaterialBake
 
     private static Material CreateEmbeddedMaterial(GameObject prefabAsset, Color color, CwslMaterialStyle style = CwslMaterialStyle.Matte)
     {
+        var materialName = "CwslMat_" + style + "_" + ColorUtility.ToHtmlStringRGB(color);
+        var existing = FindEmbeddedMaterial(prefabAsset, materialName);
+        if (existing != null)
+            return existing;
+
         var material = CwslMaterialUtil.CreateStyled(color, style);
-        material.name = "CwslMat_" + style + "_" + ColorUtility.ToHtmlStringRGB(color);
+        material.name = materialName;
         AssetDatabase.AddObjectToAsset(material, prefabAsset);
         return material;
+    }
+
+    private static Material FindEmbeddedMaterial(GameObject prefabAsset, string materialName)
+    {
+        if (prefabAsset == null || string.IsNullOrEmpty(materialName))
+            return null;
+
+        var prefabPath = AssetDatabase.GetAssetPath(prefabAsset);
+        if (string.IsNullOrEmpty(prefabPath))
+            return null;
+
+        var subAssets = AssetDatabase.LoadAllAssetsAtPath(prefabPath);
+        foreach (var asset in subAssets)
+        {
+            if (asset is Material material && material.name == materialName)
+                return material;
+        }
+
+        return null;
     }
 
     private static bool ShouldBakeRenderer(Renderer renderer)

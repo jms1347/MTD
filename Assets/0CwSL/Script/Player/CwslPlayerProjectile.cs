@@ -34,6 +34,14 @@ public class CwslPlayerProjectile : NetworkBehaviour, ICwslPooledNetworkObject
 
     public byte VisualKind => networkVisualKind.Value;
 
+    public void SetVisualKindServer(byte kind)
+    {
+        if (!IsServer)
+            return;
+
+        networkVisualKind.Value = kind;
+    }
+
     public void Configure(
         Vector3 fireDirection,
         float projectileSpeed,

@@ -4,7 +4,7 @@ using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.AI;
 
-/// <summary>?ù? R ???? ?ù?. 4?? ?? ??.</summary>
+/// <summary>??? R ???? ???. 4?? ?? ??.</summary>
 public class CwslTankShieldWhirlwindSkill : CwslPlayerSkillBase
 {
     public const int BoundSlotIndex = 2;
@@ -199,6 +199,7 @@ public class CwslTankShieldWhirlwindSkill : CwslPlayerSkillBase
             whirlwindTargets.Add(monster);
         }
 
+        var hitPositions = new List<Vector3>(whirlwindTargets.Count);
         for (var i = 0; i < whirlwindTargets.Count; i++)
         {
             var monster = whirlwindTargets[i];
@@ -207,11 +208,16 @@ public class CwslTankShieldWhirlwindSkill : CwslPlayerSkillBase
 
             var flat = monster.transform.position - center;
             flat.y = 0f;
+
+            hitPositions.Add(monster.GetFlatHitPoint());
             monster.DamageFromPlayer(OwnerClientId, damage);
 
             if (flat.sqrMagnitude > 0.0001f)
                 ApplyWhirlwindHitReact(monster, flat.normalized, empowered);
         }
+
+        if (hitPositions.Count > 0)
+            PlayWhirlwindPowerPunchClientRpc(hitPositions.ToArray());
     }
 
     private static void ApplyWhirlwindHitReact(CwslMonsterHealth monster, Vector3 worldDirection, bool empowered)
@@ -237,5 +243,19 @@ public class CwslTankShieldWhirlwindSkill : CwslPlayerSkillBase
         if (visual == null && visualRoot != null)
             visual = visualRoot.gameObject.AddComponent<CwslTankShieldSkillVisual>();
         visual?.PlayWhirlwind(duration, empowered);
+
+        var loopPos = transform.position;
+        loopPos.y = CwslTankShieldVfxUtil.VisualGroundY;
+        CwslSkillAudioFeedback.PlayTankShieldWhirlwindFanLoop(loopPos, duration);
+    }
+
+    [ClientRpc]
+    private void PlayWhirlwindPowerPunchClientRpc(Vector3[] hitPositions)
+    {
+        if (hitPositions == null || hitPositions.Length == 0)
+            return;
+
+        foreach (var pos in hitPositions)
+            CwslSkillAudioFeedback.PlayTankShieldWhirlwindPowerPunch(pos);
     }
 }

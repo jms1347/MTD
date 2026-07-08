@@ -97,7 +97,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 1979106158
+  GlobalObjectIdHash: 748029760
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -236,7 +236,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: -6859061353335075044}
+  - {fileID: 572505844178794561}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -272,7 +272,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: db041c337bb1f26428a589d19a8f892b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CwslPillWorldVisual
---- !u!21 &-6859061353335075044
+--- !u!21 &572505844178794561
 Material:
   serializedVersion: 8
   m_ObjectHideFlags: 0
@@ -354,7 +354,7 @@ Material:
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
---- !u!21 &8604229754100803
+--- !u!21 &767863261154831679
 Material:
   serializedVersion: 8
   m_ObjectHideFlags: 0
@@ -436,7 +436,7 @@ Material:
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
---- !u!21 &499938836023915252
+--- !u!21 &884245593949351199
 Material:
   serializedVersion: 8
   m_ObjectHideFlags: 0
@@ -518,7 +518,7 @@ Material:
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
---- !u!21 &758854510182809022
+--- !u!21 &2663136016666279294
 Material:
   serializedVersion: 8
   m_ObjectHideFlags: 0
@@ -600,7 +600,7 @@ Material:
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
---- !u!21 &3281593085459909576
+--- !u!21 &4325487017127438261
 Material:
   serializedVersion: 8
   m_ObjectHideFlags: 0
@@ -682,7 +682,7 @@ Material:
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
---- !u!21 &5670635912087033151
+--- !u!21 &6345632350505358067
 Material:
   serializedVersion: 8
   m_ObjectHideFlags: 0
@@ -764,7 +764,7 @@ Material:
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
---- !u!21 &7189600402595585394
+--- !u!21 &7629502906995418036
 Material:
   serializedVersion: 8
   m_ObjectHideFlags: 0
@@ -846,7 +846,7 @@ Material:
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
---- !u!21 &7906033319634125348
+--- !u!21 &7965250103038669000
 Material:
   serializedVersion: 8
   m_ObjectHideFlags: 0
@@ -928,7 +928,7 @@ Material:
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
---- !u!21 &8923830794956842734
+--- !u!21 &8962190508135767918
 Material:
   serializedVersion: 8
   m_ObjectHideFlags: 0

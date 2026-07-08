@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.AI;
@@ -15,6 +16,7 @@ public class CwslTankShieldDashSkill : CwslPlayerSkillBase
     private CwslTankShieldAttack shieldAttack;
     private CwslTankShieldSlamSkill slamSkill;
     private CwslTankShieldWhirlwindSkill whirlwindSkill;
+    private CwslTankShieldSkillVisual shieldSkillVisual;
     private NavMeshAgent agent;
     private Coroutine dashRoutine;
     private CwslPlayerSkillCooldowns skillCooldowns;
@@ -37,6 +39,7 @@ public class CwslTankShieldDashSkill : CwslPlayerSkillBase
         shieldAttack = GetComponent<CwslTankShieldAttack>();
         slamSkill = GetComponent<CwslTankShieldSlamSkill>();
         whirlwindSkill = GetComponent<CwslTankShieldWhirlwindSkill>();
+        shieldSkillVisual = transform.Find("Visual")?.GetComponent<CwslTankShieldSkillVisual>();
         agent = GetComponent<NavMeshAgent>();
         skillCooldowns = GetComponent<CwslPlayerSkillCooldowns>();
     }
@@ -99,6 +102,9 @@ public class CwslTankShieldDashSkill : CwslPlayerSkillBase
 
     private Vector3 ResolveDashDirection(Vector3 worldPoint)
     {
+        if (movement != null && movement.TryGetFlatMoveDirection(out var moveDirection))
+            return moveDirection;
+
         var flat = worldPoint - transform.position;
         flat.y = 0f;
         if (flat.sqrMagnitude < 0.15f)
@@ -122,9 +128,11 @@ public class CwslTankShieldDashSkill : CwslPlayerSkillBase
             agent.updateRotation = false;
         }
 
+        shieldSkillVisual?.ResetShieldPoseImmediate();
         transform.rotation = Quaternion.LookRotation(direction, Vector3.up);
         var empowered = fortifySkill != null && fortifySkill.IsShieldActive;
         PlayDashClientRpc(direction, empowered);
+        var notifiedMonsters = new HashSet<int>(16);
 
         var duration = CwslGameConstants.TankShieldDashDuration;
         var distance = CwslGameConstants.TankShieldDashDistance;
@@ -139,15 +147,16 @@ public class CwslTankShieldDashSkill : CwslPlayerSkillBase
             var t = Mathf.Clamp01(elapsed / duration);
             var target = origin + direction * (distance * t);
             var next = CwslArenaUtility.ClampToPlayArea(target, bodyRadius);
+            transform.rotation = Quaternion.LookRotation(direction, Vector3.up);
             transform.position = next;
 
-            ApplyDashPushServer(direction, empowered);
+            ApplyDashPushServer(direction, empowered, notifiedMonsters);
             yield return null;
         }
 
         var finalPos = CwslArenaUtility.ClampToPlayArea(origin + direction * distance, bodyRadius);
         transform.position = finalPos;
-        ApplyDashPushServer(direction, empowered);
+        ApplyDashPushServer(direction, empowered, notifiedMonsters);
 
         if (agent != null && agent.enabled)
         {
@@ -161,22 +170,24 @@ public class CwslTankShieldDashSkill : CwslPlayerSkillBase
         dashRoutine = null;
     }
 
-    private void ApplyDashPushServer(Vector3 dashDirection, bool empowered)
+    private void ApplyDashPushServer(Vector3 dashDirection, bool empowered, HashSet<int> notifiedMonsters)
     {
         PushMonstersInRadiusServer(
             transform.position,
             CwslGameConstants.TankShieldDashPushRadius,
             dashDirection,
-            empowered);
+            empowered,
+            notifiedMonsters);
 
         if (empowered)
-            ApplyShieldAreaPushServer();
+            ApplyShieldAreaPushServer(notifiedMonsters);
     }
 
-    private void ApplyShieldAreaPushServer()
+    private void ApplyShieldAreaPushServer(HashSet<int> notifiedMonsters)
     {
         var radius = CwslGameConstants.FortifyShieldBlockRadius;
         var monsters = CwslCombatRegistry.AliveMonsters;
+        var hitPositions = new List<Vector3>(8);
         foreach (var monster in monsters)
         {
             if (monster == null || !monster.IsAlive)
@@ -195,14 +206,22 @@ public class CwslTankShieldDashSkill : CwslPlayerSkillBase
                 direction,
                 CwslGameConstants.TankShieldDashShieldPushDistance,
                 CwslGameConstants.TankShieldDashShieldPushDuration);
+
+            var id = monster.GetInstanceID();
+            if (notifiedMonsters.Add(id))
+                hitPositions.Add(monster.GetFlatHitPoint());
         }
+
+        if (hitPositions.Count > 0)
+            PlayTankShieldDashImpactClientRpc(hitPositions.ToArray());
     }
 
     private void PushMonstersInRadiusServer(
         Vector3 center,
         float radius,
         Vector3 dashDirection,
-        bool empowered)
+        bool empowered,
+        HashSet<int> notifiedMonsters)
     {
         var monsters = CwslCombatRegistry.AliveMonsters;
         var radiusSq = radius * radius;
@@ -212,6 +231,7 @@ public class CwslTankShieldDashSkill : CwslPlayerSkillBase
         var pushDuration = empowered
             ? CwslGameConstants.TankShieldDashEmpoweredPushDuration
             : CwslGameConstants.TankShieldDashPushDuration;
+        var hitPositions = new List<Vector3>(8);
 
         foreach (var monster in monsters)
         {
@@ -226,8 +246,17 @@ public class CwslTankShieldDashSkill : CwslPlayerSkillBase
             var direction = flat.sqrMagnitude < 0.0001f
                 ? dashDirection
                 : Vector3.Lerp(dashDirection, flat.normalized, empowered ? 0.25f : 0.1f).normalized;
+
+            // 대시 도중 같은 몬스터에 대해 반복 사운드가 겹치지 않도록 1회만 재생.
+            var id = monster.GetInstanceID();
+            if (notifiedMonsters.Add(id))
+                hitPositions.Add(monster.GetFlatHitPoint());
+
             ApplyKnockbackToMonster(monster, direction, pushDistance, pushDuration);
         }
+
+        if (hitPositions.Count > 0)
+            PlayTankShieldDashImpactClientRpc(hitPositions.ToArray());
     }
 
     private static void ApplyKnockbackToMonster(
@@ -244,13 +273,17 @@ public class CwslTankShieldDashSkill : CwslPlayerSkillBase
             knockback = monster.gameObject.AddComponent<CwslMonsterKnockback>();
 
         knockback.ApplyKnockbackServer(direction, distance, duration);
-        monster.NotifyHitFlinchServer(direction, distance * 0.22f);
+        monster.NotifyHitFlinchServer(direction, distance * 0.42f);
     }
 
     [ClientRpc]
     private void PlayDashClientRpc(Vector3 direction, bool empowered)
     {
         var visual = transform.Find("Visual");
+        var skillVisual = visual?.GetComponent<CwslTankShieldSkillVisual>();
+        skillVisual?.PlayDash(direction, CwslGameConstants.TankShieldDashDuration);
+        CwslSkillAudioFeedback.PlayTankShieldDashImpact(transform.position);
+
         var dashWave = visual?.GetComponent<CwslTankShieldDashWaveVisual>();
         if (dashWave == null && visual != null)
             dashWave = visual.gameObject.AddComponent<CwslTankShieldDashWaveVisual>();
@@ -258,5 +291,15 @@ public class CwslTankShieldDashSkill : CwslPlayerSkillBase
 
         if (empowered)
             CwslVfxSpawner.SpawnFortifyBlock(transform.position + Vector3.up * 0.9f);
+    }
+
+    [ClientRpc]
+    private void PlayTankShieldDashImpactClientRpc(Vector3[] hitPositions)
+    {
+        if (hitPositions == null || hitPositions.Length == 0)
+            return;
+
+        foreach (var pos in hitPositions)
+            CwslSkillAudioFeedback.PlayTankShieldDashImpact(pos);
     }
 }

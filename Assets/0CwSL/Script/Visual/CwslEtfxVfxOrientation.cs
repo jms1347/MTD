@@ -3,9 +3,9 @@ using UnityEngine;
 /// <summary>Epic Toon FX / CFX 프리팹 기본 회전 보정.</summary>
 public static class CwslEtfxVfxOrientation
 {
-    // ETFX Sword Wave — 루트 X -90° + 전방(Z) 정렬용 Y 180° (풀 리셋 후 파동이 뒤로 가는 현상 보정).
-    public static readonly Quaternion ShieldDashWaveWorldRotationOffset = Quaternion.Euler(-90f, 180f, 0f);
-    public static readonly Quaternion ShieldDashWaveAttachLocalRotation = Quaternion.Euler(-90f, 180f, 0f);
+    // ETFX Sword Wave — 돌진 파동이 하늘을 보지 않도록 X축 90° 보정 + 전후 정렬.
+    public static readonly Quaternion ShieldDashWaveWorldRotationOffset = Quaternion.Euler(0f, 180f, 0f);
+    public static readonly Quaternion ShieldDashWaveAttachLocalRotation = Quaternion.Euler(90f, 0f, 0f);
 
     // ETFX Sword Whirlwind — 수평 방패에 그대로 부착
     public static readonly Quaternion ShieldWhirlwindAttachRotation = Quaternion.identity;

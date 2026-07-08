@@ -194,7 +194,8 @@ public class CwslMissileTankSkill : CwslPlayerSkillBase
             return false;
 
         FireFromGun(GunSide.Right);
-        nextRightFireTime = Time.time + ResolveGunCooldown();
+        nextRightFireTime = Time.time + ResolveGunCooldown()
+                            / Mathf.Max(0.25f, GetComponent<CwslAttackSpeedBuff>()?.AttackSpeedMultiplier ?? 1f);
         return true;
     }
 

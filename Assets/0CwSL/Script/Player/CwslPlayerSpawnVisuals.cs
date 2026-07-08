@@ -56,6 +56,10 @@ public class CwslPlayerSpawnVisuals : NetworkBehaviour
             CwslMonsterVisualBuilder.BuildMomentumRammerPlayer(transform, color);
         else if (characterId == CwslCharacterId.CrowdGatherer)
             CwslMonsterVisualBuilder.BuildCrowdGathererPlayer(transform, color);
+        else if (characterId == CwslCharacterId.Barricade)
+            CwslMonsterVisualBuilder.BuildBarricadePlayer(transform, color);
+        else if (characterId == CwslCharacterId.Healer)
+            CwslMonsterVisualBuilder.BuildHealerPlayer(transform, new Color(0.45f, 0.9f, 0.55f));
         else
             CwslMonsterVisualBuilder.BuildPlayer(transform, color);
 

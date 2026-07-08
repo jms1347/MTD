@@ -18,6 +18,44 @@ public class CwslPlayerMovement : NetworkBehaviour
     public float CurrentMoveSpeed { get; private set; }
     public bool IsMoving => CurrentMoveSpeed > 0.12f;
 
+    /// <summary>현재 이동 중이면 평면 이동 방향을 반환합니다.</summary>
+    public bool TryGetFlatMoveDirection(out Vector3 direction)
+    {
+        direction = Vector3.zero;
+
+        if (agent != null && agent.enabled)
+        {
+            var velocity = agent.velocity;
+            velocity.y = 0f;
+            if (velocity.sqrMagnitude > 0.2f)
+            {
+                direction = velocity.normalized;
+                return true;
+            }
+
+            if (agent.isOnNavMesh && agent.hasPath && !agent.pathPending)
+            {
+                var toSteeringTarget = agent.steeringTarget - transform.position;
+                toSteeringTarget.y = 0f;
+                if (toSteeringTarget.sqrMagnitude > 0.2f)
+                {
+                    direction = toSteeringTarget.normalized;
+                    return true;
+                }
+            }
+        }
+
+        var forward = transform.forward;
+        forward.y = 0f;
+        if (forward.sqrMagnitude > 0.0001f)
+        {
+            direction = forward.normalized;
+            return true;
+        }
+
+        return false;
+    }
+
     public float SpeedMultiplier
     {
         get => speedMultiplier;

@@ -52,17 +52,33 @@ public static class CwslCharacterSkillCatalog
     private static readonly SkillSlotDefinition[] MomentumRammerSkills =
     {
         new("날개 돌진", "Q", 22f, CwslGameConstants.RammerWingSpreadGrowSeconds, true),
-        new("돌파", "E", 26f, 1f, false),
-        new("회전베기", "R", 30f, 1f, false),
-        new("가속", "F", 20f, 1f, false),
+        new("밧줄 연결", "E", 26f, CwslGameConstants.RammerRopeCastDuration, true),
+        new("불꽃 질주", "R", 30f, CwslGameConstants.RammerFireTrailCastDuration, true),
+        new("급브레이크", "W", 20f, CwslGameConstants.RammerBrakeCastDuration, true),
     };
 
     private static readonly SkillSlotDefinition[] CrowdGathererSkills =
     {
         new("끌어모으기", "Q", 26f, CwslGameConstants.GatherChargeSeconds, true),
-        new("넉백", "E", 22f, 1f, false),
-        new("속박", "R", 28f, 1f, false),
-        new("집결", "F", 30f, 1f, false),
+        new("자리 교환", "E", 22f, CwslGameConstants.GathererSwapCastDuration, true),
+        new("블랙홀", "R", 28f, CwslGameConstants.GathererBlackHoleCastDuration, true),
+        new("강제 소환", "W", 30f, CwslGameConstants.GathererYankCastDuration, true),
+    };
+
+    private static readonly SkillSlotDefinition[] BarricadeSkills =
+    {
+        new("방벽 설치", "Q", 24f, CwslGameConstants.BarricadeWallCastDuration, true),
+        new("넥서스 수리", "E", CwslGameConstants.BarricadeRepairStaminaCost, CwslGameConstants.BarricadeRepairDuration, true),
+        new("방벽 폭파", "R", 32f, CwslGameConstants.BarricadeDetonateCastDuration, true),
+        new("점프 발판", "W", 22f, CwslGameConstants.BarricadeJumpPadCastDuration, true),
+    };
+
+    private static readonly SkillSlotDefinition[] HealerSkills =
+    {
+        new("힐 장판", "Q", 24f, CwslGameConstants.HealerHealPadCastDuration, true),
+        new("단체 치유", "E", 30f, CwslGameConstants.HealerBurstHealCastDuration, true),
+        new("축복 가속", "R", 34f, CwslGameConstants.HealerHasteBuffCastDuration, true),
+        new("독 장판", "W", 26f, CwslGameConstants.HealerPoisonPadCastDuration, true),
     };
 
     public static SkillSlotDefinition Get(CwslCharacterId characterId, int slotIndex)
@@ -82,6 +98,8 @@ public static class CwslCharacterSkillCatalog
             CwslCharacterId.RedMage => RedMageSkills,
             CwslCharacterId.MomentumRammer => MomentumRammerSkills,
             CwslCharacterId.CrowdGatherer => CrowdGathererSkills,
+            CwslCharacterId.Barricade => BarricadeSkills,
+            CwslCharacterId.Healer => HealerSkills,
             _ => TankSkills,
         };
     }

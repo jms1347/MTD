@@ -1089,6 +1089,92 @@ public static class CwslMonsterVisualBuilder
         visualRoot.AddComponent<CwslPlayerLegWalkVisual>();
     }
 
+    public static void BuildBarricadePlayer(Transform root, Color accentColor)
+    {
+        var visualRoot = new GameObject("Visual");
+        visualRoot.transform.SetParent(root, false);
+
+        var brick = Color.Lerp(accentColor, new Color(0.62f, 0.42f, 0.3f), 0.65f);
+        var mortar = Color.Lerp(brick, Color.black, 0.35f);
+        var heldBrick = Color.Lerp(brick, new Color(0.85f, 0.55f, 0.35f), 0.35f);
+
+        var basePlate = CreatePrimitive(PrimitiveType.Cylinder, visualRoot.transform, new Vector3(0f, 0.05f, 0f),
+            new Vector3(1f, 0.04f, 1f), mortar);
+        var torso = CreatePrimitive(PrimitiveType.Cube, visualRoot.transform, new Vector3(0f, 0.95f, 0f),
+            new Vector3(0.85f, 1.05f, 0.55f), brick);
+        var blockL = CreatePrimitive(PrimitiveType.Cube, visualRoot.transform, new Vector3(-0.22f, 1.05f, 0.18f),
+            new Vector3(0.42f, 0.35f, 0.25f), heldBrick);
+        var blockR = CreatePrimitive(PrimitiveType.Cube, visualRoot.transform, new Vector3(0.22f, 0.78f, 0.18f),
+            new Vector3(0.42f, 0.35f, 0.25f), mortar);
+        var head = CreatePrimitive(PrimitiveType.Cube, visualRoot.transform, new Vector3(0f, 1.62f, 0f),
+            new Vector3(0.48f, 0.42f, 0.48f), brick);
+        var face = CreatePrimitive(PrimitiveType.Cube, visualRoot.transform, new Vector3(0f, 1.58f, 0.22f),
+            new Vector3(0.22f, 0.1f, 0.06f), Color.Lerp(brick, Color.black, 0.4f));
+        var carry = CreatePrimitive(PrimitiveType.Cube, visualRoot.transform, new Vector3(0.55f, 1.15f, 0.15f),
+            new Vector3(0.38f, 0.28f, 0.55f), heldBrick);
+
+        RemoveCollider(basePlate);
+        RemoveCollider(torso);
+        RemoveCollider(blockL);
+        RemoveCollider(blockR);
+        RemoveCollider(head);
+        RemoveCollider(face);
+        RemoveCollider(carry);
+
+        AddWalkLegs(visualRoot.transform, mortar);
+        visualRoot.AddComponent<CwslPlayerLegWalkVisual>();
+        visualRoot.AddComponent<CwslBarricadeRepairVisual>();
+    }
+
+    public static void BuildHealerPlayer(Transform root, Color accentColor)
+    {
+        var visualRoot = new GameObject("Visual");
+        visualRoot.transform.SetParent(root, false);
+
+        var robe = Color.Lerp(new Color(0.85f, 0.95f, 0.88f), accentColor, 0.2f);
+        var trim = new Color(0.35f, 0.75f, 0.45f);
+        var wing = new Color(0.95f, 0.98f, 0.92f);
+        var gem = new Color(0.45f, 0.95f, 0.55f);
+
+        var floatRoot = new GameObject("FloatRoot");
+        floatRoot.transform.SetParent(visualRoot.transform, false);
+
+        var baseGlow = CreatePrimitive(PrimitiveType.Cylinder, floatRoot.transform, new Vector3(0f, 0.08f, 0f),
+            new Vector3(0.7f, 0.03f, 0.7f), Color.Lerp(trim, Color.white, 0.4f));
+        var body = CreatePrimitive(PrimitiveType.Capsule, floatRoot.transform, new Vector3(0f, 0.85f, 0f),
+            new Vector3(0.55f, 0.62f, 0.55f), robe);
+        var hood = CreatePrimitive(PrimitiveType.Sphere, floatRoot.transform, new Vector3(0f, 1.35f, -0.02f),
+            new Vector3(0.42f, 0.38f, 0.42f), Color.Lerp(robe, Color.white, 0.25f));
+        var face = CreatePrimitive(PrimitiveType.Sphere, floatRoot.transform, new Vector3(0f, 1.3f, 0.12f),
+            new Vector3(0.24f, 0.24f, 0.2f), new Color(0.96f, 0.86f, 0.78f));
+        var wingL = CreatePrimitive(PrimitiveType.Cube, floatRoot.transform, new Vector3(-0.42f, 1.05f, -0.12f),
+            new Vector3(0.08f, 0.55f, 0.7f), wing);
+        wingL.transform.localRotation = Quaternion.Euler(12f, 25f, 18f);
+        var wingR = CreatePrimitive(PrimitiveType.Cube, floatRoot.transform, new Vector3(0.42f, 1.05f, -0.12f),
+            new Vector3(0.08f, 0.55f, 0.7f), wing);
+        wingR.transform.localRotation = Quaternion.Euler(12f, -25f, -18f);
+
+        var staffPivot = new GameObject("StaffPivot");
+        staffPivot.transform.SetParent(floatRoot.transform, false);
+        staffPivot.transform.localPosition = new Vector3(-0.32f, 0.95f, 0.12f);
+        var staff = CreatePrimitive(PrimitiveType.Cylinder, staffPivot.transform, new Vector3(0f, 0.45f, 0f),
+            new Vector3(0.06f, 0.85f, 0.06f), new Color(0.75f, 0.7f, 0.55f));
+        var orb = CreatePrimitive(PrimitiveType.Sphere, staffPivot.transform, new Vector3(0f, 0.95f, 0f),
+            new Vector3(0.22f, 0.22f, 0.22f), gem);
+
+        RemoveCollider(baseGlow);
+        RemoveCollider(body);
+        RemoveCollider(hood);
+        RemoveCollider(face);
+        RemoveCollider(wingL);
+        RemoveCollider(wingR);
+        RemoveCollider(staff);
+        RemoveCollider(orb);
+
+        floatRoot.AddComponent<CwslHealerFloatVisual>();
+        visualRoot.AddComponent<CwslPlayerStaffCastVisual>();
+    }
+
     private static void AddHorseLeg(Transform horseRoot, string legName, Vector3 localPosition, Color legColor, Color hoofColor)
     {
         var legPivot = new GameObject(legName);

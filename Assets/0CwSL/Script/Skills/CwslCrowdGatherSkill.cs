@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.AI;
 
 /// <summary>
-/// ?åÎ™®: Q ?Ä?úÎ°ú ÏßÄÎ©????ïÏû• ??Ï∞®Ï? Ï§??Å¬∑Ìà¨?¨Ï≤¥ ?¨Î°ú???Ä?ÅÎãπ Í≥®Îìú) ??Q ?¥Ï†ú ??Î≤îÏúÑ ???Å¬∑Ï¥ù???πÍ?.
+/// ???: Q ????? ???????? ????? ????????? ?????????? ??) ??Q ??? ???? ????????????.
 /// </summary>
 public class CwslCrowdGatherSkill : CwslPlayerSkillBase
 {
@@ -31,12 +31,9 @@ public class CwslCrowdGatherSkill : CwslPlayerSkillBase
 
     private CwslPlayerCharacter playerCharacter;
     private CwslPlayerHealth playerHealth;
-    private CwslPlayerGold playerGold;
-    private CwslPlayerPillBuff pillBuff;
     private CwslPlayerMovement movement;
     private CwslPlayerSkillCooldowns skillCooldowns;
     private float chargeStartTime;
-    private float nextSlowGoldTick;
     private bool maxReadyNotified;
     private Coroutine pullRoutine;
 
@@ -54,8 +51,6 @@ public class CwslCrowdGatherSkill : CwslPlayerSkillBase
     {
         playerCharacter = GetComponent<CwslPlayerCharacter>();
         playerHealth = GetComponent<CwslPlayerHealth>();
-        playerGold = GetComponent<CwslPlayerGold>();
-        pillBuff = GetComponent<CwslPlayerPillBuff>();
         movement = GetComponent<CwslPlayerMovement>();
         skillCooldowns = GetComponent<CwslPlayerSkillCooldowns>();
         if (playerCharacter != null)
@@ -105,8 +100,7 @@ public class CwslCrowdGatherSkill : CwslPlayerSkillBase
                playerCharacter.CharacterId == CwslCharacterId.CrowdGatherer &&
                (playerHealth == null || playerHealth.IsAlive) &&
                !isCharging.Value &&
-               (skillCooldowns == null || skillCooldowns.IsReady(0)) &&
-               CanAffordSkillGold(CwslGameConstants.GatherStartGoldCost);
+               (skillCooldowns == null || skillCooldowns.IsReady(0));
     }
 
     public bool BeginChargeServer(Vector3 worldPoint)
@@ -115,17 +109,7 @@ public class CwslCrowdGatherSkill : CwslPlayerSkillBase
             return false;
 
         if (!CanCastServer(OwnerClientId))
-        {
-            if (IsStartGoldInsufficient())
-                RejectGatherStartClientRpc();
             return false;
-        }
-
-        if (!TrySpendSkillGold(CwslGameConstants.GatherStartGoldCost, playSpendEffect: false))
-        {
-            RejectGatherStartClientRpc();
-            return false;
-        }
 
         worldPoint.y = 0f;
         movement?.StopMovement();
@@ -133,11 +117,9 @@ public class CwslCrowdGatherSkill : CwslPlayerSkillBase
         syncedAtMaxCharge.Value = false;
         maxReadyNotified = false;
         chargeStartTime = Time.time;
-        nextSlowGoldTick = Time.time;
         syncedCenter.Value = worldPoint;
         syncedRadius.Value = CwslGameConstants.GatherMinRadius;
         SyncChargeVisualClientRpc(worldPoint, syncedRadius.Value, false);
-        PlayGatherCenterSpendClientRpc(worldPoint);
         PlayGatherCastClientRpc(worldPoint);
         return true;
     }
@@ -169,16 +151,10 @@ public class CwslCrowdGatherSkill : CwslPlayerSkillBase
         var center = syncedCenter.Value;
         ApplySlowInZoneServer(center, radius);
 
-        if (!TickSlowGoldServer(center, radius))
-            return;
-
         var atMax = chargeRatio >= 1f;
         syncedAtMaxCharge.Value = atMax;
         if (atMax && !maxReadyNotified)
-        {
             maxReadyNotified = true;
-            PlayMaxChargeReadyClientRpc(center);
-        }
 
         SyncChargeVisualClientRpc(center, radius, atMax);
     }
@@ -189,33 +165,6 @@ public class CwslCrowdGatherSkill : CwslPlayerSkillBase
             return;
 
         FinishChargeAndPullServer(syncedCenter.Value, syncedRadius.Value);
-    }
-
-    private bool IsStartGoldInsufficient()
-    {
-        return !CanAffordSkillGold(CwslGameConstants.GatherStartGoldCost);
-    }
-
-    private bool TickSlowGoldServer(Vector3 center, float radius)
-    {
-        if (Time.time < nextSlowGoldTick)
-            return true;
-
-        nextSlowGoldTick = Time.time + CwslGameConstants.GatherSlowGoldIntervalSeconds;
-
-        var targetCount = CollectZoneTargets(center, radius).Count;
-        if (targetCount <= 0)
-            return true;
-
-        var cost = targetCount * CwslGameConstants.GatherSlowGoldPerTarget;
-        if (!CanAffordSkillGold(cost))
-        {
-            FinishChargeAndPullServer(center, radius);
-            return false;
-        }
-
-        TrySpendSkillGold(cost, playSpendEffect: false);
-        return true;
     }
 
     private void ApplySlowInZoneServer(Vector3 center, float radius)
@@ -435,35 +384,18 @@ public class CwslCrowdGatherSkill : CwslPlayerSkillBase
     }
 
     [ClientRpc]
-    private void RejectGatherStartClientRpc()
-    {
-        if (!IsOwner)
-            return;
-
-        CwslGatherAudioFeedback.StopChargeLoop();
-        CwslGatherChargeVisual.Hide();
-        CwslSkillGoldFeedback.ShowInsufficientGold("Í≥®ÎìúÍ∞Ä Î∂ÄÏ°±Ìï¥ ?πÍ? ?§ÌÇ¨???úÏ†Ñ?????ÜÏäµ?àÎã§.");
-    }
-
-    [ClientRpc]
     private void PlayGatherCastClientRpc(Vector3 center)
     {
         CwslGatherAudioFeedback.PlayGatherCast(center);
     }
 
     [ClientRpc]
-    private void PlayGatherCenterSpendClientRpc(Vector3 center)
-    {
-        CwslGatherChargeVisual.BeginLocalCharge(center);
-        CwslGatherChargeVisual.PlayCenterSpend(center);
-        CwslGatherAudioFeedback.StartChargeLoop(center);
-    }
-
-    [ClientRpc]
     private void SyncChargeVisualClientRpc(Vector3 center, float radius, bool atMax)
     {
+        CwslGatherChargeVisual.BeginLocalCharge(center);
         CwslGatherChargeVisual.Sync(center, radius, atMax);
         CwslGatherSlowVisual.Sync(center, radius);
+        CwslGatherAudioFeedback.StartChargeLoop(center);
         CwslGatherAudioFeedback.UpdateChargeLoopPosition(center);
     }
 
@@ -476,36 +408,9 @@ public class CwslCrowdGatherSkill : CwslPlayerSkillBase
     }
 
     [ClientRpc]
-    private void PlayMaxChargeReadyClientRpc(Vector3 center)
-    {
-        CwslVfxSpawner.SpawnGatherMaxReady(center);
-    }
-
-    [ClientRpc]
     private void PlayPullFxClientRpc(Vector3 center, float radius)
     {
         CwslGatherChargeVisual.PlayPull(center, radius);
     }
 
-    private bool CanAffordSkillGold(int amount)
-    {
-        if (!CwslGameConstants.SkillsConsumeGold)
-            return true;
-
-        if (pillBuff != null && pillBuff.CanAffordSkillGold(playerGold, amount))
-            return true;
-
-        return playerGold != null && playerGold.Gold >= amount;
-    }
-
-    private bool TrySpendSkillGold(int amount, bool playSpendEffect = true)
-    {
-        if (!CwslGameConstants.SkillsConsumeGold)
-            return true;
-
-        if (pillBuff != null && pillBuff.TrySpendSkillGold(playerGold, amount, playSpendEffect))
-            return true;
-
-        return playerGold != null && playerGold.TrySpendGoldServer(amount, playSpendEffect);
-    }
 }
