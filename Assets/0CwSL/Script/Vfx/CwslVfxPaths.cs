@@ -84,6 +84,9 @@ public static class CwslVfxPaths
     public const string RammerStunSound =
         "Assets/Game/0Sound/stun-dding.mp3";
 
+    public const string RammerBrakeNeighSound =
+        "Assets/Game/0Sound/dragon-studio-horse-neigh-390297.mp3";
+
     public const string SkillGoldFailSound =
         "Assets/Game/0Sound/soundshelfstudio-ui-warning-buzz-515667.mp3";
 

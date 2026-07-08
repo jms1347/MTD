@@ -115,6 +115,7 @@ public class CwslRammerBrakeSkill : CwslPlayerSkillBase
         var scale = Mathf.Lerp(1.1f, 1.8f, Mathf.Clamp01(speed / CwslGameConstants.RammerMaxSpeed))
                     * CwslGameConstants.RammerBrakeVfxScaleMultiplier;
         CwslVfxSpawner.SpawnRammerBrakeBurst(center, scale);
+        CwslRammerAudioFeedback.PlayBrakeNeigh(center);
         PlayBrakeScreech(center);
         if (IsOwner)
             CwslCameraShake.Play(0.28f, 0.22f * scale);

@@ -200,6 +200,7 @@ public static class CwslGameSceneSetup
         assets.goldPickupSound = AssetDatabase.LoadAssetAtPath<AudioClip>(CwslVfxPaths.CoinDropSound);
         assets.horseGallopSound = AssetDatabase.LoadAssetAtPath<AudioClip>(CwslVfxPaths.HorseGallopSound);
         assets.rammerStunSound = AssetDatabase.LoadAssetAtPath<AudioClip>(CwslVfxPaths.RammerStunSound);
+        assets.rammerBrakeNeighSound = AssetDatabase.LoadAssetAtPath<AudioClip>(CwslVfxPaths.RammerBrakeNeighSound);
         assets.bossTeleportCastSound = AssetDatabase.LoadAssetAtPath<AudioClip>(CwslVfxPaths.BossTeleportCastSound);
         assets.bossTeleportArriveSound = AssetDatabase.LoadAssetAtPath<AudioClip>(CwslVfxPaths.BossTeleportArriveSound);
         assets.bossPhaseShiftSound = AssetDatabase.LoadAssetAtPath<AudioClip>(CwslVfxPaths.BossPhaseShiftSound);

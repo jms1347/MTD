@@ -131,6 +131,7 @@ public class CwslGameAssets : ScriptableObject
     public AudioClip offsideHornSound;
     public AudioClip horseGallopSound;
     public AudioClip rammerStunSound;
+    public AudioClip rammerBrakeNeighSound;
     public AudioClip bossTeleportCastSound;
     public AudioClip bossTeleportArriveSound;
     public AudioClip bossPhaseShiftSound;

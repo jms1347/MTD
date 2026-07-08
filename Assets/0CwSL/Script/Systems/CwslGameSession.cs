@@ -30,7 +30,10 @@ public class CwslGameSession : NetworkBehaviour
         if (assets != null)
         {
             CwslGoldFeedback.Initialize(assets.goldBurstVfx, assets.goldPickupSound);
-            CwslRammerAudioFeedback.Initialize(assets.horseGallopSound, assets.rammerStunSound);
+            CwslRammerAudioFeedback.Initialize(
+                assets.horseGallopSound,
+                assets.rammerStunSound,
+                assets.rammerBrakeNeighSound);
             CwslGatherAudioFeedback.Initialize(
                 assets.gatherChargeCastSound,
                 assets.gatherChargeLoopSound,
