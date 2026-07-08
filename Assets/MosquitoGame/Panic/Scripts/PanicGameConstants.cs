@@ -36,6 +36,7 @@ public static class PanicGameConstants
     public const float MosquitoLookSensitivity = 0.22f;
 
     public const int MaxTrapsPerType = 4;
+    public const ushort NetcodePort = 7780;
 }
 
 public enum PanicGamePhase : byte

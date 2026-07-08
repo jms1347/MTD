@@ -68,8 +68,10 @@ public static class PanicPrototypeSceneSetup
     {
         PanicVisionLayers.EnsureLayersExist();
         var root = new GameObject("PanicSystems");
-        root.AddComponent<NetworkManager>();
-        root.AddComponent<UnityTransport>();
+        var networkManager = root.AddComponent<NetworkManager>();
+        var transport = root.AddComponent<UnityTransport>();
+        transport.ConnectionData.Port = PanicGameConstants.NetcodePort;
+        networkManager.NetworkConfig.NetworkTransport = transport;
         root.AddComponent<PanicGameManager>();
         root.AddComponent<ScoreManager>();
         root.AddComponent<TrapManager>();
@@ -142,6 +144,22 @@ public static class PanicPrototypeSceneSetup
         serialized.ApplyModifiedPropertiesWithoutUndo();
 
         RegisterNetworkPrefabs(systems.GetComponent<NetworkManager>(), humanPrefab, mosquitoPrefab);
+        EnsureNetworkTransportOnScene(systems);
+    }
+
+    private static void EnsureNetworkTransportOnScene(GameObject systems)
+    {
+        var networkManager = systems.GetComponent<NetworkManager>();
+        if (networkManager == null)
+            return;
+
+        var transport = systems.GetComponent<UnityTransport>();
+        if (transport == null)
+            transport = systems.AddComponent<UnityTransport>();
+
+        transport.ConnectionData.Port = PanicGameConstants.NetcodePort;
+        networkManager.NetworkConfig.NetworkTransport = transport;
+        EditorUtility.SetDirty(networkManager);
     }
 
     private static void RegisterNetworkPrefabs(NetworkManager networkManager, GameObject humanPrefab, GameObject mosquitoPrefab)
