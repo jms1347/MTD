@@ -175,6 +175,7 @@ public static class CwslMonsterVisualBuilder
         fuseTip.transform.SetParent(root, false);
         fuseTip.transform.localPosition = new Vector3(0f, fuseBaseY + 0.17f, 0f);
         CwslSuicideFuseVisual.Ensure(fuseTip.transform, 0.18f);
+        fuseTip.GetComponent<CwslSuicideFuseVisual>()?.SetBurningActive(false);
 
         EnsureMonsterWalkVisual(root);
         RemoveColliders(fuse);
@@ -325,7 +326,6 @@ public static class CwslMonsterVisualBuilder
             new Vector3(0.14f, 0.09f, 0.03f),
             palette.Accent,
             CwslMaterialStyle.Glossy);
-        CwslThreatLight.Ensure(sensor.transform, palette.Accent, 2.2f, 1.4f, Vector3.zero);
 
         var pressureRing = CreateKuPrimitive(
             PrimitiveType.Cylinder,
@@ -919,8 +919,6 @@ public static class CwslMonsterVisualBuilder
         RemoveCollider(staff);
         RemoveCollider(orb);
 
-        CwslThreatLight.Ensure(orb.transform, gemColor, 3.5f, 2.2f, Vector3.zero);
-
         AddWalkLegs(visualRoot.transform, Color.Lerp(robeColor, Color.black, 0.35f));
         visualRoot.AddComponent<CwslPlayerLegWalkVisual>();
         visualRoot.AddComponent<CwslPlayerStaffCastVisual>();
@@ -1087,7 +1085,6 @@ public static class CwslMonsterVisualBuilder
         RemoveCollider(armR);
         RemoveCollider(threadLine);
 
-        CwslThreatLight.Ensure(spoolRoot.transform, threadColor, 2.8f, 1.8f, Vector3.zero);
         AddWalkLegs(visualRoot.transform, Color.Lerp(robeColor, Color.black, 0.35f));
         visualRoot.AddComponent<CwslPlayerLegWalkVisual>();
     }

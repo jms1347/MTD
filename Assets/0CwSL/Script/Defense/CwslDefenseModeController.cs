@@ -871,34 +871,19 @@ public class CwslDefenseModeController : NetworkBehaviour
 
 
 
-        var instance = Instantiate(prefab, position, Quaternion.Euler(0f, UnityEngine.Random.Range(0f, 360f), 0f));
+        var rotation = Quaternion.Euler(0f, UnityEngine.Random.Range(0f, 360f), 0f);
 
-        var networkObject = instance.GetComponent<NetworkObject>();
-
+        var networkObject = CwslNetworkPoolService.Instance?.Get(prefab, position, rotation);
         if (networkObject == null)
-
         {
-
-            Destroy(instance);
-
-            Debug.LogError("[CwSL] CwslEnemyBase 프리팹에 NetworkObject가 없습니다.");
-
+            Debug.LogError("[CwSL] 적 기지 풀 스폰 실패.");
             return;
-
         }
 
-
-
-        networkObject.Spawn();
-
-        var enemyBase = instance.GetComponent<CwslEnemyBase>();
-
+        var enemyBase = networkObject.GetComponent<CwslEnemyBase>();
         enemyBase?.ConfigureServer(maxHealth);
-
         if (enemyBase != null)
-
             enemyBases.Add(enemyBase);
-
     }
 
 

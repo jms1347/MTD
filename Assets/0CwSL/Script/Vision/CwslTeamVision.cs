@@ -17,8 +17,24 @@ public static class CwslTeamVision
     }
 
     private static readonly List<CwslTeamVisionSource> SourceBuffer = new(MaxSources);
+    private static float cachedAt = -1f;
 
     public static IReadOnlyList<CwslTeamVisionSource> CollectSources()
+    {
+        if (Time.time - cachedAt < CwslGameConstants.TeamVisionSourceCacheSeconds && SourceBuffer.Count > 0)
+            return SourceBuffer;
+
+        RefreshSources();
+        cachedAt = Time.time;
+        return SourceBuffer;
+    }
+
+    public static void InvalidateSourceCache()
+    {
+        cachedAt = -1f;
+    }
+
+    private static void RefreshSources()
     {
         SourceBuffer.Clear();
 
@@ -34,14 +50,15 @@ public static class CwslTeamVision
             });
         }
 
-        var playerVisions = Object.FindObjectsByType<CwslPlayerVision>(FindObjectsSortMode.None);
-        foreach (var vision in playerVisions)
+        var players = CwslCombatRegistry.AlivePlayers;
+        for (var i = 0; i < players.Count; i++)
         {
-            if (vision == null || !vision.IsSpawned)
+            var health = players[i];
+            if (health == null || !health.IsAlive)
                 continue;
 
-            var health = vision.GetComponent<CwslPlayerHealth>();
-            if (health != null && !health.IsAlive)
+            var vision = health.GetComponent<CwslPlayerVision>();
+            if (vision == null || !vision.IsSpawned)
                 continue;
 
             SourceBuffer.Add(new CwslTeamVisionSource
@@ -53,20 +70,24 @@ public static class CwslTeamVision
             });
 
             if (SourceBuffer.Count >= MaxSources)
-                break;
+                return;
         }
-
-        return SourceBuffer;
     }
 
-    public static float EvaluateTeamVisibility(Vector3 worldPosition, bool isProjectile)
+    public static float EvaluateTeamVisibility(
+        Vector3 worldPosition,
+        bool isProjectile,
+        IReadOnlyList<CwslTeamVisionSource> sources = null)
     {
         if (CwslPlayerVision.Local == null)
             return 1f;
 
+        sources ??= CollectSources();
+
         var maxVisibility = 0f;
-        foreach (var source in CollectSources())
+        for (var i = 0; i < sources.Count; i++)
         {
+            var source = sources[i];
             if (source.PlayerVision != null && source.PlayerVision.IsAbsoluteBlindVision)
             {
                 maxVisibility = Mathf.Max(

@@ -1,7 +1,11 @@
 using UnityEngine;
+using UnityEngine.Rendering;
 
 public static class CwslGroundRingVisual
 {
+    private static Material sharedTransparentMaterial;
+    private static MaterialPropertyBlock propertyBlock;
+
     public static GameObject Create(Vector3 worldPosition, float diameter, Color color, float height = 0.04f)
     {
         var ring = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
@@ -18,19 +22,12 @@ public static class CwslGroundRingVisual
         if (renderer == null)
             return;
 
-        var material = CwslMaterialUtil.CreateMatteColored(color);
-        material.SetFloat("_Mode", 3f);
-        material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
-        material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-        material.SetInt("_ZWrite", 0);
-        material.DisableKeyword("_ALPHATEST_ON");
-        material.EnableKeyword("_ALPHABLEND_ON");
-        material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
-        material.renderQueue = 3000;
-        material.color = color;
-        if (material.HasProperty("_BaseColor"))
-            material.SetColor("_BaseColor", color);
-        renderer.material = material;
+        renderer.sharedMaterial = GetSharedTransparentMaterial();
+        propertyBlock ??= new MaterialPropertyBlock();
+        propertyBlock.Clear();
+        propertyBlock.SetColor("_Color", color);
+        propertyBlock.SetColor("_BaseColor", color);
+        renderer.SetPropertyBlock(propertyBlock);
     }
 
     public static GameObject CreateEdgeRing(
@@ -51,7 +48,7 @@ public static class CwslGroundRingVisual
         line.numCapVertices = 2;
         line.startWidth = lineWidth;
         line.endWidth = lineWidth;
-        line.material = CwslMaterialUtil.CreateMatteColored(color);
+        line.sharedMaterial = CwslMaterialUtil.CreateMatteColored(color);
         line.positionCount = segments;
 
         var radius = diameter * 0.5f;
@@ -64,5 +61,22 @@ public static class CwslGroundRingVisual
         }
 
         return root;
+    }
+
+    private static Material GetSharedTransparentMaterial()
+    {
+        if (sharedTransparentMaterial != null)
+            return sharedTransparentMaterial;
+
+        sharedTransparentMaterial = CwslMaterialUtil.CreateMatteColored(Color.white);
+        sharedTransparentMaterial.SetFloat("_Mode", 3f);
+        sharedTransparentMaterial.SetInt("_SrcBlend", (int)BlendMode.SrcAlpha);
+        sharedTransparentMaterial.SetInt("_DstBlend", (int)BlendMode.OneMinusSrcAlpha);
+        sharedTransparentMaterial.SetInt("_ZWrite", 0);
+        sharedTransparentMaterial.DisableKeyword("_ALPHATEST_ON");
+        sharedTransparentMaterial.EnableKeyword("_ALPHABLEND_ON");
+        sharedTransparentMaterial.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+        sharedTransparentMaterial.renderQueue = 3000;
+        return sharedTransparentMaterial;
     }
 }

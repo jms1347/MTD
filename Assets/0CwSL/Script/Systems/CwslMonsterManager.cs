@@ -20,7 +20,7 @@ public class CwslMonsterManager : MonoBehaviour
 
     [Header("스폰")]
     [SerializeField] private float spawnIntervalPerBase = 4f;
-    [SerializeField] private int maxAliveMonsters = 80;
+    [SerializeField] private int maxAliveMonsters = CwslGameConstants.MaxAliveMonsters;
     [SerializeField] private float spawnWarningSeconds = 1.5f;
 
     [Header("분당 강화")]

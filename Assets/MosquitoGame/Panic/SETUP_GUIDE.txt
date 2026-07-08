@@ -1,0 +1,74 @@
+Mosquito Panic 3D — 프로토타입 셋업 가이드
+=========================================
+
+## 1. 씬 생성
+Unity 메뉴: Tools → MosquitoGame → Setup Panic Prototype Scene
+생성 경로: Assets/MosquitoGame/Panic/Scenes/MosquitoPanicPrototype.unity
+
+기존 아파트 맵(kenney / CubedBear / awlok) 위에 게임 시스템이 올라갑니다.
+
+## 2. URP 설정
+- Project Settings → Graphics → Scriptable Render Pipeline Settings 에 URP Asset 연결
+- PanicMaterialFactory 가 URP/Lit → Standard 순으로 셰이더를 자동 선택합니다.
+
+## 3. 플레이 테스트 (에디터)
+1. MosquitoPanicPrototype 씬 열기
+2. Play
+3. Host 자동 시작 (PanicOfflineBootstrap)
+4. Client 0 = 인간, Client 1+ = 모기 (멀티 클라이언트 테스트 시 ParrelSync 등 사용)
+
+### 인간 (1인칭)
+- 이동: 화면 좌측 드래그 / WASD
+- 시야: 화면 우측 드래그 / 마우스
+- 사격: 우측 탭 / 좌클릭 (에프킬라 큐브 총)
+- 함정 설치 (준비 70초): 1 모기향 / 2 끈끈이 / 3 미끼 → E 로 설치
+- 미션 홀드 (플레이 중): 미션 구역에서 F 또는 좌측 홀드
+
+### 모기 (3인칭)
+- 시야: 우측 드래그
+- 대시 비행: 좌측 드래그 → AddForce Impulse (끊어 치는 느낌)
+- PC: Shift 추가 대시
+- 흡혈: 우측 탭 / 우클릭 (인간 또는 가짜 미끼 근접 시)
+
+## 4. 승리 규칙
+| 조건 | 승자 | RP 보너스 |
+|------|------|-----------|
+| 미션 3개 클리어 | 인간 | 남은 HP × 20 |
+| 모기 전멸 | 인간 | 남은 HP × 20 |
+| 인간 HP 0 | 모기팀 | +500 (팀 전원) |
+| 5분 종료 시 RP 우세 | RP 높은 쪽 | 위 규칙과 동일 보너스 |
+
+실시간: 모기 흡혈 1회 → 모기 +10 RP / 인간 -10 RP
+
+## 5. 핵심 스크립트
+- PanicGameManager.cs — 페이즈(준비/플레이/종료), 승패
+- ScoreManager.cs — RP 점수
+- TrapManager.cs — 함정 설치
+- HumanController.cs — 1인칭, 심장박동 레이더, 함정/미션
+- MosquitoController.cs — 3인칭 대시 비행
+- MosquitoVisualBuilder.cs — 기본 도형 모기 조립
+- MissionObject.cs — 홀드 미션
+- FanGimmick.cs — 선풍기 소리(모기 오디오 마스킹)
+
+## 6. 모기 3D 자동 생성
+MosquitoVisualBuilder.Build(parent) 가 런타임에 생성:
+- 몸통: 갈색 Capsule
+- 머리: Sphere + 빨간 눈
+- 빨대: 회색 Cylinder
+- 날개: 반투명 Cube ×2 + MosquitoWingFlap 회전
+
+## 7. 오디오 (선택)
+PanicAudioCue 에 AudioClip 연결 시 heartbeat / alarm / gun / fan 루프 교체 가능.
+FanGimmick AudioSource 에 fan_loop 클립 할당 권장.
+
+## 8. 상수 변경
+PanicGameConstants.cs
+- MatchDurationSeconds = 300 (5분, 변경 가능)
+- PrepDurationSeconds = 70
+- RequiredMissionCount = 3
+
+## 9. 멀티플레이어 확장 TODO
+- 함정 NetworkPrefab 목록 등록 (현재 서버 Instantiate + Spawn)
+- 전용 로비 / 역할 선택 UI
+- ScoreManager 클라이언트 동기화 RPC
+- 모기 3D AudioSource 윙 소리 Spatial 배치

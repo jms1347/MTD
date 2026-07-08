@@ -192,15 +192,19 @@ public class CwslMinimap : MonoBehaviour
     {
         var index = 0;
         var filterByVision = ShouldFilterMinimapByWorldVision();
-        var monsters = FindObjectsByType<CwslMonsterBase>(FindObjectsSortMode.None);
-        foreach (var monster in monsters)
+        var monsters = CwslCombatRegistry.AliveMonsters;
+        foreach (var monsterHealth in monsters)
         {
-            if (monster == null || index >= MaxMonsterDots)
+            if (monsterHealth == null || index >= MaxMonsterDots)
                 break;
 
-            var monsterHealth = monster.GetComponent<CwslMonsterHealth>();
-            if (monsterHealth != null && !monsterHealth.IsAlive)
+            if (!monsterHealth.IsAlive)
                 continue;
+
+            var monster = monsterHealth.GetComponent<CwslMonsterBase>();
+            if (monster == null)
+                continue;
+
             if (filterByVision && !CwslPlayerVision.IsInLocalVision(monster.transform.position))
                 continue;
 
@@ -221,7 +225,7 @@ public class CwslMinimap : MonoBehaviour
     {
         var index = 0;
         var filterByVision = ShouldFilterMinimapByWorldVision();
-        var pickups = FindObjectsByType<CwslGoldPickup>(FindObjectsSortMode.None);
+        var pickups = CwslCombatRegistry.ActiveGoldPickups;
         foreach (var pickup in pickups)
         {
             if (pickup == null || index >= MaxGoldDots)

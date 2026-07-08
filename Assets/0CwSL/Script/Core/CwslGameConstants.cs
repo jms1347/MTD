@@ -15,9 +15,13 @@ public static class CwslGameConstants
     public const int PoolBossExpandSize = 2;
     public const int PoolFallbackInitialSize = 32;
     public const int PoolFallbackExpandSize = 8;
+    public const int PoolStructureInitialSize = 8;
+    public const int PoolStructureExpandSize = 2;
 
     public const float NexusDefaultHealth = 20000f;
     public const float NexusTeamVisionRadius = 11f;
+    public const float TeamVisionSourceCacheSeconds = 0.05f;
+    public const float SimpleVisionShowThreshold = 0.12f;
     public const float EnemyBaseDefaultHealth = 3000f;
 
     public const float MonsterMaxHealth = 50f;
@@ -486,7 +490,7 @@ public static class CwslGameConstants
     public const float SeniorCoachAceSpotlightCooldown = 14f;
     public const float SeniorCoachOrbitSpeed = 2.6f;
     public const float SeniorCoachOrbitInset = 2.1f;
-    public const int MaxAliveMonsters = 65;
+    public const int MaxAliveMonsters = 80;
     public const float MonsterSpawnWarningSeconds = 2f;
     public const float MonsterSpawnWarningRadius = 1.8f;
     public const float SuicideExplosionScale = 0.32f;

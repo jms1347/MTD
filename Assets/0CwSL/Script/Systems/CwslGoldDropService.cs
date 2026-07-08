@@ -84,9 +84,8 @@ public static class CwslGoldDropService
 
         if (networkObject == null)
         {
-            var pickup = Object.Instantiate(prefab, center, Quaternion.identity);
-            networkObject = pickup.GetComponent<NetworkObject>();
-            networkObject?.Spawn(true);
+            Debug.LogError($"[CwSL] 골드 픽업 풀 스폰 실패: {prefab.name}");
+            return;
         }
 
         var goldPickup = networkObject?.GetComponent<CwslGoldPickup>();

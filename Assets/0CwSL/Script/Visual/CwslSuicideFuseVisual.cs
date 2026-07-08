@@ -1,6 +1,6 @@
 using UnityEngine;
 
-/// <summary>심지 끝 BombFuse 파티클 (에디터 프리팹 미리보기 + 런타임).</summary>
+/// <summary>심지 끝 BombFuse 파티클 — 근접 시에만 생성·재생.</summary>
 public class CwslSuicideFuseVisual : MonoBehaviour
 {
     [SerializeField] private float scale = 0.2f;
@@ -16,23 +16,19 @@ public class CwslSuicideFuseVisual : MonoBehaviour
             visual = fuseTip.gameObject.AddComponent<CwslSuicideFuseVisual>();
 
         visual.scale = fuseScale;
-        visual.Refresh();
+        if (!Application.isPlaying)
+            visual.Refresh();
     }
 
-    private void OnEnable()
+    private void Awake()
     {
-        Refresh();
+        if (Application.isPlaying)
+            DestroyEmbeddedFuseChildren();
     }
 
     private void OnDestroy()
     {
-        if (instance == null)
-            return;
-
-        if (Application.isPlaying)
-            Destroy(instance);
-        else
-            DestroyImmediate(instance);
+        DestroyInstance();
     }
 
     public void Refresh()
@@ -53,13 +49,48 @@ public class CwslSuicideFuseVisual : MonoBehaviour
 
     public void SetBurningActive(bool active)
     {
+        if (!active)
+        {
+            DestroyInstance();
+            DestroyEmbeddedFuseChildren();
+            return;
+        }
+
         if (instance == null)
             Refresh();
+        else if (!instance.activeSelf)
+            instance.SetActive(true);
+    }
 
+    private void DestroyEmbeddedFuseChildren()
+    {
+        for (var i = transform.childCount - 1; i >= 0; i--)
+        {
+            var child = transform.GetChild(i);
+            if (child.name != "BombFuseFx")
+                continue;
+
+            if (child.gameObject == instance)
+                continue;
+
+            if (Application.isPlaying)
+                Destroy(child.gameObject);
+            else
+                DestroyImmediate(child.gameObject);
+        }
+    }
+
+    private void DestroyInstance()
+    {
         if (instance == null)
             return;
 
-        instance.SetActive(active);
+        if (Application.isPlaying)
+            Destroy(instance);
+        else
+            DestroyImmediate(instance);
+
+        instance = null;
     }
 
     private static GameObject ResolvePrefab()

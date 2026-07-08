@@ -302,7 +302,6 @@ public class CwslMonsterVisualTestController : MonoBehaviour
         instance.name = "Preview_" + type;
         CwslMonsterVisualRefresh.Refresh(instance.transform, type);
         EnsurePreviewExtras(instance.transform, type);
-        ApplyThreatLight(instance.transform, type);
 
         if (instance.GetComponent<CwslMonsterVisualTestWalker>() == null)
             instance.AddComponent<CwslMonsterVisualTestWalker>();
@@ -325,22 +324,6 @@ public class CwslMonsterVisualTestController : MonoBehaviour
 
         if (root.GetComponent<CwslMonsterStunVisual>() == null)
             root.gameObject.AddComponent<CwslMonsterStunVisual>();
-    }
-
-    private static void ApplyThreatLight(Transform root, CwslMonsterType type)
-    {
-        var color = CwslMonsterVisualPalette.GetThreatLightColor(type);
-        var isSuicide = type is CwslMonsterType.Suicide or CwslMonsterType.NexusSuicide or CwslMonsterType.StickySuicide;
-        var isRanged = type is CwslMonsterType.Ranged or CwslMonsterType.NexusRanged
-            or CwslMonsterType.InkSniper or CwslMonsterType.NexusInkSniper;
-        var isNexus = CwslMonsterTypeUtil.IsNexusPriority(type);
-        if (!isSuicide && !isRanged && !isNexus)
-            return;
-
-        var range = isSuicide ? 5.5f : isNexus ? 4.2f : 3.2f;
-        var intensity = isSuicide ? 3.2f : isNexus ? 2.4f : 1.4f;
-        var offsetY = isSuicide ? 0.8f : 1.0f;
-        CwslThreatLight.Ensure(root, color, range, intensity, new Vector3(0f, offsetY, 0f));
     }
 
     private GameObject ResolvePrefab(CwslMonsterType type)

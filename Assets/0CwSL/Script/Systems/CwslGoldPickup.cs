@@ -216,13 +216,13 @@ public class CwslGoldPickup : NetworkBehaviour, ICwslPooledNetworkObject
 
     private void DespawnSelf()
     {
-        if (NetworkObject != null && NetworkObject.IsSpawned)
-        {
-            if (CwslNetworkPoolService.Instance != null)
-                CwslNetworkPoolService.Instance.Release(NetworkObject);
-            else
-                NetworkObject.Despawn(true);
-        }
+        if (NetworkObject == null || !NetworkObject.IsSpawned)
+            return;
+
+        if (CwslNetworkPoolService.Instance != null)
+            CwslNetworkPoolService.Instance.Release(NetworkObject);
+        else
+            Debug.LogError("[CwSL] NetworkPoolService 없음 — 골드 픽업 풀 반환 불가.");
     }
 
     [ClientRpc]

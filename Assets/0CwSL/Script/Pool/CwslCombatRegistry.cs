@@ -6,7 +6,7 @@ using System.Collections.Generic;
 public static class CwslCombatRegistry
 {
     private static readonly HashSet<CwslMonsterHealth> monsterSet = new();
-    private static readonly List<CwslMonsterHealth> monsters = new(128);
+    private static readonly List<CwslMonsterHealth> monsters = new(256);
     private static readonly HashSet<CwslPlayerHealth> playerSet = new();
     private static readonly List<CwslPlayerHealth> players = new(8);
     private static readonly HashSet<CwslMonsterProjectile> monsterProjectileSet = new();

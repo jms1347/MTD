@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -5,9 +6,31 @@ public static class CwslMaterialUtil
 {
     private static Material sharedFallback;
     private static Shader cachedShader;
+    private static readonly Dictionary<StyledMaterialKey, Material> StyledCache = new(64);
 
     private static readonly Vector2 BombPaintTiling = new(2.2f, 2.2f);
     private static readonly Vector2 ScratchedMetalTiling = new(2.8f, 2.8f);
+
+    private readonly struct StyledMaterialKey : System.IEquatable<StyledMaterialKey>
+    {
+        private readonly Color32 color;
+        private readonly CwslMaterialStyle style;
+
+        public StyledMaterialKey(Color value, CwslMaterialStyle materialStyle)
+        {
+            color = value;
+            style = materialStyle;
+        }
+
+        public bool Equals(StyledMaterialKey other)
+            => color.Equals(other.color) && style == other.style;
+
+        public override bool Equals(object obj)
+            => obj is StyledMaterialKey other && Equals(other);
+
+        public override int GetHashCode()
+            => ((int)color.r << 24) ^ ((int)color.g << 16) ^ ((int)color.b << 8) ^ color.a ^ ((int)style << 1);
+    }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void WarmShaderCache()
@@ -23,9 +46,14 @@ public static class CwslMaterialUtil
 
     public static Material CreateStyled(Color color, CwslMaterialStyle style)
     {
+        var key = new StyledMaterialKey(color, style);
+        if (StyledCache.TryGetValue(key, out var cached) && cached != null)
+            return cached;
+
         var material = new Material(ResolveShader());
         ApplyColorProperties(material, color);
         ApplyStyle(material, style);
+        StyledCache[key] = material;
         return material;
     }
 

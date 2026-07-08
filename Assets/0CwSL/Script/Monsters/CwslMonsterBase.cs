@@ -29,7 +29,7 @@ public abstract class CwslMonsterBase : NetworkBehaviour
         CwslMonsterVisualRefresh.Refresh(transform, type);
         EnsureMeleeLungeVisual();
         EnsureLegWalkVisual();
-        EnsureThreatLight();
+        StripMonsterThreatLights();
         ApplyScaleMultiplier();
         health?.RefreshCombatHitCollider();
         health?.SyncHealthAfterConfigureServer();
@@ -81,14 +81,14 @@ public abstract class CwslMonsterBase : NetworkBehaviour
         transform.localScale = Vector3.one * localScaleMultiplier;
     }
 
-    /// <summary>게스트 클라이언트 — 타입·위협 라이트 등 비주얼만 동기화 (서버 로직 없음).</summary>
+    /// <summary>게스트 클라이언트 — 타입·비주얼만 동기화 (서버 로직 없음).</summary>
     public void EnsureClientVisuals(CwslMonsterType type)
     {
         MonsterType = type;
         targetingMode = CwslMonsterTypeUtil.GetDefaultTargeting(type);
         EnsureMeleeLungeVisual();
         EnsureLegWalkVisual();
-        EnsureThreatLight();
+        StripMonsterThreatLights();
         ApplyScaleMultiplier();
     }
 
@@ -102,22 +102,9 @@ public abstract class CwslMonsterBase : NetworkBehaviour
             visual.gameObject.AddComponent<CwslMonsterLegWalkVisual>();
     }
 
-    private void EnsureThreatLight()
+    private void StripMonsterThreatLights()
     {
-        var lightColor = CwslMonsterVisualPalette.GetThreatLightColor(MonsterType);
-        var isSuicide = MonsterType is CwslMonsterType.Suicide
-            or CwslMonsterType.NexusSuicide
-            or CwslMonsterType.StickySuicide;
-        var isRanged = MonsterType is CwslMonsterType.Ranged or CwslMonsterType.NexusRanged;
-        var isNexus = CwslMonsterTypeUtil.IsNexusPriority(MonsterType);
-
-        if (isSuicide || isRanged || isNexus)
-        {
-            var range = isSuicide ? 5.5f : isNexus ? 4.2f : 3.2f;
-            var intensity = isSuicide ? 3.2f : isNexus ? 2.4f : 1.4f;
-            var offsetY = isSuicide ? 0.8f : 1.0f;
-            CwslThreatLight.Ensure(transform, lightColor, range, intensity, new Vector3(0f, offsetY, 0f));
-        }
+        CwslThreatLight.RemoveFromHierarchy(transform);
     }
 
     private void EnsureMeleeLungeVisual()

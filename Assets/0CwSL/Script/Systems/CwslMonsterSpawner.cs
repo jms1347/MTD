@@ -14,6 +14,12 @@ public class CwslMonsterSpawner : NetworkBehaviour
 
     public bool SpawningEnabled { get; set; } = true;
 
+    private int GetMaxAliveMonsters()
+    {
+        var manager = CwslMonsterManager.Instance;
+        return manager != null ? manager.MaxAliveMonsters : maxAliveMonsters;
+    }
+
     private void Update()
     {
         if (!IsServer || !SpawningEnabled)
@@ -29,7 +35,7 @@ public class CwslMonsterSpawner : NetworkBehaviour
         if (spawnTimer > 0f)
             return;
 
-        if (aliveCount >= maxAliveMonsters)
+        if (aliveCount >= GetMaxAliveMonsters())
         {
             spawnTimer = spawnInterval;
             return;
@@ -48,7 +54,7 @@ public class CwslMonsterSpawner : NetworkBehaviour
             baseSpawnTimers.Add(Random.Range(0f, intervalPerBase));
 
         var manager = CwslMonsterManager.Instance;
-        var maxAlive = manager != null ? manager.MaxAliveMonsters : maxAliveMonsters;
+        var maxAlive = GetMaxAliveMonsters();
         var interval = manager != null ? manager.SpawnIntervalPerBase : intervalPerBase;
 
         for (var i = 0; i < basePositions.Count; i++)
@@ -99,7 +105,7 @@ public class CwslMonsterSpawner : NetworkBehaviour
 
         for (var i = 0; i < count; i++)
         {
-            if (aliveCount >= maxAliveMonsters)
+            if (aliveCount >= GetMaxAliveMonsters())
                 break;
 
             var angle = Random.Range(0f, Mathf.PI * 2f);
@@ -118,7 +124,7 @@ public class CwslMonsterSpawner : NetworkBehaviour
 
         for (var i = 0; i < count; i++)
         {
-            if (aliveCount >= maxAliveMonsters)
+            if (aliveCount >= GetMaxAliveMonsters())
                 break;
 
             var offset = Random.insideUnitCircle * spreadRadius;
@@ -159,9 +165,7 @@ public class CwslMonsterSpawner : NetworkBehaviour
             CwslKarmaSystem.Instance.IsBossThresholdReached)
             yield break;
 
-        var maxAlive = useDefenseRules && CwslMonsterManager.Instance != null
-            ? CwslMonsterManager.Instance.MaxAliveMonsters
-            : maxAliveMonsters;
+        var maxAlive = GetMaxAliveMonsters();
         if (aliveCount >= maxAlive)
             yield break;
 
@@ -268,7 +272,7 @@ public class CwslMonsterSpawner : NetworkBehaviour
         CwslMonsterType type,
         NetworkObject forcedPlayerTarget)
     {
-        if (aliveCount >= maxAliveMonsters)
+        if (aliveCount >= GetMaxAliveMonsters())
             return;
 
         position = CwslArenaUtility.ClampToArena(position);

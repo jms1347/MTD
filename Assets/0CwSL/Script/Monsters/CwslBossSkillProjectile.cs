@@ -222,8 +222,8 @@ public class CwslBossSkillProjectile : NetworkBehaviour, ICwslPooledNetworkObjec
 
     private void DespawnSelf()
     {
-        if (IsSpawned && NetworkObject != null && NetworkObject.IsSpawned)
-            NetworkObject.Despawn();
+        if (NetworkObject != null && NetworkObject.IsSpawned)
+            CwslNetworkPoolService.Instance?.Release(NetworkObject);
     }
 
     private void ApplyVisualScale()

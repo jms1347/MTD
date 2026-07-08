@@ -38,6 +38,6 @@ public class CwslColoredRenderer : MonoBehaviour
         if (!force && renderer.sharedMaterial != null && CwslMaterialUtil.IsMaterialValid(renderer.sharedMaterial))
             return;
 
-        CwslMaterialUtil.ApplyStyled(renderer, color, style);
+        renderer.sharedMaterial = CwslMaterialUtil.CreateStyled(color, style);
     }
 }

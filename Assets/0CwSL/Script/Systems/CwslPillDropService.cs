@@ -52,9 +52,8 @@ public static class CwslPillDropService
 
         if (networkObject == null)
         {
-            var pickupObject = Object.Instantiate(session.Assets.pillPickupPrefab, center, Quaternion.identity);
-            networkObject = pickupObject.GetComponent<NetworkObject>();
-            networkObject?.Spawn(true);
+            Debug.LogError($"[CwSL] 알약 픽업 풀 스폰 실패: {session.Assets.pillPickupPrefab.name}");
+            return;
         }
 
         networkObject?.GetComponent<CwslPillPickup>()?.ConfigureServer(center, finalPosition, pillType);

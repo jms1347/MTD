@@ -14,22 +14,35 @@ public class CwslSuicideMonster : CwslMonsterBase, ICwslPooledNetworkObject
         base.Initialize(type);
         targetingMode = CwslMonsterTargetingMode.Nearest;
         detonated = false;
+        EnsureFuseController();
     }
 
     public void OnSpawnedFromPool()
     {
         detonated = false;
         ResetSuicideState();
+        GetComponent<CwslSuicideFuseController>()?.ResetForPool();
     }
 
     public void OnReturnedToPool()
     {
         detonated = false;
         ResetSuicideState();
+        GetComponent<CwslSuicideFuseController>()?.ResetForPool();
+    }
+
+    private void EnsureFuseController()
+    {
+        if (MonsterType == CwslMonsterType.StickySuicide)
+            return;
+
+        if (GetComponent<CwslSuicideFuseController>() == null)
+            gameObject.AddComponent<CwslSuicideFuseController>();
     }
 
     protected virtual void ResetSuicideState()
     {
+        GetComponent<CwslSuicideFuseController>()?.ResetForPool();
     }
 
     protected override void TickServerAI()
@@ -39,6 +52,7 @@ public class CwslSuicideMonster : CwslMonsterBase, ICwslPooledNetworkObject
 
         if (!IsValidTarget(currentTarget))
         {
+            UpdateFuseProximity(false);
             RefreshTarget();
             if (!IsValidTarget(currentTarget))
                 return;
@@ -49,8 +63,16 @@ public class CwslSuicideMonster : CwslMonsterBase, ICwslPooledNetworkObject
             : currentTarget.transform.position;
         MoveToward(destination, RushSpeedMultiplier);
 
-        if (GetFlatDistanceTo(currentTarget) <= DetonateRadius)
+        var distance = GetFlatDistanceTo(currentTarget);
+        UpdateFuseProximity(distance <= CwslMonsterStatCatalog.SuicideFuseIgniteDistance);
+
+        if (distance <= DetonateRadius)
             DetonateServer();
+    }
+
+    protected void UpdateFuseProximity(bool ignite)
+    {
+        GetComponent<CwslSuicideFuseController>()?.SetFuseLitServer(ignite);
     }
 
     protected Vector3 ResolveExplosionPosition()

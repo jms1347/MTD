@@ -2,6 +2,10 @@ using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
+/// <summary>
+/// 전투용 NetworkObject(몬스터·투사체·소환·드롭 등)는 반드시 이 서비스를 통해 스폰/반환한다.
+/// Instantiate + Spawn / Despawn(true) 폴백은 사용하지 않는다.
+/// </summary>
 public class CwslNetworkPoolService : MonoBehaviour
 {
     public static CwslNetworkPoolService Instance { get; private set; }
@@ -41,6 +45,8 @@ public class CwslNetworkPoolService : MonoBehaviour
         var highExpand = CwslGameConstants.PoolHighChurnExpandSize;
         var boss = CwslGameConstants.PoolBossInitialSize;
         var bossExpand = CwslGameConstants.PoolBossExpandSize;
+        var structure = CwslGameConstants.PoolStructureInitialSize;
+        var structureExpand = CwslGameConstants.PoolStructureExpandSize;
 
         RegisterPool(assets.projectilePrefab, high, highExpand);
         RegisterPool(assets.bossSkillProjectilePrefab, high, highExpand);
@@ -59,6 +65,7 @@ public class CwslNetworkPoolService : MonoBehaviour
         RegisterPool(assets.goldPickupPrefab, high, highExpand);
         RegisterPool(assets.pillPickupPrefab, high, highExpand);
         RegisterPool(assets.bossPrefab, boss, bossExpand);
+        RegisterPool(assets.enemyBasePrefab, structure, structureExpand);
     }
 
     public NetworkObject Get(GameObject prefab, Vector3 position, Quaternion rotation)
@@ -68,6 +75,8 @@ public class CwslNetworkPoolService : MonoBehaviour
 
         if (!pools.TryGetValue(prefab, out var pool))
         {
+            Debug.LogWarning(
+                $"[CwSL] Initialize에 미등록된 풀 프리팹: {prefab.name}. 런타임 폴백 풀을 생성합니다.");
             pool = RegisterPool(
                 prefab,
                 CwslGameConstants.PoolFallbackInitialSize,
@@ -85,15 +94,15 @@ public class CwslNetworkPoolService : MonoBehaviour
         var identity = networkObject.GetComponent<CwslPooledNetworkIdentity>();
         if (identity == null || identity.SourcePrefab == null)
         {
-            if (networkObject.IsSpawned)
-                networkObject.Despawn(true);
+            Debug.LogError(
+                $"[CwSL] 풀 미등록 NetworkObject 반환 시도: {networkObject.name}. CwslPooledNetworkIdentity가 필요합니다.");
             return;
         }
 
         if (pools.TryGetValue(identity.SourcePrefab, out var pool))
             pool.Release(networkObject);
-        else if (networkObject.IsSpawned)
-            networkObject.Despawn(true);
+        else
+            Debug.LogError($"[CwSL] 풀을 찾을 수 없음: {identity.SourcePrefab.name}");
     }
 
     private void EnsureHierarchy()

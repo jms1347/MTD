@@ -18,6 +18,7 @@ public static class CwslMonsterStatCatalog
     public const float SuicideMoveSpeed = 2.9f;
     public const float SuicideExplosionDamage = 80f;
     public const float SuicideExplosionRadius = 2.5f;
+    public const float SuicideFuseIgniteDistance = 5.5f;
     public const float SuicideNexusExplosionDamage = 100f;
 
     public const float NexusVariantHealth = 150f;

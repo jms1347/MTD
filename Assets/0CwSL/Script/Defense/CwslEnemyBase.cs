@@ -3,7 +3,7 @@ using Unity.Netcode;
 using UnityEngine;
 
 /// <summary>맵 가장자리 적 기지 — 파괴 시 해당 기지 스폰 중단.</summary>
-public class CwslEnemyBase : NetworkBehaviour
+public class CwslEnemyBase : NetworkBehaviour, ICwslPooledNetworkObject
 {
     public const float BarHeight = 3.6f;
 
@@ -45,6 +45,16 @@ public class CwslEnemyBase : NetworkBehaviour
     {
         health.OnValueChanged -= HandleHealthChanged;
         syncedMaxHealth.OnValueChanged -= HandleMaxHealthChanged;
+    }
+
+    public void OnSpawnedFromPool()
+    {
+    }
+
+    public void OnReturnedToPool()
+    {
+        if (worldBar != null)
+            worldBar.SetVisible(false);
     }
 
     public void ConfigureServer(float maxHealthValue)
@@ -137,6 +147,6 @@ public class CwslEnemyBase : NetworkBehaviour
     {
         CwslDefenseModeController.Instance?.NotifyEnemyBaseDestroyedServer(this);
         if (NetworkObject != null && NetworkObject.IsSpawned)
-            NetworkObject.Despawn(true);
+            CwslNetworkPoolService.Instance?.Release(NetworkObject);
     }
 }
