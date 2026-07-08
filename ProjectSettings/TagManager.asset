@@ -26,9 +26,8 @@ TagManager:
   - CwslMonster
   - CwslProjectile
   - CwslGold
-  - 
-  - 
-  - 
+  - HumanTarget
+  - Player
   - 
   - 
   - 

@@ -3,6 +3,7 @@ public static class PanicGameConstants
     public const string SceneName = "MosquitoPanicPrototype";
     public const string HumanTag = "PanicHuman";
     public const string MosquitoTag = "PanicMosquito";
+    public const string HumanTargetLayerName = PanicVisionLayers.HumanTargetLayerName;
 
     public const float PrepDurationSeconds = 70f;
     public const float MatchDurationSeconds = 300f;

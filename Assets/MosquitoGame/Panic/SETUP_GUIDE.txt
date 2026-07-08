@@ -67,8 +67,22 @@ PanicGameConstants.cs
 - PrepDurationSeconds = 70
 - RequiredMissionCount = 3
 
-## 9. 멀티플레이어 확장 TODO
-- 함정 NetworkPrefab 목록 등록 (현재 서버 Instantiate + Spawn)
+## 9. 모기 시야 (Body + Outline 이중 메쉬)
+- BodyMesh (Player 레이어): 인간/모기 모두에게 보이는 일반 몸 + Collider
+- OutlineMesh (HumanTarget 레이어): 빨간 투시 껍데기, Collider 없음
+- 인간 카메라: HumanTarget OFF → 자기 빨강 아웃라인 안 보임, Body는 보임
+- 모기 카메라: Player + HumanTarget ON → 몸 + 빨간 투시 아웃라인
+- NetworkTransform으로 인간 위치 동기화
+- HumanTargetRegistry로 모기가 인간 Transform 조회
+
+## 10. 모기 흡혈 부착
+- Player 레이어 Body Collider에 OverlapSphere 로 접촉
+- 우클릭/탭: 해당 지점에 Attach (Rigidbody kinematic)
+- 부착 중 매초 HP -1 / RP ±10
+- 다시 우클릭 또는 Esc: Detach
+
+## 11. 멀티플레이어 확장 TODO
+- 함정 NetworkPrefab 목록 등록
 - 전용 로비 / 역할 선택 UI
 - ScoreManager 클라이언트 동기화 RPC
 - 모기 3D AudioSource 윙 소리 Spatial 배치

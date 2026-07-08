@@ -66,12 +66,14 @@ public static class PanicPrototypeSceneSetup
 
     private static GameObject CreateSystemsRoot()
     {
+        PanicVisionLayers.EnsureLayersExist();
         var root = new GameObject("PanicSystems");
-        var network = root.AddComponent<NetworkManager>();
+        root.AddComponent<NetworkManager>();
         root.AddComponent<UnityTransport>();
         root.AddComponent<PanicGameManager>();
         root.AddComponent<ScoreManager>();
         root.AddComponent<TrapManager>();
+        root.AddComponent<HumanTargetRegistry>();
         return root;
     }
 
@@ -178,27 +180,62 @@ public static class PanicPrototypeSceneSetup
 
     private static GameObject EnsureHumanPrefab()
     {
+        PanicVisionLayers.EnsureLayersExist();
+        // 기존 프리팹도 NetworkTransform / Visual 컴포넌트를 보강한다.
         var existing = AssetDatabase.LoadAssetAtPath<GameObject>(HumanPrefabPath);
         if (existing != null)
+        {
+            UpgradeHumanPrefab(existing);
             return existing;
+        }
 
         var root = new GameObject("PanicHuman");
         root.AddComponent<NetworkObject>();
+        root.AddComponent<Unity.Netcode.Components.NetworkTransform>();
+        root.AddComponent<CharacterController>();
+        root.AddComponent<HumanVisualBuilder>();
         root.AddComponent<HumanController>();
+        root.AddComponent<HumanTargetOutline>();
         return SavePrefab(root, HumanPrefabPath);
+    }
+
+    private static void UpgradeHumanPrefab(GameObject prefab)
+    {
+        var root = PrefabUtility.LoadPrefabContents(HumanPrefabPath);
+        if (root.GetComponent<Unity.Netcode.Components.NetworkTransform>() == null)
+            root.AddComponent<Unity.Netcode.Components.NetworkTransform>();
+        if (root.GetComponent<HumanVisualBuilder>() == null)
+            root.AddComponent<HumanVisualBuilder>();
+        if (root.GetComponent<HumanTargetOutline>() == null)
+            root.AddComponent<HumanTargetOutline>();
+        PrefabUtility.SaveAsPrefabAsset(root, HumanPrefabPath);
+        PrefabUtility.UnloadPrefabContents(root);
     }
 
     private static GameObject EnsureMosquitoPrefab()
     {
         var existing = AssetDatabase.LoadAssetAtPath<GameObject>(MosquitoPrefabPath);
         if (existing != null)
+        {
+            UpgradeMosquitoPrefab();
             return existing;
+        }
 
         var root = new GameObject("PanicMosquito");
         root.AddComponent<NetworkObject>();
+        root.AddComponent<Unity.Netcode.Components.NetworkTransform>();
         root.AddComponent<Rigidbody>();
         root.AddComponent<MosquitoController>();
         return SavePrefab(root, MosquitoPrefabPath);
+    }
+
+    private static void UpgradeMosquitoPrefab()
+    {
+        var root = PrefabUtility.LoadPrefabContents(MosquitoPrefabPath);
+        if (root.GetComponent<Unity.Netcode.Components.NetworkTransform>() == null)
+            root.AddComponent<Unity.Netcode.Components.NetworkTransform>();
+        PrefabUtility.SaveAsPrefabAsset(root, MosquitoPrefabPath);
+        PrefabUtility.UnloadPrefabContents(root);
     }
 
     private static GameObject SavePrefab(GameObject root, string path)

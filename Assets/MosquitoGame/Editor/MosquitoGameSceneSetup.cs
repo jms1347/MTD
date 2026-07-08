@@ -317,10 +317,9 @@ public static class MosquitoGameSceneSetup
         navRoot.transform.SetParent(apartment.transform, false);
 
         var surface = navRoot.AddComponent<NavMeshSurface>();
+        surface.center = new Vector3(6f, 1f, 3f);
+        surface.size = new Vector3(16f, 4f, 8f);
         surface.collectObjects = CollectObjects.Children;
-        surface.useGeometry = NavMeshCollectGeometry.RenderMeshes;
-        surface.overrideTileSize = true;
-        surface.tileSize = 128;
         surface.BuildNavMesh();
     }
 

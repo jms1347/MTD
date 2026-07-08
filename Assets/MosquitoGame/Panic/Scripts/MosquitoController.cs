@@ -1,14 +1,16 @@
 using System.Collections.Generic;
 using Unity.Netcode;
+using Unity.Netcode.Components;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody))]
+[RequireComponent(typeof(NetworkObject))]
+[RequireComponent(typeof(NetworkTransform))]
 public class MosquitoController : NetworkBehaviour
 {
     private readonly NetworkVariable<float> syncedHealth = new(100f);
 
     private Rigidbody body;
-    private Transform visualRoot;
     private MosquitoHumanTracker tracker;
     private MobileDualTouchInput touchInput = new();
     private readonly HashSet<MosquitoCoilTrap> activeCoils = new();
@@ -18,8 +20,10 @@ public class MosquitoController : NetworkBehaviour
     private float stickyTimer;
     private float coilJitterSeed;
     private bool isDead;
+    private MosquitoBloodSuck bloodSuck;
 
     public bool IsAlive => !isDead && syncedHealth.Value > 0f;
+    public bool IsAttached => bloodSuck != null && bloodSuck.IsAttached;
 
     private void Awake()
     {
@@ -30,9 +34,13 @@ public class MosquitoController : NetworkBehaviour
         body.constraints = RigidbodyConstraints.FreezeRotation;
         body.interpolation = RigidbodyInterpolation.Interpolate;
 
-        visualRoot = MosquitoVisualBuilder.Build(transform).transform;
+        if (GetComponent<NetworkTransform>() == null)
+            gameObject.AddComponent<NetworkTransform>();
+
+        MosquitoVisualBuilder.Build(transform);
         tracker = gameObject.AddComponent<MosquitoHumanTracker>();
-        gameObject.AddComponent<MosquitoBloodSuck>();
+        tracker.EnsureCamera();
+        bloodSuck = gameObject.AddComponent<MosquitoBloodSuck>();
         tag = PanicGameConstants.MosquitoTag;
     }
 
@@ -40,12 +48,30 @@ public class MosquitoController : NetworkBehaviour
     {
         if (IsServer)
             PanicGameManager.Instance?.RegisterMosquitoSpawned();
+
+        tracker?.EnsureCamera();
+        tracker?.SetOwnerCameraActive(IsOwner);
+
+        if (IsOwner)
+            HumanTargetRegistry.Instance?.GetPrimaryHuman()?.EnsureMosquitoVisibleOutline();
     }
 
     private void Update()
     {
         if (!IsOwner || !IsAlive)
             return;
+
+        // 부착 중에는 대시/호버 중단, 흡혈만 유지
+        if (IsAttached)
+        {
+            if (stickyTimer > 0f)
+                stickyTimer -= Time.deltaTime;
+
+            touchInput.Update(enableTouch: Application.isMobilePlatform, enableKeyboardFallback: !Application.isMobilePlatform);
+            if (touchInput.FirePressed || Input.GetKeyDown(KeyCode.Escape))
+                bloodSuck?.Detach();
+            return;
+        }
 
         if (stickyTimer > 0f)
         {
@@ -65,12 +91,12 @@ public class MosquitoController : NetworkBehaviour
             TryDash(transform.forward);
 
         if (touchInput.FirePressed)
-            GetComponent<MosquitoBloodSuck>()?.TryStartSuck();
+            bloodSuck?.TryStartSuck();
     }
 
     private void FixedUpdate()
     {
-        if (!IsOwner || !IsAlive)
+        if (!IsOwner || !IsAlive || IsAttached)
             return;
 
         if (stickyTimer > 0f)
@@ -102,7 +128,7 @@ public class MosquitoController : NetworkBehaviour
             direction = transform.forward;
 
         direction = transform.TransformDirection(direction.normalized);
-        direction.y = Mathf.Clamp(Input.GetKey(KeyCode.Space) ? 0.35f : 0f, 0f, 0.35f);
+        direction.y = Input.GetKey(KeyCode.Space) ? 0.35f : 0f;
 
         var impulse = PanicGameConstants.MosquitoDashImpulse;
         if (activeCoils.Count > 0)

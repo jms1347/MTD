@@ -1,7 +1,10 @@
 using Unity.Netcode;
+using Unity.Netcode.Components;
 using UnityEngine;
 
 [RequireComponent(typeof(CharacterController))]
+[RequireComponent(typeof(NetworkObject))]
+[RequireComponent(typeof(NetworkTransform))]
 public class HumanController : NetworkBehaviour
 {
     private readonly NetworkVariable<float> health = new(PanicGameConstants.HumanMaxHealth);
@@ -10,8 +13,9 @@ public class HumanController : NetworkBehaviour
     private Camera firstPersonCamera;
     private HumanGun gun;
     private HumanHeartbeatRadar heartbeatRadar;
+    private HumanVisualBuilder visualBuilder;
+    private HumanTargetOutline targetOutline;
     private MobileDualTouchInput touchInput = new();
-    private Transform trackerOutline;
 
     private float yaw;
     private float pitch;
@@ -34,13 +38,9 @@ public class HumanController : NetworkBehaviour
         characterController.center = new Vector3(0f, 0.92f, 0f);
         tag = PanicGameConstants.HumanTag;
 
-        var cameraGo = new GameObject("HumanCamera");
-        cameraGo.transform.SetParent(transform, false);
-        cameraGo.transform.localPosition = new Vector3(0f, 1.62f, 0f);
-        firstPersonCamera = cameraGo.AddComponent<Camera>();
-        firstPersonCamera.nearClipPlane = 0.05f;
-        firstPersonCamera.fieldOfView = 75f;
-        cameraGo.AddComponent<AudioListener>();
+        EnsureNetworkTransform();
+        BuildFirstPersonCamera();
+        EnsureHumanVisual();
 
         gun = gameObject.AddComponent<HumanGun>();
         HumanGun.CreateMuzzle(transform, firstPersonCamera);
@@ -48,11 +48,83 @@ public class HumanController : NetworkBehaviour
         heartbeatRadar.Bind(this);
     }
 
+    private void EnsureNetworkTransform()
+    {
+        if (GetComponent<NetworkTransform>() == null)
+            gameObject.AddComponent<NetworkTransform>();
+    }
+
+    private void BuildFirstPersonCamera()
+    {
+        var cameraGo = new GameObject("HumanCamera");
+        cameraGo.transform.SetParent(transform, false);
+        cameraGo.transform.localPosition = new Vector3(0f, 1.62f, 0f);
+        firstPersonCamera = cameraGo.AddComponent<Camera>();
+        firstPersonCamera.nearClipPlane = 0.05f;
+        firstPersonCamera.fieldOfView = 75f;
+        cameraGo.AddComponent<AudioListener>();
+        PanicVisionLayers.ApplyHumanCameraCulling(firstPersonCamera);
+    }
+
     public override void OnNetworkSpawn()
     {
+        EnsureHumanVisual();
         PanicGameManager.Instance?.RegisterHuman(this);
+
+        HumanTargetRegistry.Instance?.RegisterHuman(this);
+
         if (!IsLocalOwner)
+        {
             firstPersonCamera.enabled = false;
+            var listener = firstPersonCamera.GetComponent<AudioListener>();
+            if (listener != null)
+                Destroy(listener);
+            return;
+        }
+
+        firstPersonCamera.enabled = true;
+        PanicVisionLayers.ApplyHumanCameraCulling(firstPersonCamera);
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        HumanTargetRegistry.Instance?.UnregisterHuman(this);
+    }
+
+    public Vector3 GetAimPoint()
+    {
+        if (visualBuilder != null && visualBuilder.BodyRoot != null)
+            return visualBuilder.BodyRoot.position + Vector3.up * 0.9f;
+
+        return transform.position + Vector3.up * 1.5f;
+    }
+
+    public Vector3 GetNearestAttachPoint(Vector3 fromPosition)
+    {
+        EnsureHumanVisual();
+        return visualBuilder != null
+            ? visualBuilder.GetNearestAttachPoint(fromPosition)
+            : GetAimPoint();
+    }
+
+    public Transform EnsureMosquitoVisibleOutline()
+    {
+        EnsureHumanVisual();
+        visualBuilder?.SetOutlineVisible(true);
+        return visualBuilder != null ? visualBuilder.OutlineRoot : null;
+    }
+
+    private void EnsureHumanVisual()
+    {
+        if (visualBuilder == null)
+            visualBuilder = GetComponent<HumanVisualBuilder>() ?? gameObject.AddComponent<HumanVisualBuilder>();
+
+        visualBuilder.Build();
+
+        if (targetOutline == null)
+            targetOutline = GetComponent<HumanTargetOutline>() ?? gameObject.AddComponent<HumanTargetOutline>();
+
+        targetOutline.Build();
     }
 
     private void Update()
@@ -210,22 +282,6 @@ public class HumanController : NetworkBehaviour
         heartbeatIntensity = intensity;
         heartbeatSin = sinWave;
         PanicAudioCue.PlayHeartbeat(intensity);
-    }
-
-    public Transform EnsureTrackerOutline()
-    {
-        if (trackerOutline != null)
-            return trackerOutline;
-
-        var outline = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-        outline.name = "HumanTrackerOutline";
-        outline.transform.SetParent(transform, false);
-        outline.transform.localScale = new Vector3(0.75f, 1.05f, 0.75f);
-        outline.transform.localPosition = new Vector3(0f, 0.95f, 0f);
-        PanicMaterialFactory.ApplyColor(outline.GetComponent<Renderer>(), new Color(1f, 0.1f, 0.1f, 0.35f), transparent: true);
-        Object.Destroy(outline.GetComponent<Collider>());
-        trackerOutline = outline.transform;
-        return trackerOutline;
     }
 
     private void OnGUI()
