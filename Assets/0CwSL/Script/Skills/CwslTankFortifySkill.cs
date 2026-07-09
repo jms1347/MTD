@@ -2,7 +2,7 @@ using Unity.Netcode;
 using UnityEngine;
 
 /// <summary>
-/// 탱커 Q/Space 홀드 — 골드가 있을 때만 쉴드 이펙트·무적. 피격 시 골드 1 소모.
+/// 탱커 Q/Space 홀드 — 방패를 펼쳐 방어력 2배. SP 4/초 유지 소모. E·R·W 강화.
 /// </summary>
 public class CwslTankFortifySkill : CwslPlayerSkillBase
 {
@@ -18,16 +18,15 @@ public class CwslTankFortifySkill : CwslPlayerSkillBase
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server);
 
-    private CwslPlayerGold playerGold;
     private CwslPlayerMovement movement;
     private CwslPlayerVisualScale visualScale;
     private CwslPlayerShieldFortifyVisual shieldFortifyVisual;
-    private CwslPlayerPillBuff pillBuff;
     private CwslPlayerSkillCooldowns skillCooldowns;
+    private CwslPlayerStamina playerStamina;
+    private CwslPlayerSkills playerSkills;
 
     public bool IsFortifying => isFortifying.Value;
     public bool IsShieldActive => isShieldActive.Value;
-    public float BlockRadius => IsShieldActive ? CwslGameConstants.FortifyShieldBlockRadius : 0f;
 
     public override CwslSkillActivationType ActivationType => CwslSkillActivationType.Charged;
 
@@ -36,23 +35,12 @@ public class CwslTankFortifySkill : CwslPlayerSkillBase
 
     public override void OnNetworkSpawn()
     {
-        playerGold = GetComponent<CwslPlayerGold>();
         movement = GetComponent<CwslPlayerMovement>();
         visualScale = GetComponent<CwslPlayerVisualScale>();
         shieldFortifyVisual = GetComponent<CwslPlayerShieldFortifyVisual>();
-        pillBuff = GetComponent<CwslPlayerPillBuff>();
         skillCooldowns = GetComponent<CwslPlayerSkillCooldowns>();
-        if (GetComponent<CwslPlayerShieldBubble>() == null)
-            gameObject.AddComponent<CwslPlayerShieldBubble>();
-
-        if (playerGold != null)
-            playerGold.OnGoldChanged += HandleGoldChanged;
-    }
-
-    public override void OnNetworkDespawn()
-    {
-        if (playerGold != null)
-            playerGold.OnGoldChanged -= HandleGoldChanged;
+        playerStamina = GetComponent<CwslPlayerStamina>();
+        playerSkills = GetComponent<CwslPlayerSkills>();
     }
 
     public override void OnSkillPressedServer(ulong senderClientId)
@@ -62,6 +50,15 @@ public class CwslTankFortifySkill : CwslPlayerSkillBase
 
         if (skillCooldowns != null && !skillCooldowns.IsReady(0))
             return;
+
+        if (playerStamina == null)
+            playerStamina = GetComponent<CwslPlayerStamina>();
+
+        if (playerStamina != null && playerStamina.Current <= 0f)
+        {
+            playerSkills?.NotifyStaminaInsufficientServer();
+            return;
+        }
 
         isFortifying.Value = true;
         visualScale?.SetScaleServer(CwslGameConstants.FortifyBodyScale);
@@ -75,52 +72,33 @@ public class CwslTankFortifySkill : CwslPlayerSkillBase
         if (!IsServer)
             return;
 
-        isFortifying.Value = false;
-        SetShieldActiveServer(false);
-        visualScale?.SetScaleServer(1f);
-        if (movement != null)
-            movement.SpeedMultiplier = 1f;
-        skillCooldowns?.BeginCooldown(0);
+        EndFortifyServer(beginCooldown: true);
     }
 
     public override void TickChargedServer()
     {
-        RefreshShieldState();
-    }
-
-    public bool TryBlockDamageServer()
-    {
-        if (!IsServer || !isShieldActive.Value || playerGold == null)
-            return false;
-
-        if (!CwslGameConstants.SkillsConsumeGold)
-        {
-            RefreshShieldState();
-            return true;
-        }
-
-        if (pillBuff != null && pillBuff.TrySpendSkillGold(playerGold, CwslGameConstants.TankHitGoldCost))
-        {
-            RefreshShieldState();
-            return true;
-        }
-
-        if (!playerGold.TrySpendGoldServer(CwslGameConstants.TankHitGoldCost))
-        {
-            RefreshShieldState();
-            return false;
-        }
-
-        RefreshShieldState();
-        return true;
-    }
-
-    private void HandleGoldChanged(int gold)
-    {
-        if (!IsServer)
+        if (!IsServer || !isFortifying.Value)
             return;
 
+        if (playerStamina == null)
+            playerStamina = GetComponent<CwslPlayerStamina>();
+
+        var drain = CwslGameConstants.TankFortifyStaminaDrainPerSecond * Time.deltaTime;
+        if (drain > 0f &&
+            CwslGameConstants.SkillsUseStamina &&
+            playerStamina != null &&
+            !playerStamina.TrySpendServer(drain))
+        {
+            EndFortifyServer(beginCooldown: true);
+            return;
+        }
+
         RefreshShieldState();
+    }
+
+    public float GetDefenseMultiplier()
+    {
+        return IsShieldActive ? CwslGameConstants.TankFortifyDefenseMultiplier : 1f;
     }
 
     private void RefreshShieldState()
@@ -129,10 +107,25 @@ public class CwslTankFortifySkill : CwslPlayerSkillBase
             return;
 
         var shouldActivate = isFortifying.Value &&
-                             playerGold != null &&
-                             ( !CwslGameConstants.SkillsConsumeGold ||
-                               playerGold.Gold >= CwslGameConstants.TankHitGoldCost);
+                             (!CwslGameConstants.SkillsUseStamina ||
+                              playerStamina == null ||
+                              playerStamina.Current > 0f);
         SetShieldActiveServer(shouldActivate);
+    }
+
+    private void EndFortifyServer(bool beginCooldown)
+    {
+        if (!isFortifying.Value && !isShieldActive.Value)
+            return;
+
+        isFortifying.Value = false;
+        SetShieldActiveServer(false);
+        visualScale?.SetScaleServer(1f);
+        if (movement != null)
+            movement.SpeedMultiplier = 1f;
+
+        if (beginCooldown)
+            skillCooldowns?.BeginCooldown(0);
     }
 
     private void SetShieldActiveServer(bool active)

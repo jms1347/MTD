@@ -194,11 +194,17 @@ public class CwslBarricadeWall : MonoBehaviour
             if (flat.sqrMagnitude > radiusSq)
                 continue;
 
-            monster.DamageFromPlayer(ownerClientId, CwslGameConstants.BarricadeDetonateBlastDamage);
+            monster.DamageFromPlayer(
+                ownerClientId,
+                CwslCombatMath.ResolveSkillDamage(
+                    CwslCharacterId.Barricade,
+                    CwslGameConstants.BarricadeDetonateSkillCoeff));
             CwslMonsterStatusController.Ensure(monster)?.ApplyBurnServer(
                 ownerClientId,
                 CwslGameConstants.BarricadeDetonateBurnDuration,
-                CwslGameConstants.BarricadeDetonateBurnDamage);
+                CwslCombatMath.ResolveSkillDamage(
+                    CwslCharacterId.Barricade,
+                    CwslGameConstants.BarricadeDetonateBurnSkillCoeff));
         }
 
         CwslVfxSpawner.SpawnBarricadeDetonate(center);

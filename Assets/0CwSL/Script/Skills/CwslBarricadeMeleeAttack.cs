@@ -58,7 +58,9 @@ public class CwslBarricadeMeleeAttack : NetworkBehaviour
 
         movement?.StopMovement();
         FaceToward(monster.transform.position);
-        var damage = CwslCharacterStatCatalog.GetAttackPower(CwslCharacterId.Barricade);
+        var damage = CwslCombatMath.ResolveSkillDamage(
+            CwslCharacterId.Barricade,
+            CwslGameConstants.BasicAttackSkillCoeff);
         monster.DamageFromPlayer(OwnerClientId, damage);
         nextAttackTime = Time.time + CwslGameConstants.BarricadeMeleeCooldown
                          / Mathf.Max(0.25f, GetComponent<CwslAttackSpeedBuff>()?.AttackSpeedMultiplier ?? 1f);

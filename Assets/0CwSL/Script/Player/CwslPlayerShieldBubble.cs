@@ -1,8 +1,7 @@
 using UnityEngine;
 
 /// <summary>
-/// Q 방패(골드 있을 때) 캐릭터를 감싸는 트리거 콜라이더.
-/// 근접/미사일/자폭 공격은 들어오되, 데미지는 방패가 막습니다.
+/// (레거시) 방패 투사체 차단 콜라이더 — 차단 기능 비활성화, 시각만 유지 가능.
 /// </summary>
 [DefaultExecutionOrder(-50)]
 public class CwslPlayerShieldBubble : MonoBehaviour
@@ -39,23 +38,12 @@ public class CwslPlayerShieldBubble : MonoBehaviour
 
     public bool TryBlockProjectileServer(Vector3 hitPosition, float damage)
     {
-        if (!IsBubbleActive || playerHealth == null)
-            return false;
-
-        return playerHealth.TryBlockHitServer(hitPosition, damage, isProjectile: true);
+        return false;
     }
 
     private bool ShouldBeActive()
     {
-        if (fortifySkill == null)
-            fortifySkill = GetComponent<CwslTankFortifySkill>();
-        if (playerCharacter == null)
-            playerCharacter = GetComponent<CwslPlayerCharacter>();
-
-        return fortifySkill != null &&
-               playerCharacter != null &&
-               playerCharacter.CharacterId == CwslCharacterId.Tank &&
-               fortifySkill.IsShieldActive;
+        return false;
     }
 
     private void EnsureBubble()

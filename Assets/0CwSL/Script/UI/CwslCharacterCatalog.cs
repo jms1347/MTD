@@ -30,44 +30,44 @@ public static class CwslCharacterCatalog
         new(
             CwslCharacterId.Tank,
             "방패 탱커",
-            "임시 밸런스: HP/공격/방어/시야 동일 · Q/E/R/F 스킬 4개 · 스테미너 소모",
-            "우클릭 이동 | 좌클릭 적선택 | A+클릭 어택 | Q/E/R/F 스킬 | G 골드 선물",
+            "높은 체력과 방어력으로 전선을 유지합니다. 몬스터의 압박을 막고, 스턴·넉백으로 아군을 보호하는 역할입니다.",
+            "우클릭 이동 · 좌클릭 적 선택 · A+클릭 공격 이동",
             CwslGameConstants.PlayerVisionRadius),
         new(
             CwslCharacterId.MissileTank,
             "총잡이",
-            "임시 밸런스: HP/공격/방어/시야 동일 · Q/E/R/F 스킬 4개 · 스테미너 소모",
-            "우클릭 이동 | 좌클릭 적선택 | A+클릭 어택 | Q/E/R/F 스킬 | G 골드 선물",
+            "원거리 화력 딜러입니다. 안전한 거리에서 몬스터와 넥서스를 압박하는 적을 처리합니다.",
+            "우클릭 이동 · 좌클릭 적 선택 · A+클릭 공격 이동",
             CwslGameConstants.PlayerVisionRadius),
         new(
             CwslCharacterId.RedMage,
             "빨간 마법사",
-            "임시 밸런스: HP/공격/방어/시야 동일 · Q/E/R/F 스킬 4개 · 스테미너 소모",
-            "우클릭 이동 | 좌클릭 적선택 | A+클릭 어택 | Q 메테오(지면) · E/R/F 준비중 | G 골드 선물",
+            "광역 마법으로 몬스터 무리를 정리합니다. 메테오·구체·순간이동으로 순간 폭딜을 넣습니다.",
+            "우클릭 이동 · 좌클릭 적 선택 · Q 스킬은 지면 클릭",
             CwslGameConstants.PlayerVisionRadius),
         new(
             CwslCharacterId.MomentumRammer,
             "질주자",
-            "임시 밸런스: HP/공격/방어/시야 동일 · Q/E/R/W 스킬 4개 · 스테미너 소모",
-            "우클릭 홀드 조향 | 좌클릭 적선택 | A+클릭 어택 | Q/E/R/W 스킬 | G 골드 선물",
+            "속도를 모아 돌진하며 충돌 피해를 줍니다. 기동성이 높아 견제와 견인에 특화되어 있습니다.",
+            "우클릭 홀드 조향 · 좌클릭 적 선택 · Q/Space 홀드 스킬",
             CwslGameConstants.PlayerVisionRadius),
         new(
             CwslCharacterId.CrowdGatherer,
             "끌모",
-            "임시 밸런스: HP/공격/방어/시야 동일 · Q/E/R/W 스킬 4개 · 스테미너 소모",
-            "우클릭 이동 | 좌클릭 적선택 | A+클릭 어택 | Q/E/R/W 스킬 | G 골드 선물",
+            "몬스터를 끌어모아 아군 딜 타이밍을 만듭니다. 블랙홀·교환으로 전장을 교란합니다.",
+            "우클릭 이동 · 좌클릭 적 선택 · Q/Space 홀드 스킬",
             CwslGameConstants.PlayerVisionRadius),
         new(
             CwslCharacterId.Barricade,
             "바리케이드",
-            "벽돌 인간 · 벽/발판/수리/폭파 · Q/E/R/W 스킬",
-            "우클릭 이동 | 좌클릭 적선택 | A+클릭 어택 | Q 드래그로 벽 · E/R/W 스킬 | G 골드 선물",
+            "벽과 발판으로 길을 통제하고 넥서스를 수리합니다. 넥서스 러시를 막는 방어형입니다.",
+            "우클릭 이동 · Q는 드래그로 벽 설치",
             CwslGameConstants.PlayerVisionRadius),
         new(
             CwslCharacterId.Healer,
             "힐러",
-            "요정 프리스트 · 힐/독/버프 · Q/E/R/W 스킬",
-            "우클릭 이동 | 좌클릭 적선택 | A+클릭 어택 | Q 힐장판 · E/R/W 스킬 | G 골드 선물",
+            "아군 회복과 버프, 독 장판으로 전장을 지원합니다. 지속 전투에서 팀 생존력을 높입니다.",
+            "우클릭 이동 · 좌클릭 적 선택 · Q/E/R/W 장판·스킬",
             CwslGameConstants.PlayerVisionRadius)
     };
 

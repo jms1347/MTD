@@ -5,7 +5,6 @@ using UnityEngine;
 
 public class CwslPlayerSkills : NetworkBehaviour
 {
-    private const float MeteorDamage = 1f;
     private const float MeteorRadius = 4.8f;
     private const float MeteorFallDuration = 0.55f;
 
@@ -68,9 +67,6 @@ public class CwslPlayerSkills : NetworkBehaviour
             return;
 
         if (!IsSkillActiveForCharacter(crowdGatherSkill))
-            return;
-
-        if (!TrySpendStaminaForSlot(0))
             return;
 
         crowdGatherSkill.BeginChargeServer(worldPoint);
@@ -195,8 +191,9 @@ public class CwslPlayerSkills : NetworkBehaviour
             ? playerCharacter.CharacterId
             : CwslCharacterId.Tank;
 
-        // ??? Q???????? ?????????? 1 ??? ????????????????
-        if (characterId == CwslCharacterId.Tank)
+        // 홀드 Q는 각 스킬에서 시작·유지 SP 처리
+        if (characterId == CwslCharacterId.Tank ||
+            characterId == CwslCharacterId.MomentumRammer)
             return true;
 
         return TrySpendStaminaForSlot(0);
@@ -317,11 +314,15 @@ public class CwslPlayerSkills : NetworkBehaviour
             if (flat.sqrMagnitude > radiusSqr)
                 continue;
 
-            monster.DamageFromPlayer(attackerClientId, MeteorDamage);
+            monster.DamageFromPlayer(
+                attackerClientId,
+                CwslCombatMath.ResolveSkillDamageForClient(attackerClientId, CwslGameConstants.MeteorSkillCoeff));
             CwslMonsterStatusController.Ensure(monster)?.ApplyBurnServer(
                 attackerClientId,
                 CwslGameConstants.MonsterBurnDuration,
-                CwslGameConstants.MonsterBurnTotalDamage);
+                CwslCombatMath.ResolveSkillDamageForClient(
+                    attackerClientId,
+                    CwslGameConstants.MonsterBurnTotalSkillCoeff));
         }
     }
 

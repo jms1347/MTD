@@ -2,13 +2,14 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>게임 시작 시 배정 캐릭터·조작법 안내 팝업.</summary>
+/// <summary>게임 시작 시 랜덤 배정 캐릭터·스킬(QWER) 안내 팝업.</summary>
 public static class CwslCharacterIntroPopup
 {
     private static GameObject root;
     private static TextMeshProUGUI titleLabel;
     private static TextMeshProUGUI descriptionLabel;
-    private static TextMeshProUGUI controlsLabel;
+    private static TextMeshProUGUI skillsLabel;
+    private static TextMeshProUGUI movementLabel;
 
     public static void Ensure(Transform canvasTransform)
     {
@@ -34,7 +35,7 @@ public static class CwslCharacterIntroPopup
         boxRect.anchorMin = new Vector2(0.5f, 0.5f);
         boxRect.anchorMax = new Vector2(0.5f, 0.5f);
         boxRect.pivot = new Vector2(0.5f, 0.5f);
-        boxRect.sizeDelta = new Vector2(620f, 420f);
+        boxRect.sizeDelta = new Vector2(680f, 500f);
         box.GetComponent<Image>().color = new Color(0.07f, 0.09f, 0.13f, 0.98f);
 
         var accent = new GameObject("Accent", typeof(RectTransform), typeof(Image));
@@ -52,8 +53,8 @@ public static class CwslCharacterIntroPopup
         titleRect.anchorMin = new Vector2(0.5f, 1f);
         titleRect.anchorMax = new Vector2(0.5f, 1f);
         titleRect.pivot = new Vector2(0.5f, 1f);
-        titleRect.anchoredPosition = new Vector2(0f, -24f);
-        titleRect.sizeDelta = new Vector2(560f, 48f);
+        titleRect.anchoredPosition = new Vector2(0f, -22f);
+        titleRect.sizeDelta = new Vector2(620f, 48f);
         titleLabel.color = new Color(1f, 0.92f, 0.45f);
 
         var roleHeader = CreateLabel(box.transform, "RoleHeader", "캐릭터 설명", 18f, FontStyles.Bold);
@@ -61,7 +62,7 @@ public static class CwslCharacterIntroPopup
         roleHeaderRect.anchorMin = new Vector2(0f, 1f);
         roleHeaderRect.anchorMax = new Vector2(1f, 1f);
         roleHeaderRect.pivot = new Vector2(0f, 1f);
-        roleHeaderRect.anchoredPosition = new Vector2(28f, -84f);
+        roleHeaderRect.anchoredPosition = new Vector2(28f, -78f);
         roleHeaderRect.sizeDelta = new Vector2(-56f, 28f);
         roleHeader.alignment = TextAlignmentOptions.MidlineLeft;
         roleHeader.color = new Color(0.72f, 0.8f, 0.92f);
@@ -71,34 +72,46 @@ public static class CwslCharacterIntroPopup
         descriptionRect.anchorMin = new Vector2(0f, 1f);
         descriptionRect.anchorMax = new Vector2(1f, 1f);
         descriptionRect.pivot = new Vector2(0f, 1f);
-        descriptionRect.anchoredPosition = new Vector2(28f, -112f);
-        descriptionRect.sizeDelta = new Vector2(-56f, 88f);
+        descriptionRect.anchoredPosition = new Vector2(28f, -106f);
+        descriptionRect.sizeDelta = new Vector2(-56f, 72f);
         descriptionLabel.alignment = TextAlignmentOptions.TopLeft;
         descriptionLabel.enableWordWrapping = true;
         descriptionLabel.color = new Color(0.9f, 0.92f, 0.96f);
 
-        var controlsHeader = CreateLabel(box.transform, "ControlsHeader", "조작법", 18f, FontStyles.Bold);
-        var controlsHeaderRect = controlsHeader.rectTransform;
-        controlsHeaderRect.anchorMin = new Vector2(0f, 1f);
-        controlsHeaderRect.anchorMax = new Vector2(1f, 1f);
-        controlsHeaderRect.pivot = new Vector2(0f, 1f);
-        controlsHeaderRect.anchoredPosition = new Vector2(28f, -206f);
-        controlsHeaderRect.sizeDelta = new Vector2(-56f, 28f);
-        controlsHeader.alignment = TextAlignmentOptions.MidlineLeft;
-        controlsHeader.color = new Color(0.72f, 0.8f, 0.92f);
+        var skillsHeader = CreateLabel(box.transform, "SkillsHeader", "스킬 안내 (Q · W · E · R)", 18f, FontStyles.Bold);
+        var skillsHeaderRect = skillsHeader.rectTransform;
+        skillsHeaderRect.anchorMin = new Vector2(0f, 1f);
+        skillsHeaderRect.anchorMax = new Vector2(1f, 1f);
+        skillsHeaderRect.pivot = new Vector2(0f, 1f);
+        skillsHeaderRect.anchoredPosition = new Vector2(28f, -186f);
+        skillsHeaderRect.sizeDelta = new Vector2(-56f, 28f);
+        skillsHeader.alignment = TextAlignmentOptions.MidlineLeft;
+        skillsHeader.color = new Color(0.72f, 0.8f, 0.92f);
 
-        controlsLabel = CreateLabel(box.transform, "Controls", string.Empty, 18f, FontStyles.Normal);
-        var controlsRect = controlsLabel.rectTransform;
-        controlsRect.anchorMin = new Vector2(0f, 1f);
-        controlsRect.anchorMax = new Vector2(1f, 1f);
-        controlsRect.pivot = new Vector2(0f, 1f);
-        controlsRect.anchoredPosition = new Vector2(28f, -234f);
-        controlsRect.sizeDelta = new Vector2(-56f, 96f);
-        controlsLabel.alignment = TextAlignmentOptions.TopLeft;
-        controlsLabel.enableWordWrapping = true;
-        controlsLabel.color = new Color(0.86f, 0.9f, 0.96f);
+        skillsLabel = CreateLabel(box.transform, "Skills", string.Empty, 17f, FontStyles.Normal);
+        var skillsRect = skillsLabel.rectTransform;
+        skillsRect.anchorMin = new Vector2(0f, 1f);
+        skillsRect.anchorMax = new Vector2(1f, 1f);
+        skillsRect.pivot = new Vector2(0f, 1f);
+        skillsRect.anchoredPosition = new Vector2(28f, -214f);
+        skillsRect.sizeDelta = new Vector2(-56f, 168f);
+        skillsLabel.alignment = TextAlignmentOptions.TopLeft;
+        skillsLabel.enableWordWrapping = true;
+        skillsLabel.color = new Color(0.86f, 0.9f, 0.96f);
+        skillsLabel.lineSpacing = 2f;
 
-        var confirmButton = CreateButton(box.transform, "확인", new Vector2(0f, 28f));
+        movementLabel = CreateLabel(box.transform, "Movement", string.Empty, 15f, FontStyles.Italic);
+        var movementRect = movementLabel.rectTransform;
+        movementRect.anchorMin = new Vector2(0f, 0f);
+        movementRect.anchorMax = new Vector2(1f, 0f);
+        movementRect.pivot = new Vector2(0f, 0f);
+        movementRect.anchoredPosition = new Vector2(28f, 88f);
+        movementRect.sizeDelta = new Vector2(-56f, 40f);
+        movementLabel.alignment = TextAlignmentOptions.MidlineLeft;
+        movementLabel.enableWordWrapping = true;
+        movementLabel.color = new Color(0.62f, 0.68f, 0.76f);
+
+        var confirmButton = CreateButton(box.transform, "확인하고 시작", new Vector2(0f, 24f));
         confirmButton.onClick.AddListener(Hide);
 
         root.SetActive(false);
@@ -112,9 +125,10 @@ public static class CwslCharacterIntroPopup
             return;
 
         var entry = CwslCharacterCatalog.Get(characterId);
-        titleLabel.text = $"당신의 캐릭터: {entry.DisplayName}";
+        titleLabel.text = $"배정 캐릭터: {entry.DisplayName}";
         descriptionLabel.text = entry.Description;
-        controlsLabel.text = entry.ControlHint;
+        skillsLabel.text = CwslCharacterSkillCatalog.BuildGuideText(characterId);
+        movementLabel.text = entry.ControlHint;
 
         root.transform.SetAsLastSibling();
         root.SetActive(true);
@@ -154,7 +168,7 @@ public static class CwslCharacterIntroPopup
         rect.anchorMax = new Vector2(0.5f, 0f);
         rect.pivot = new Vector2(0.5f, 0f);
         rect.anchoredPosition = anchoredPosition;
-        rect.sizeDelta = new Vector2(220f, 52f);
+        rect.sizeDelta = new Vector2(260f, 52f);
 
         var image = buttonObject.GetComponent<Image>();
         image.color = new Color(0.2f, 0.55f, 0.95f, 1f);
@@ -170,7 +184,7 @@ public static class CwslCharacterIntroPopup
         var labelText = labelObject.GetComponent<TextMeshProUGUI>();
         CwslTmpFontUtil.ApplyFont(labelText);
         labelText.text = label;
-        labelText.fontSize = 24f;
+        labelText.fontSize = 22f;
         labelText.alignment = TextAlignmentOptions.Center;
         labelText.color = Color.white;
 

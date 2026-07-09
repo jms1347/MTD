@@ -175,7 +175,9 @@ public class CwslGathererMissileAttack : NetworkBehaviour
             return false;
 
         var projectile = networkObject.GetComponent<CwslPlayerProjectile>();
-        var damage = CwslCharacterStatCatalog.GetAttackPower(CwslCharacterId.CrowdGatherer);
+        var damage = CwslCombatMath.ResolveSkillDamage(
+            CwslCharacterId.CrowdGatherer,
+            CwslGameConstants.BasicAttackSkillCoeff);
         projectile?.Configure(
             direction,
             CwslGameConstants.GathererMissileSpeed,

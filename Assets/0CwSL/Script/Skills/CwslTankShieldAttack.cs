@@ -78,16 +78,21 @@ public class CwslTankShieldAttack : NetworkBehaviour
 
         if (IsEmpoweredShieldAttack())
         {
-            var empoweredDamage = attackPower * CwslGameConstants.FortifyEmpoweredAttackDamageMultiplier;
+            var empoweredDamage = CwslCombatMath.ResolveSkillDamage(
+                CwslCharacterId.Tank,
+                CwslGameConstants.TankEmpoweredBashSkillCoeff);
             ApplyAreaDamageServer(empoweredDamage, ResolveEmpoweredHitCenter());
         }
         else if (targetObject != null && targetObject.IsSpawned &&
                  CwslPlayerShieldBashVisual.IsInStrikeRange(transform, targetObject))
         {
+            var basicDamage = CwslCombatMath.ResolveSkillDamage(
+                CwslCharacterId.Tank,
+                CwslGameConstants.BasicAttackSkillCoeff);
             if (monsterHealth != null && monsterHealth.IsAlive)
-                monsterHealth.DamageFromPlayer(OwnerClientId, attackPower);
+                monsterHealth.DamageFromPlayer(OwnerClientId, basicDamage);
             else if (enemyBase != null && enemyBase.IsAlive)
-                enemyBase.DamageFromPlayer(OwnerClientId, attackPower);
+                enemyBase.DamageFromPlayer(OwnerClientId, basicDamage);
         }
 
         PlayShieldImpactClientRpc(hitPoint, IsEmpoweredShieldAttack());

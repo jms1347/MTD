@@ -250,7 +250,13 @@ public class CwslTankShieldDashSkill : CwslPlayerSkillBase
             // 대시 도중 같은 몬스터에 대해 반복 사운드가 겹치지 않도록 1회만 재생.
             var id = monster.GetInstanceID();
             if (notifiedMonsters.Add(id))
+            {
                 hitPositions.Add(monster.GetFlatHitPoint());
+                var dashDamage = CwslCombatMath.ResolveSkillDamage(
+                    CwslCharacterId.Tank,
+                    CwslGameConstants.TankDashContactSkillCoeff) * (empowered ? CwslTankSkillEmpower.GetPowerMultiplier(true) : 1f);
+                monster.DamageFromPlayer(OwnerClientId, dashDamage);
+            }
 
             ApplyKnockbackToMonster(monster, direction, pushDistance, pushDuration);
         }

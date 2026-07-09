@@ -82,7 +82,7 @@ public class CwslMonsterHealth : NetworkBehaviour, ICwslPooledNetworkObject
             : executive
                 ? CwslGameConstants.GoldDropExecutive
                 : CwslGameConstants.GoldDropNormal;
-        maxHealth = CwslMonsterStatCatalog.GetMaxHealth(type);
+        maxHealth = CwslMonsterStatCatalog.GetMaxHealth(type) * Mathf.Max(0.01f, healthMultiplier);
         if (IsServer)
             syncedMonsterType.Value = (byte)type;
     }
@@ -282,8 +282,11 @@ public class CwslMonsterHealth : NetworkBehaviour, ICwslPooledNetworkObject
 
         var scaledAmount = ApplyAttackerBuffs(attackerClientId, amount);
         var status = GetComponent<CwslMonsterStatusController>();
+        var monsterDefense = CwslMonsterStatCatalog.GetDefense(MonsterType);
         if (status != null)
-            scaledAmount = Mathf.Max(0f, scaledAmount - status.GetFlatDefenseReduction());
+            monsterDefense = Mathf.Max(0f, monsterDefense - status.GetFlatDefenseReduction());
+
+        scaledAmount = CwslCombatMath.ResolveDamageAfterDefense(scaledAmount, monsterDefense);
 
         var runtime = GetComponent<CwslMonsterRuntimeStats>();
         if (runtime != null && runtime.DefenseMultiplier > 0f)

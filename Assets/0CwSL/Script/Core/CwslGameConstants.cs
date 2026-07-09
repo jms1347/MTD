@@ -24,16 +24,20 @@ public static class CwslGameConstants
     public const float SimpleVisionShowThreshold = 0.12f;
     public const float EnemyBaseDefaultHealth = 3000f;
 
-    public const float MonsterMaxHealth = 50f;
-    public const float PlayerMaxHealth = 600f;
-    public const float PlayerAttackDamage = 15f;
-    public const float PlayerDefense = 15f;
+    public const float MonsterMaxHealth = 100f;
+    public const float PlayerMaxHealth = 720f;
+    public const float PlayerAttackDamage = 30f;
+    public const float PlayerDefense = 70f;
     public const float PlayerVisionRadius = 16f;
     public const float PlayerMaxStamina = 100f;
-    public const float PlayerStaminaRegenPerSecond = 5f;
+    public const float PlayerStaminaRegenPerSecond = 15f;
     public const float SkillCooldownMultiplier = 2f;
     public const int SkillsPerCharacter = 4;
     public const float DefaultSkillStaminaCost = 22f;
+    public const float SkillStaminaTierS = 40f;
+    public const float SkillStaminaTierA = 30f;
+    public const float SkillStaminaTierB = 22f;
+    public const float SkillStaminaTierC = 14f;
     public const int StartingGold = 50;
     public const int SkillGoldCost = 1;
 
@@ -72,7 +76,7 @@ public static class CwslGameConstants
     public const float RammerArrivalDistance = 0.3f;
     public const float RammerStopSpeed = 0.85f;
     public const float RammerDamageSpeedThreshold = 9.5f;
-    public const float RammerCollisionDamage = 1f;
+    public const float RammerCollisionSkillCoeff = 0.4f;
     public const float RammerCollisionCooldown = 0.45f;
     public const float RammerWingSpreadMaxScale = 2.8f;
     public const float RammerWingSpreadGrowSeconds = 1.55f;
@@ -80,15 +84,16 @@ public static class CwslGameConstants
     public const float RammerWingSpreadGoldIntervalSeconds = 0.5f;
     public const int RammerWingSpreadTickGoldCost = 0;
     public const float RammerWingSpreadBaseRadius = 0.72f;
-    public const float RammerWingSpreadDamage = 1f;
+    public const float RammerWingSpreadSkillCoeff = 0.22f;
     public const float RammerWingSpreadHitCooldown = 0.38f;
     public const float RammerWingSpreadMinScaleForDamage = 1.12f;
+    public const float RammerWingSpreadStaminaDrainPerSecond = 3f;
     public const float RammerWallStunDuration = 2f;
     public const float RammerWallStunMinSpeed = 5f;
     public const float RammerAllyStunCooldown = 1.2f;
 
     public const float RammerBrakeMinSpeed = 6f;
-    public const float RammerBrakeDamagePerSpeed = 1.1f;
+    public const float RammerBrakeSkillCoeff = 1.65f;
     public const float RammerBrakeRadius = 4.2f;
     public const float RammerBrakeKnockDistance = 5.5f;
     public const float RammerBrakeKnockDuration = 0.34f;
@@ -104,7 +109,7 @@ public static class CwslGameConstants
     public const float RammerRopeFlingDistance = 8.5f;
     public const float RammerRopeFlingDuration = 0.42f;
     public const float RammerRopeCastDuration = 0.2f;
-    public const float RammerRopePullDamagePerSpeed = 0.9f;
+    public const float RammerRopeTickSkillCoeff = 0.055f;
     public const float RammerRopeDamageTickInterval = 0.2f;
     public const float RammerRopeSpinDuration = 1.35f;
     public const float RammerRopeSpinAngularSpeed = 960f;
@@ -159,9 +164,9 @@ public static class CwslGameConstants
     public const float BarricadeRepairAmount = 450f;
     public const float BarricadeRepairDuration = 1.15f;
     public const float BarricadeDetonateRadius = 3.4f;
-    public const float BarricadeDetonateBlastDamage = 85f;
+    public const float BarricadeDetonateSkillCoeff = 2.8f;
     public const float BarricadeDetonateBurnDuration = 3.5f;
-    public const float BarricadeDetonateBurnDamage = 28f;
+    public const float BarricadeDetonateBurnSkillCoeff = 0.55f;
     public const float BarricadeDetonateCastDuration = 0.3f;
 
     public const float HealerMissileCooldown = 3f;
@@ -175,7 +180,7 @@ public static class CwslGameConstants
     public const float HealerPoisonPadRadius = 12f;
     public const float HealerPoisonPadDuration = 8f;
     public const float HealerPoisonDuration = 3f;
-    public const float HealerPoisonTickDamage = 8f;
+    public const float HealerPoisonTickSkillCoeff = 0.14f;
     public const float HealerPoisonArmorPerStack = 4f;
     public const float HealerPoisonPadCastDuration = 0.35f;
     public const float HealerBurstHealRadius = 6f;
@@ -191,6 +196,7 @@ public static class CwslGameConstants
     public const float GatherMaxRadius = GatherReferenceRadius * 2f;
     public const float GatherMinRadius = 1.4f;
     public const float GatherChargeSeconds = 1.35f;
+    public const float GatherChargeStaminaDrainPerSecond = 3f;
     public const int GatherStartGoldCost = 0;
     public const float GatherPullSeconds = 0.48f;
     public const float GatherCooldown = 4f;
@@ -209,6 +215,9 @@ public static class CwslGameConstants
     public const float MissileTankSmokeZoneDuration = 5f;
     public const float MissileTankSmokeStunDuration = 5f;
     public const float AttackCooldown = 0.45f;
+    public const float BasicAttackSkillCoeff = 1f;
+    public const float MissileShotSkillCoeff = 1f;
+    public const float MissileDualShotSkillCoeff = 0.78f;
     public const float AttackDamage = PlayerAttackDamage;
     public const int TankHitGoldCost = 1;
     public const int MissileDualWieldGoldCost = 3;
@@ -226,7 +235,7 @@ public static class CwslGameConstants
     public const float RedMageFrozenOrbCastDuration = 0.4f;
     public const float RedMageFrozenOrbShardSpeed = 16f;
     public const float RedMageFrozenOrbShardEmitInterval = 0.05f;
-    public const float RedMageFrozenOrbShardDamageRatio = 0.24f;
+    public const float RedMageFrozenOrbShardDamageRatio = 0.28f;
     public const float RedMageFrozenOrbShardLifetime = 0.7f;
     public const float RedMageFrozenOrbScaleDrainPerShot = 0.03f;
     public const int RedMageFrozenOrbEmitDirections = 8;
@@ -242,7 +251,7 @@ public static class CwslGameConstants
     public const float RedMageLightningOrbStrikeInterval = 0.35f;
     public const float RedMageLightningOrbStrikeRadius = 3.4f;
     public const float RedMageLightningOrbGroundRadiusVfxDiameterDivisor = 8f;
-    public const float RedMageLightningOrbStrikeDamageRatio = 0.42f;
+    public const float RedMageLightningOrbStrikeDamageRatio = 0.45f;
     public const float RedMageLightningOrbForwardDistance = 3.2f;
     public const float RedMageLightningOrbHeight = 1.4f;
     public const float RedMageLightningOrbLifetime = 1.2f;
@@ -273,7 +282,8 @@ public static class CwslGameConstants
     public const float FortifyShieldBlockRadius = 2.8f;
     public const float FortifyShieldGrowSmoothTime = 0.52f;
     public const float FortifyShieldShrinkSmoothTime = 0.08f;
-    public const float FortifyEmpoweredAttackDamageMultiplier = 3f;
+    public const float FortifyEmpoweredAttackDamageMultiplier = 2.4f;
+    public const float TankEmpoweredBashSkillCoeff = 2.4f;
     public const float FortifyEmpoweredAttackRadius = 3.2f;
 
     public const float TankShieldDashRaiseTime = 0.14f;
@@ -290,6 +300,7 @@ public static class CwslGameConstants
     public const float TankShieldDashEmpoweredPushDuration = 0.24f;
     public const float TankShieldDashShieldPushDistance = 12f;
     public const float TankShieldDashShieldPushDuration = 0.22f;
+    public const float TankDashContactSkillCoeff = 0.85f;
 
     public const float TankSkillEmpowerRadiusMultiplier = 3f;
     public const float TankSkillEmpowerPowerMultiplier = 3f;
@@ -310,6 +321,7 @@ public static class CwslGameConstants
     public static readonly Vector3 TankShieldSlamVerticalLocalEuler = new(-90f, 0f, 0f);
     public const float TankShieldSlamSoftVfxScale = 0.68f;
     public const float TankShieldSlamCartoonyVfxScale = 1.45f;
+    public const float TankShieldSlamSkillCoeff = 1.2f;
     public const float TankShieldSlamCastDuration = 0.91f;
     public const float TankShieldSlamShakeDuration = 0.38f;
     public const float TankShieldSlamShakeMagnitude = 0.24f;
@@ -317,22 +329,24 @@ public static class CwslGameConstants
     public const float TankShieldWhirlwindDuration = 4f;
     public const float TankShieldWhirlwindRadius = 2.9f;
     public const float TankShieldWhirlwindTickInterval = 0.5f;
-    public const float TankShieldWhirlwindDamagePerTick = 0.55f;
+    public const float TankShieldWhirlwindDamagePerTick = 0.42f;
+    public const float MeteorSkillCoeff = 2.6f;
     public const float MeteorCastDuration = 0.55f;
     public const int MeteorGroundFirePatchCountMin = 5;
     public const int MeteorGroundFirePatchCountMax = 9;
     public const float MeteorGroundFireLifetimeMin = 2f;
     public const float MeteorGroundFireLifetimeMax = 4f;
     public const float MonsterBurnDuration = 3f;
-    public const float MonsterBurnTotalDamage = 18f;
+    public const float MonsterBurnTotalSkillCoeff = 0.6f;
     public const float MonsterShockDuration = 1.4f;
     public const float MonsterPoisonDuration = 5f;
-    public const float MonsterPoisonTickDamage = 12f;
+    public const float MonsterPoisonTickSkillCoeff = 0.11f;
     public const float MonsterPoisonArmorPerStack = 5f;
     public const float TankShieldWhirlwindSpinSpeed = 900f;
     public const float TankShieldWhirlwindMoveSpeedMultiplier = 1.2f;
 
-    public const float TankFortifyMissileBlockStaminaCost = 1f;
+    public const float TankFortifyStaminaDrainPerSecond = 4f;
+    public const float TankFortifyDefenseMultiplier = 2f;
     public const float TankSkillStaminaCost = 20f;
     public const float TankWhirlwindStaminaCost = 30f;
 
@@ -343,7 +357,7 @@ public static class CwslGameConstants
     public const long KarmaPickupAmount = 10L;
     public const long CheatKarmaIncrement = 100L; // TODO(릴리즈): U키 치트용 — 정식 버전 전 제거
 
-    public const float BossMaxHealth = 15000f;
+    public const float BossMaxHealth = 12000f;
     /// <summary>고려대 모델 기준 보스 시각·콜라이더 배율.</summary>
     public const float BossVisualScale = 5f;
     public const float MidBossKuVisualScale = 3f;

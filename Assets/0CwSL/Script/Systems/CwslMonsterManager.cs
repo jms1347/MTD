@@ -29,23 +29,23 @@ public class CwslMonsterManager : MonoBehaviour
     [SerializeField] private bool spawnDefenseBossEachMinute = true;
 
     [Header("넥서스 우선 몬스터 배율")]
-    [SerializeField] private float nexusVariantHealthMultiplier = 3f;
+    [SerializeField] private float nexusVariantHealthMultiplier = 2.2f;
     [SerializeField] private float nexusVariantScaleMultiplier = 1.35f;
     [SerializeField] private float nexusVariantSpeedMultiplier = 0.72f;
 
     [Header("중간보스")]
-    [SerializeField] private float midBossHealthMultiplier = 30f;
+    [SerializeField] private float midBossHealthMultiplier = 3f;
     [SerializeField] private float midBossScaleMultiplier = 3f;
     [SerializeField] private float midBossSpeedMultiplier = 0.667f;
     [SerializeField] private float midBossBuffRadius = 7f;
 
     [Header("수석 코치")]
     [SerializeField] private bool spawnSeniorCoachEachMinute = true;
-    [SerializeField] private float seniorCoachHealthMultiplier = 22f;
+    [SerializeField] private float seniorCoachHealthMultiplier = 2.8f;
     [SerializeField] private float seniorCoachScaleMultiplier = 3f;
 
     [Header("보스")]
-    [SerializeField] private float defenseBossHealthMultiplier = 60f;
+    [SerializeField] private float defenseBossHealthMultiplier = 4f;
     [SerializeField] private float defenseBossScaleMultiplier = 2.8f;
     [SerializeField] private float defenseBossSpeedMultiplier = 1f;
 

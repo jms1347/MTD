@@ -16,7 +16,7 @@ public class CwslPlayerFortifyVfx : NetworkBehaviour
 
     private void Update()
     {
-        // Q 시전(홀드) 중이면 ShieldSoftBlue 표시. 무적은 골드 있을 때만(IsShieldActive).
+        // Q 홀드 중 ShieldSoftBlue 오라 표시.
         var fortifying = fortifySkill != null &&
                          playerCharacter != null &&
                          playerCharacter.CharacterId == CwslCharacterId.Tank &&

@@ -155,6 +155,11 @@ public class CwslTankShieldSlamSkill : CwslPlayerSkillBase
 
             CwslMonsterStatusController.Ensure(monster)?.ApplyShockServer(stunDuration);
 
+            var slamDamage = CwslCombatMath.ResolveSkillDamage(
+                CwslCharacterId.Tank,
+                CwslGameConstants.TankShieldSlamSkillCoeff) * CwslTankSkillEmpower.GetPowerMultiplier(empowered);
+            monster.DamageFromPlayer(OwnerClientId, slamDamage);
+
             var knockback = monster.GetComponent<CwslMonsterKnockback>();
             if (knockback == null)
                 knockback = monster.gameObject.AddComponent<CwslMonsterKnockback>();

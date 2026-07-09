@@ -51,7 +51,11 @@ public class CwslRammerBrakeSkill : CwslPlayerSkillBase
         skillCooldowns?.BeginCooldown(BoundSlotIndex);
 
         var center = transform.position;
-        var damage = speed * CwslGameConstants.RammerBrakeDamagePerSpeed;
+        var damage = CwslCombatMath.ResolveSpeedScaledSkillDamage(
+            CwslCharacterId.MomentumRammer,
+            CwslGameConstants.RammerBrakeSkillCoeff,
+            speed,
+            CwslGameConstants.RammerMaxSpeed);
         var knockDistance = CwslGameConstants.RammerBrakeKnockDistance
                             * Mathf.Clamp01(speed / CwslGameConstants.RammerMaxSpeed);
         var slideDistance = speed * CwslGameConstants.RammerBrakeSlideDistanceMultiplier;

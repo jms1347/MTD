@@ -241,7 +241,9 @@ public class CwslRammerRopeSkill : CwslPlayerSkillBase
             return;
 
         nextRopeDamageByTarget[targetId] = Time.time + CwslGameConstants.RammerRopeDamageTickInterval;
-        var damage = movedSpeed * CwslGameConstants.RammerRopePullDamagePerSpeed;
+        var damage = CwslCombatMath.ResolveSkillDamage(
+            CwslCharacterId.MomentumRammer,
+            CwslGameConstants.RammerRopeTickSkillCoeff) * movedSpeed;
         if (damage <= 0f)
             return;
 
@@ -313,7 +315,9 @@ public class CwslRammerRopeSkill : CwslPlayerSkillBase
                 continue;
 
             playerObject.GetComponent<CwslPlayerStun>()?.ApplyStunServer(CwslGameConstants.RammerRopeSpinStunDuration, center + Vector3.up * 0.6f);
-            health.TryReceiveMeleeHitServer(CwslGameConstants.RammerCollisionDamage, center + Vector3.up * 0.6f);
+            health.TryReceiveMeleeHitServer(
+                CwslCombatMath.ResolveSkillDamage(CwslCharacterId.MomentumRammer, CwslGameConstants.RammerCollisionSkillCoeff),
+                center + Vector3.up * 0.6f);
         }
     }
 

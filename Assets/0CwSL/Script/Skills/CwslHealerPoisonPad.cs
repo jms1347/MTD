@@ -58,7 +58,9 @@ public class CwslHealerPoisonPad : MonoBehaviour
             CwslMonsterStatusController.Ensure(monster)?.ApplyPoisonServer(
                 ownerClientId,
                 CwslGameConstants.HealerPoisonDuration,
-                CwslGameConstants.HealerPoisonTickDamage,
+                CwslCombatMath.ResolveSkillDamageForClient(
+                    ownerClientId,
+                    CwslGameConstants.HealerPoisonTickSkillCoeff),
                 CwslGameConstants.HealerPoisonArmorPerStack);
         }
     }

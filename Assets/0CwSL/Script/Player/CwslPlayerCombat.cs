@@ -451,9 +451,12 @@ public class CwslPlayerCombat : NetworkBehaviour
         nextAttackTime = Time.time + ResolveAttackCooldown();
         PlayAttackClientRpc();
 
-        var attackPower = playerCharacter != null
-            ? CwslCharacterStatCatalog.GetAttackPower(playerCharacter.CharacterId)
-            : CwslGameConstants.AttackDamage;
+        var characterId = playerCharacter != null
+            ? playerCharacter.CharacterId
+            : CwslCharacterId.Tank;
+        var attackPower = CwslCombatMath.ResolveSkillDamage(
+            characterId,
+            CwslGameConstants.BasicAttackSkillCoeff);
 
         if (monsterHealth != null)
             monsterHealth.DamageFromPlayer(OwnerClientId, attackPower);

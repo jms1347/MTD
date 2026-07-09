@@ -1,3 +1,4 @@
+using System.Collections;
 using TMPro;
 using Unity.Netcode;
 using UnityEngine;
@@ -33,7 +34,21 @@ public class CwslLocalPlayerHud : NetworkBehaviour
         {
             playerCharacter.OnCharacterChanged += HandleCharacterChangedForHud;
             HandleCharacterChangedForHud(playerCharacter.CharacterId);
+            StartCoroutine(ShowIntroPopupOnce());
         }
+    }
+
+    private IEnumerator ShowIntroPopupOnce()
+    {
+        yield return null;
+
+        if (!IsOwner || introPopupShown)
+            yield break;
+
+        var characterId = playerCharacter != null
+            ? playerCharacter.CharacterId
+            : CwslCharacterId.Tank;
+        TryShowCharacterIntroPopup(characterId);
     }
 
     private void Update()
@@ -57,7 +72,6 @@ public class CwslLocalPlayerHud : NetworkBehaviour
         RefreshHint(characterId);
         if (hudCanvasTransform != null)
             EnsureSkillCooldownHud(hudCanvasTransform);
-        TryShowCharacterIntroPopup(characterId);
     }
 
     private void TryShowCharacterIntroPopup(CwslCharacterId characterId)

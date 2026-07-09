@@ -57,7 +57,9 @@ public class CwslRammerFireTrailZone : MonoBehaviour
             CwslMonsterStatusController.Ensure(monster)?.ApplyBurnServer(
                 ownerClientId,
                 CwslGameConstants.MonsterBurnDuration,
-                CwslGameConstants.MonsterBurnTotalDamage);
+                CwslCombatMath.ResolveSkillDamageForClient(
+                    ownerClientId,
+                    CwslGameConstants.MonsterBurnTotalSkillCoeff));
         }
     }
 }

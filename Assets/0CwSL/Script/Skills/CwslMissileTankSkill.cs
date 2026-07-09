@@ -225,8 +225,8 @@ public class CwslMissileTankSkill : CwslPlayerSkillBase
         if (!TryPrepareShot(out var aimPoint, out var fireDirection, out var shotTarget))
             return false;
 
-        FireProjectileServer(fireDirection, useLeftMuzzle: false, shotTarget);
-        FireProjectileServer(fireDirection, useLeftMuzzle: true, shotTarget);
+        FireProjectileServer(fireDirection, useLeftMuzzle: false, shotTarget, useDualShotCoeff: true);
+        FireProjectileServer(fireDirection, useLeftMuzzle: true, shotTarget, useDualShotCoeff: true);
         PlayDualFireClientRpc(aimPoint);
         skillCooldowns?.BeginCooldown(0);
         return true;
@@ -428,7 +428,8 @@ public class CwslMissileTankSkill : CwslPlayerSkillBase
         Vector3 fireDirection,
         bool useLeftMuzzle,
         CwslMonsterHealth lockedTarget,
-        bool forceSmokeBomb = false)
+        bool forceSmokeBomb = false,
+        bool useDualShotCoeff = false)
     {
         var session = CwslGameSession.Instance;
         if (session == null || session.Assets.playerMissilePrefab == null)
@@ -450,9 +451,13 @@ public class CwslMissileTankSkill : CwslPlayerSkillBase
             return;
 
         var projectile = networkObject.GetComponent<CwslPlayerProjectile>();
-        var attackPower = playerCharacter != null
-            ? CwslCharacterStatCatalog.GetAttackPower(playerCharacter.CharacterId)
-            : CwslGameConstants.AttackDamage;
+        var characterId = playerCharacter != null
+            ? playerCharacter.CharacterId
+            : CwslCharacterId.MissileTank;
+        var shotCoeff = useDualShotCoeff
+            ? CwslGameConstants.MissileDualShotSkillCoeff
+            : CwslGameConstants.MissileShotSkillCoeff;
+        var attackPower = CwslCombatMath.ResolveSkillDamage(characterId, shotCoeff);
 
         var ammo = forceSmokeBomb ? CwslMissileTankAmmoKind.Basic : ResolveCurrentAmmo();
         projectile?.ConfigureAdvanced(

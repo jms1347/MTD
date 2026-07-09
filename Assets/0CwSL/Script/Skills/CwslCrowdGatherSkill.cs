@@ -33,6 +33,8 @@ public class CwslCrowdGatherSkill : CwslPlayerSkillBase
     private CwslPlayerHealth playerHealth;
     private CwslPlayerMovement movement;
     private CwslPlayerSkillCooldowns skillCooldowns;
+    private CwslPlayerStamina playerStamina;
+    private CwslPlayerSkills playerSkills;
     private float chargeStartTime;
     private bool maxReadyNotified;
     private Coroutine pullRoutine;
@@ -53,6 +55,8 @@ public class CwslCrowdGatherSkill : CwslPlayerSkillBase
         playerHealth = GetComponent<CwslPlayerHealth>();
         movement = GetComponent<CwslPlayerMovement>();
         skillCooldowns = GetComponent<CwslPlayerSkillCooldowns>();
+        playerStamina = GetComponent<CwslPlayerStamina>();
+        playerSkills = GetComponent<CwslPlayerSkills>();
         if (playerCharacter != null)
             playerCharacter.OnCharacterChanged += HandleCharacterChanged;
         if (playerHealth != null)
@@ -111,6 +115,15 @@ public class CwslCrowdGatherSkill : CwslPlayerSkillBase
         if (!CanCastServer(OwnerClientId))
             return false;
 
+        var startCost = CwslCharacterSkillCatalog.GetStaminaCost(CwslCharacterId.CrowdGatherer, 0);
+        if (CwslGameConstants.SkillsUseStamina &&
+            playerStamina != null &&
+            !playerStamina.TrySpendServer(startCost))
+        {
+            playerSkills?.NotifyStaminaInsufficientServer();
+            return false;
+        }
+
         worldPoint.y = 0f;
         movement?.StopMovement();
         isCharging.Value = true;
@@ -139,6 +152,16 @@ public class CwslCrowdGatherSkill : CwslPlayerSkillBase
             return;
 
         movement?.StopMovement();
+
+        var drain = CwslGameConstants.GatherChargeStaminaDrainPerSecond * Time.deltaTime;
+        if (drain > 0f &&
+            CwslGameConstants.SkillsUseStamina &&
+            playerStamina != null &&
+            !playerStamina.TrySpendServer(drain))
+        {
+            CancelChargeServer();
+            return;
+        }
 
         var elapsed = Time.time - chargeStartTime;
         var chargeRatio = Mathf.Clamp01(elapsed / CwslGameConstants.GatherChargeSeconds);

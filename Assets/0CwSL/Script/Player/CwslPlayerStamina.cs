@@ -39,12 +39,32 @@ public class CwslPlayerStamina : NetworkBehaviour
         if (health != null && !health.IsAlive)
             return;
 
+        if (IsRegenBlocked())
+            return;
+
         if (stamina.Value >= Max)
             return;
 
         stamina.Value = Mathf.Min(
             Max,
             stamina.Value + CwslGameConstants.PlayerStaminaRegenPerSecond * Time.deltaTime);
+    }
+
+    private bool IsRegenBlocked()
+    {
+        var fortify = GetComponent<CwslTankFortifySkill>();
+        if (fortify != null && fortify.IsFortifying)
+            return true;
+
+        var rammer = GetComponent<CwslMomentumRammerSkill>();
+        if (rammer != null && rammer.IsWingSpreadActive)
+            return true;
+
+        var gatherer = GetComponent<CwslCrowdGatherSkill>();
+        if (gatherer != null && gatherer.IsCharging)
+            return true;
+
+        return false;
     }
 
     public bool TrySpendServer(float amount)

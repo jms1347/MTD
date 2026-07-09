@@ -651,7 +651,8 @@ public class CwslPlayerProjectile : NetworkBehaviour, ICwslPooledNetworkObject
 
         var owner = ownerNetworkObject;
         var character = owner != null ? owner.GetComponent<CwslPlayerCharacter>() : null;
-        if (character == null || character.CharacterId != CwslCharacterId.MissileTank)
+        var characterId = character != null ? character.CharacterId : CwslCharacterId.MissileTank;
+        if (character == null || characterId != CwslCharacterId.MissileTank)
             return;
 
         var status = CwslMonsterStatusController.Ensure(monsterHealth);
@@ -664,13 +665,17 @@ public class CwslPlayerProjectile : NetworkBehaviour, ICwslPooledNetworkObject
                 status.ApplyBurnServer(
                     ownerClientId,
                     CwslGameConstants.MonsterBurnDuration,
-                    CwslGameConstants.MonsterBurnTotalDamage);
+                    CwslCombatMath.ResolveSkillDamage(
+                        characterId,
+                        CwslGameConstants.MonsterBurnTotalSkillCoeff));
                 break;
             case CwslMissileTankAmmoKind.Poison:
                 status.ApplyPoisonServer(
                     ownerClientId,
                     CwslGameConstants.MonsterPoisonDuration,
-                    CwslGameConstants.MonsterPoisonTickDamage,
+                    CwslCombatMath.ResolveSkillDamage(
+                        characterId,
+                        CwslGameConstants.MonsterPoisonTickSkillCoeff),
                     CwslGameConstants.MonsterPoisonArmorPerStack);
                 break;
             case CwslMissileTankAmmoKind.Lightning:

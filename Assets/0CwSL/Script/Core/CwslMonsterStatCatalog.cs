@@ -1,43 +1,47 @@
 using UnityEngine;
 
-/// <summary>몬스터 타입별 HP·공격·이동 스탯 (스케일업 밸런스).</summary>
+/// <summary>몬스터 타입별 HP·공격·방어 스탯. 정예 HP 배율은 CwslMonsterManager + Configure healthMultiplier.</summary>
 public static class CwslMonsterStatCatalog
 {
-    /// <summary>전체 몬스터 이동 속도 배율.</summary>
     public const float GlobalMoveSpeedMultiplier = 0.68f;
 
-    public const float MeleeBaseHealth = 50f;
+    public const float MeleeBaseHealth = 100f;
     public const float MeleeMoveSpeed = 3.2f;
-    public const float MeleeAttackPower = 12f;
+    public const float MeleeAttackPower = 24f;
+    public const float MeleeDefense = 10f;
 
-    public const float RangedBaseHealth = 40f;
+    public const float RangedBaseHealth = 75f;
     public const float RangedMoveSpeed = 2.5f;
-    public const float RangedProjectileDamage = 15f;
+    public const float RangedProjectileDamage = 20f;
+    public const float RangedDefense = 0f;
 
-    public const float SuicideBaseHealth = 120f;
+    public const float SuicideBaseHealth = 110f;
     public const float SuicideMoveSpeed = 2.9f;
-    public const float SuicideExplosionDamage = 80f;
+    public const float SuicideExplosionDamage = 48f;
     public const float SuicideExplosionRadius = 2.5f;
     public const float SuicideFuseIgniteDistance = 5.5f;
-    public const float SuicideNexusExplosionDamage = 100f;
+    public const float SuicideNexusExplosionDamage = 70f;
 
-    public const float NexusVariantHealth = 150f;
-    public const float MidBossHealth = 1500f;
-    public const float MidBossAttackPower = 40f;
+    public const float MidBossBaseHealth = 550f;
+    public const float MidBossAttackPower = 38f;
+    public const float MidBossDefense = 28f;
     public const float MidBossMoveSpeed = 2.2f;
 
-    public const float SeniorCoachHealth = 1800f;
+    public const float SeniorCoachBaseHealth = 500f;
+    public const float SeniorCoachAttackPower = 28f;
+    public const float SeniorCoachDefense = 22f;
     public const float SeniorCoachMoveSpeed = 2.8f;
 
-    public const float DefenseBossHealth = 3000f;
+    public const float DefenseBossBaseHealth = 750f;
     public const float DefenseBossMoveSpeed = 1.85f;
-    public const float DefenseBossSlamDamage = 80f;
-    public const float DefenseBossMissileDamage = 40f;
+    public const float DefenseBossDefense = 35f;
+    public const float DefenseBossSlamDamage = 52f;
+    public const float DefenseBossMissileDamage = 28f;
 
-    public const float BossHongmyeongboHealth = 15000f;
+    public const float BossHongmyeongboHealth = 12000f;
     public const float BossHongmyeongboMoveSpeed = 3.4f;
-    public const float BossHongmyeongboSlamDamage = 150f;
-    public const float BossHongmyeongboRingDamage = 100f;
+    public const float BossHongmyeongboSlamDamage = 120f;
+    public const float BossHongmyeongboRingDamage = 85f;
 
     public static float GetMaxHealth(CwslMonsterType type)
     {
@@ -45,15 +49,30 @@ public static class CwslMonsterStatCatalog
         {
             CwslMonsterType.Ranged => RangedBaseHealth,
             CwslMonsterType.InkSniper or CwslMonsterType.NexusInkSniper => RangedBaseHealth,
-            CwslMonsterType.Suicide => SuicideBaseHealth,
-            CwslMonsterType.StickySuicide => SuicideBaseHealth,
+            CwslMonsterType.Suicide or CwslMonsterType.StickySuicide => SuicideBaseHealth,
             CwslMonsterType.NexusMelee or CwslMonsterType.NexusRanged or CwslMonsterType.NexusSuicide
-                or CwslMonsterType.NexusInkSniper => NexusVariantHealth,
-            CwslMonsterType.MidBoss => MidBossHealth,
-            CwslMonsterType.SeniorCoach => SeniorCoachHealth,
-            CwslMonsterType.DefenseBoss => DefenseBossHealth,
+                or CwslMonsterType.NexusInkSniper => MeleeBaseHealth,
+            CwslMonsterType.MidBoss => MidBossBaseHealth,
+            CwslMonsterType.SeniorCoach => SeniorCoachBaseHealth,
+            CwslMonsterType.DefenseBoss => DefenseBossBaseHealth,
             CwslMonsterType.BossHongmyeongbo => BossHongmyeongboHealth,
             _ => MeleeBaseHealth
+        };
+    }
+
+    public static float GetDefense(CwslMonsterType type)
+    {
+        return type switch
+        {
+            CwslMonsterType.Ranged or CwslMonsterType.InkSniper => RangedDefense,
+            CwslMonsterType.NexusRanged or CwslMonsterType.NexusInkSniper => 8f,
+            CwslMonsterType.Suicide or CwslMonsterType.StickySuicide or CwslMonsterType.NexusSuicide => 0f,
+            CwslMonsterType.NexusMelee => 14f,
+            CwslMonsterType.MidBoss => MidBossDefense,
+            CwslMonsterType.SeniorCoach => SeniorCoachDefense,
+            CwslMonsterType.DefenseBoss => DefenseBossDefense,
+            CwslMonsterType.BossHongmyeongbo => 45f,
+            _ => MeleeDefense
         };
     }
 
@@ -80,6 +99,20 @@ public static class CwslMonsterStatCatalog
 
     public static float GetMeleeAttackPower(CwslMonsterType type)
     {
-        return type == CwslMonsterType.MidBoss ? MidBossAttackPower : MeleeAttackPower;
+        return type switch
+        {
+            CwslMonsterType.NexusMelee => MeleeAttackPower + 2f,
+            CwslMonsterType.MidBoss => MidBossAttackPower,
+            CwslMonsterType.SeniorCoach => SeniorCoachAttackPower,
+            CwslMonsterType.KoreaUniversitySoldier => MeleeAttackPower + 4f,
+            _ => MeleeAttackPower
+        };
+    }
+
+    public static float GetRangedAttackPower(CwslMonsterType type)
+    {
+        return type is CwslMonsterType.NexusRanged or CwslMonsterType.NexusInkSniper
+            ? RangedProjectileDamage + 2f
+            : RangedProjectileDamage;
     }
 }

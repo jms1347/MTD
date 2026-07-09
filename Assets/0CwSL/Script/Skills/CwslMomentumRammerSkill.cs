@@ -40,6 +40,8 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
     private bool momentumActive;
     private float wingSpreadStartTime;
     private CwslPlayerSkillCooldowns skillCooldowns;
+    private CwslPlayerStamina playerStamina;
+    private CwslPlayerSkills playerSkills;
 
     public float CurrentSpeed => syncedSpeed.Value;
     public bool IsMomentumActive => momentumActive;
@@ -60,6 +62,8 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
         playerStun = GetComponent<CwslPlayerStun>();
         bodyCollider = GetComponent<CwslPlayerBodyCollider>();
         skillCooldowns = GetComponent<CwslPlayerSkillCooldowns>();
+        playerStamina = GetComponent<CwslPlayerStamina>();
+        playerSkills = GetComponent<CwslPlayerSkills>();
         moveDirection = transform.forward.sqrMagnitude > 0.0001f ? transform.forward : Vector3.forward;
         moveDirection.y = 0f;
         moveDirection.Normalize();
@@ -151,6 +155,15 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
         if (skillCooldowns != null && !skillCooldowns.IsReady(0))
             return;
 
+        var startCost = CwslCharacterSkillCatalog.GetStaminaCost(CwslCharacterId.MomentumRammer, 0);
+        if (CwslGameConstants.SkillsUseStamina &&
+            playerStamina != null &&
+            !playerStamina.TrySpendServer(startCost))
+        {
+            playerSkills?.NotifyStaminaInsufficientServer();
+            return;
+        }
+
         isWingSpreadActive.Value = true;
         wingSpreadStartTime = Time.time;
         syncedBladeScale.Value = 1f;
@@ -176,6 +189,16 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
         }
 
         if (IsStunned)
+        {
+            StopWingSpreadServer();
+            return;
+        }
+
+        var drain = CwslGameConstants.RammerWingSpreadStaminaDrainPerSecond * Time.deltaTime;
+        if (drain > 0f &&
+            CwslGameConstants.SkillsUseStamina &&
+            playerStamina != null &&
+            !playerStamina.TrySpendServer(drain))
         {
             StopWingSpreadServer();
             return;
@@ -506,7 +529,11 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
                 continue;
 
             TryWingDamageTargetServer(monster.NetworkObjectId, () =>
-                monster.DamageFromPlayer(OwnerClientId, CwslGameConstants.RammerWingSpreadDamage));
+                monster.DamageFromPlayer(
+                    OwnerClientId,
+                    CwslCombatMath.ResolveSkillDamage(
+                        CwslCharacterId.MomentumRammer,
+                        CwslGameConstants.RammerWingSpreadSkillCoeff)));
         }
 
         if (NetworkManager.Singleton == null)
@@ -527,7 +554,9 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
 
             TryWingDamageTargetServer(playerObject.NetworkObjectId, () =>
                 allyHealth.TryReceiveMeleeHitServer(
-                    CwslGameConstants.RammerWingSpreadDamage,
+                    CwslCombatMath.ResolveSkillDamage(
+                        CwslCharacterId.MomentumRammer,
+                        CwslGameConstants.RammerWingSpreadSkillCoeff),
                     playerObject.transform.position + Vector3.up * 0.5f));
         }
     }
@@ -565,7 +594,13 @@ public class CwslMomentumRammerSkill : CwslPlayerSkillBase
                 continue;
 
             TryDamageTargetServer(monster.NetworkObjectId, () =>
-                monster.DamageFromPlayer(OwnerClientId, CwslGameConstants.RammerCollisionDamage));
+                monster.DamageFromPlayer(
+                    OwnerClientId,
+                    CwslCombatMath.ResolveSpeedScaledSkillDamage(
+                        CwslCharacterId.MomentumRammer,
+                        CwslGameConstants.RammerCollisionSkillCoeff,
+                        syncedSpeed.Value,
+                        CwslGameConstants.RammerMaxSpeed)));
         }
     }
 

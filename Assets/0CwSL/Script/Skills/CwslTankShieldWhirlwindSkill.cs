@@ -172,11 +172,13 @@ public class CwslTankShieldWhirlwindSkill : CwslPlayerSkillBase
     private void ApplyWhirlwindTickServer(bool empowered)
     {
         var attackPower = playerCharacter != null
-            ? CwslCharacterStatCatalog.GetAttackPower(playerCharacter.CharacterId)
-            : CwslGameConstants.AttackDamage;
-        var damage = attackPower
-                     * CwslGameConstants.TankShieldWhirlwindDamagePerTick
-                     * CwslTankSkillEmpower.GetPowerMultiplier(empowered);
+            ? CwslCombatMath.ResolveSkillDamage(
+                playerCharacter.CharacterId,
+                CwslGameConstants.TankShieldWhirlwindDamagePerTick)
+            : CwslCombatMath.ResolveSkillDamage(
+                CwslCharacterId.Tank,
+                CwslGameConstants.TankShieldWhirlwindDamagePerTick);
+        var damage = attackPower * CwslTankSkillEmpower.GetPowerMultiplier(empowered);
 
         var radius = CwslGameConstants.TankShieldWhirlwindRadius
                      * CwslTankSkillEmpower.GetRadiusMultiplier(empowered);

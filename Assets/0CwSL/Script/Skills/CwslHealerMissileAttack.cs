@@ -131,7 +131,9 @@ public class CwslHealerMissileAttack : NetworkBehaviour
             return false;
 
         var projectile = networkObject.GetComponent<CwslPlayerProjectile>();
-        var damage = CwslCharacterStatCatalog.GetAttackPower(CwslCharacterId.Healer);
+        var damage = CwslCombatMath.ResolveSkillDamage(
+            CwslCharacterId.Healer,
+            CwslGameConstants.BasicAttackSkillCoeff);
         projectile?.Configure(
             direction,
             CwslGameConstants.HealerMissileSpeed,

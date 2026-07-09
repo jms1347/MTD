@@ -44,10 +44,13 @@ public class CwslPlayerSkillCooldownHud : MonoBehaviour
 
     private void EnsureUiBuilt(RectTransform rect)
     {
-        if (slots[0] != null || rect == null)
+        if (rect == null)
             return;
 
-        BuildUi(rect);
+        if (slots[0] == null)
+            BuildUi(rect);
+
+        ApplySlotStyles();
     }
 
     private void BuildUi(RectTransform rect)
@@ -57,7 +60,7 @@ public class CwslPlayerSkillCooldownHud : MonoBehaviour
         rect.pivot = new Vector2(0f, 0f);
         rect.anchoredPosition = new Vector2(24f, 24f);
 
-        const float boxSize = 68f;
+        const float boxSize = 72f;
         const float spacing = 10f;
         rect.sizeDelta = new Vector2(
             boxSize * CwslCharacterSkillCatalog.SkillCount + spacing * (CwslCharacterSkillCatalog.SkillCount - 1),
@@ -83,25 +86,24 @@ public class CwslPlayerSkillCooldownHud : MonoBehaviour
             bgRect.offsetMax = Vector2.zero;
             bg.GetComponent<Image>().color = new Color(0.07f, 0.09f, 0.13f, 0.92f);
 
-            var accent = new GameObject("Accent", typeof(RectTransform), typeof(Image));
-            accent.transform.SetParent(slotRoot.transform, false);
-            var accentRect = accent.GetComponent<RectTransform>();
-            accentRect.anchorMin = new Vector2(0f, 1f);
-            accentRect.anchorMax = new Vector2(1f, 1f);
-            accentRect.pivot = new Vector2(0.5f, 1f);
-            accentRect.sizeDelta = new Vector2(-8f, 2f);
-            accentRect.anchoredPosition = new Vector2(0f, -4f);
-            accent.GetComponent<Image>().color = new Color(0.42f, 0.72f, 1f, 0.85f);
+            var ring = new GameObject("Ring", typeof(RectTransform), typeof(Image));
+            ring.transform.SetParent(slotRoot.transform, false);
+            var ringRect = ring.GetComponent<RectTransform>();
+            ringRect.anchorMin = Vector2.zero;
+            ringRect.anchorMax = Vector2.one;
+            ringRect.offsetMin = new Vector2(2f, 2f);
+            ringRect.offsetMax = new Vector2(-2f, -2f);
+            ring.GetComponent<Image>().color = new Color(0.16f, 0.22f, 0.3f, 0.55f);
 
             var fillGo = new GameObject("CooldownFill", typeof(RectTransform), typeof(Image));
             fillGo.transform.SetParent(slotRoot.transform, false);
             var fillRect = fillGo.GetComponent<RectTransform>();
             fillRect.anchorMin = Vector2.zero;
             fillRect.anchorMax = Vector2.one;
-            fillRect.offsetMin = new Vector2(3f, 3f);
-            fillRect.offsetMax = new Vector2(-3f, -3f);
+            fillRect.offsetMin = new Vector2(4f, 4f);
+            fillRect.offsetMax = new Vector2(-4f, -4f);
             var fillImage = fillGo.GetComponent<Image>();
-            CwslUiSpriteUtil.ConfigureRadial360Fill(fillImage, new Color(0.02f, 0.03f, 0.05f, 0.78f));
+            CwslUiSpriteUtil.ConfigureRadial360Fill(fillImage, new Color(0.02f, 0.04f, 0.08f, 0.82f));
 
             var keyGo = new GameObject("Key", typeof(RectTransform), typeof(TextMeshProUGUI));
             keyGo.transform.SetParent(slotRoot.transform, false);
@@ -109,14 +111,9 @@ public class CwslPlayerSkillCooldownHud : MonoBehaviour
             keyRect.anchorMin = new Vector2(0f, 1f);
             keyRect.anchorMax = new Vector2(0f, 1f);
             keyRect.pivot = new Vector2(0f, 1f);
-            keyRect.anchoredPosition = new Vector2(8f, -8f);
-            keyRect.sizeDelta = new Vector2(28f, 22f);
+            keyRect.anchoredPosition = new Vector2(7f, -6f);
+            keyRect.sizeDelta = new Vector2(24f, 18f);
             var keyLabel = keyGo.GetComponent<TextMeshProUGUI>();
-            CwslTmpFontUtil.ApplyFont(keyLabel);
-            keyLabel.fontSize = 16f;
-            keyLabel.fontStyle = FontStyles.Bold;
-            keyLabel.alignment = TextAlignmentOptions.TopLeft;
-            keyLabel.color = new Color(0.88f, 0.94f, 1f, 0.95f);
 
             var timeGo = new GameObject("Time", typeof(RectTransform), typeof(TextMeshProUGUI));
             timeGo.transform.SetParent(slotRoot.transform, false);
@@ -126,11 +123,6 @@ public class CwslPlayerSkillCooldownHud : MonoBehaviour
             timeRect.offsetMin = Vector2.zero;
             timeRect.offsetMax = Vector2.zero;
             var timeLabel = timeGo.GetComponent<TextMeshProUGUI>();
-            CwslTmpFontUtil.ApplyFont(timeLabel);
-            timeLabel.fontSize = 18f;
-            timeLabel.fontStyle = FontStyles.Bold;
-            timeLabel.alignment = TextAlignmentOptions.Center;
-            timeLabel.color = new Color(1f, 0.95f, 0.82f, 0.98f);
 
             slots[i] = new SlotUi
             {
@@ -138,6 +130,41 @@ public class CwslPlayerSkillCooldownHud : MonoBehaviour
                 keyLabel = keyLabel,
                 timeLabel = timeLabel,
             };
+        }
+
+        ApplySlotStyles();
+    }
+
+    private void ApplySlotStyles()
+    {
+        for (var i = 0; i < slots.Length; i++)
+        {
+            var slot = slots[i];
+            if (slot == null)
+                continue;
+
+            if (slot.keyLabel != null)
+            {
+                CwslTmpFontUtil.ApplyFont(slot.keyLabel);
+                slot.keyLabel.fontSize = 13f;
+                slot.keyLabel.fontStyle = FontStyles.Bold;
+                slot.keyLabel.alignment = TextAlignmentOptions.TopLeft;
+                slot.keyLabel.color = new Color(0.78f, 0.86f, 0.96f, 0.88f);
+                slot.keyLabel.raycastTarget = false;
+            }
+
+            if (slot.timeLabel != null)
+            {
+                CwslTmpFontUtil.ApplyFont(slot.timeLabel);
+                slot.timeLabel.fontSize = 28f;
+                slot.timeLabel.fontStyle = FontStyles.Bold;
+                slot.timeLabel.alignment = TextAlignmentOptions.Center;
+                slot.timeLabel.color = new Color(1f, 0.96f, 0.86f, 0.98f);
+                slot.timeLabel.raycastTarget = false;
+            }
+
+            if (slot.cooldownFill != null && slot.cooldownFill.sprite == null)
+                CwslUiSpriteUtil.ConfigureRadial360Fill(slot.cooldownFill, new Color(0.02f, 0.04f, 0.08f, 0.82f));
         }
     }
 
@@ -164,16 +191,19 @@ public class CwslPlayerSkillCooldownHud : MonoBehaviour
             if (slot.cooldownFill != null)
             {
                 if (slot.cooldownFill.sprite == null)
-                    CwslUiSpriteUtil.ConfigureRadial360Fill(slot.cooldownFill, new Color(0.02f, 0.03f, 0.05f, 0.78f));
+                    CwslUiSpriteUtil.ConfigureRadial360Fill(slot.cooldownFill, new Color(0.02f, 0.04f, 0.08f, 0.82f));
 
-                slot.cooldownFill.enabled = remaining > 0.01f;
-                slot.cooldownFill.fillAmount = cooldowns.GetFillAmount(i);
+                var onCooldown = remaining > 0.01f;
+                slot.cooldownFill.enabled = onCooldown;
+                slot.cooldownFill.fillAmount = onCooldown ? cooldowns.GetFillAmount(i) : 0f;
             }
 
             if (slot.timeLabel != null)
             {
                 if (remaining > 0.01f)
-                    slot.timeLabel.text = remaining.ToString("0.0");
+                    slot.timeLabel.text = remaining >= 10f
+                        ? Mathf.CeilToInt(remaining).ToString()
+                        : remaining.ToString("0.0");
                 else
                     slot.timeLabel.text = string.Empty;
             }
@@ -184,5 +214,6 @@ public class CwslPlayerSkillCooldownHud : MonoBehaviour
     {
         cooldowns = skillCooldowns;
         playerCharacter = character;
+        ApplySlotStyles();
     }
 }

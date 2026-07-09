@@ -32,7 +32,7 @@ public class CwslRangedMonster : CwslMonsterBase
                 if (fireTimer <= 0f)
                 {
                     fireTimer = GetFireCooldown();
-                    currentWallTarget.DamageServer(GetScaledDamage(CwslMonsterStatCatalog.RangedProjectileDamage));
+                    currentWallTarget.DamageServer(GetScaledDamage(CwslMonsterStatCatalog.GetRangedAttackPower(MonsterType)));
                 }
             }
 
@@ -147,7 +147,7 @@ public class CwslRangedMonster : CwslMonsterBase
             return;
 
         var projectile = networkObject.GetComponent<CwslMonsterProjectile>();
-        var damage = GetScaledDamage(CwslMonsterStatCatalog.RangedProjectileDamage);
+        var damage = GetScaledDamage(CwslMonsterStatCatalog.GetRangedAttackPower(MonsterType));
         projectile?.Configure(fireDirection, 14f, 8f, damage, GetProjectileKind());
         PlayFireFxClientRpc(muzzle, fireDirection);
     }
