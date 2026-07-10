@@ -44,7 +44,7 @@ public static class CwslTeamVision
             SourceBuffer.Add(new CwslTeamVisionSource
             {
                 Origin = nexus.transform.position,
-                Radius = CwslGameConstants.NexusTeamVisionRadius,
+                Radius = CwslGameConstants.PlayerVisionRadius,
                 BlindVision = false,
                 PlayerVision = null
             });

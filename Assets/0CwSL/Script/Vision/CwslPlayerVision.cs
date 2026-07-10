@@ -60,7 +60,7 @@ public class CwslPlayerVision : NetworkBehaviour
         if (Local == null)
             return false;
 
-        return Local.EvaluateLocalVisibility(worldPosition) > 0.01f;
+        return CwslTeamVision.IsInTeamVision(worldPosition);
     }
 
     public float EvaluateLocalVisibility(Vector3 worldPosition, bool isProjectile = false)

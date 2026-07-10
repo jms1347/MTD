@@ -3,7 +3,7 @@ using Unity.Netcode;
 using UnityEngine;
 /// <summary>
 /// 시야 경계를 smoothstep으로 부드럽게 페이드.
-/// 내 캐릭터 시야만 적용 (화면·오클루전 일치).
+/// 아군 플레이어·넥서스 시야를 합집합으로 적용.
 /// </summary>
 public class CwslLocalVisionSystem : MonoBehaviour
 {
@@ -32,15 +32,13 @@ public class CwslLocalVisionSystem : MonoBehaviour
 
     private void RefreshVisibility()
     {
-        if (playerVision == null)
-            return;
-
+        var sources = CwslTeamVision.CollectSources();
         RefreshAlliedStructures();
-        RefreshMonsters();
-        RefreshGold();
-        RefreshPills();
-        RefreshOtherPlayers();
-        RefreshProjectiles();
+        RefreshMonsters(sources);
+        RefreshGold(sources);
+        RefreshPills(sources);
+        RefreshOtherPlayers(sources);
+        RefreshProjectiles(sources);
     }
 
     private void RefreshAlliedStructures()
@@ -50,7 +48,7 @@ public class CwslLocalVisionSystem : MonoBehaviour
             SetOccludeeVisibility(nexus.gameObject, 1f);
     }
 
-    private void RefreshMonsters()
+    private void RefreshMonsters(IReadOnlyList<CwslTeamVision.CwslTeamVisionSource> sources)
     {
         var monsters = CwslCombatRegistry.AliveMonsters;
         foreach (var health in monsters)
@@ -68,12 +66,15 @@ public class CwslLocalVisionSystem : MonoBehaviour
                 continue;
             }
 
-            var visibility = playerVision.EvaluateLocalVisibility(monster.transform.position);
+            var visibility = CwslTeamVision.EvaluateTeamVisibility(
+                monster.transform.position,
+                isProjectile: false,
+                sources);
             SetOccludeeVisibility(monster.gameObject, visibility);
         }
     }
 
-    private void RefreshGold()
+    private void RefreshGold(IReadOnlyList<CwslTeamVision.CwslTeamVisionSource> sources)
     {
         var pickups = CwslCombatRegistry.ActiveGoldPickups;
         foreach (var pickup in pickups)
@@ -81,12 +82,15 @@ public class CwslLocalVisionSystem : MonoBehaviour
             if (pickup == null)
                 continue;
 
-            var visibility = playerVision.EvaluateLocalVisibility(pickup.transform.position);
+            var visibility = CwslTeamVision.EvaluateTeamVisibility(
+                pickup.transform.position,
+                isProjectile: false,
+                sources);
             SetOccludeeVisibility(pickup.gameObject, visibility);
         }
     }
 
-    private void RefreshPills()
+    private void RefreshPills(IReadOnlyList<CwslTeamVision.CwslTeamVisionSource> sources)
     {
         var pickups = CwslCombatRegistry.ActivePillPickups;
         foreach (var pickup in pickups)
@@ -94,12 +98,15 @@ public class CwslLocalVisionSystem : MonoBehaviour
             if (pickup == null)
                 continue;
 
-            var visibility = playerVision.EvaluateLocalVisibility(pickup.transform.position);
+            var visibility = CwslTeamVision.EvaluateTeamVisibility(
+                pickup.transform.position,
+                isProjectile: false,
+                sources);
             SetOccludeeVisibility(pickup.gameObject, visibility);
         }
     }
 
-    private void RefreshOtherPlayers()
+    private void RefreshOtherPlayers(IReadOnlyList<CwslTeamVision.CwslTeamVisionSource> sources)
     {
         var players = CwslCombatRegistry.AlivePlayers;
         foreach (var health in players)
@@ -107,12 +114,15 @@ public class CwslLocalVisionSystem : MonoBehaviour
             if (health == null || health.transform == transform)
                 continue;
 
-            var visibility = playerVision.EvaluateLocalVisibility(health.transform.position);
+            var visibility = CwslTeamVision.EvaluateTeamVisibility(
+                health.transform.position,
+                isProjectile: false,
+                sources);
             SetOccludeeVisibility(health.gameObject, visibility);
         }
     }
 
-    private void RefreshProjectiles()
+    private void RefreshProjectiles(IReadOnlyList<CwslTeamVision.CwslTeamVisionSource> sources)
     {
         var projectiles = CwslCombatRegistry.ActiveMonsterProjectiles;
         foreach (var projectile in projectiles)
@@ -120,7 +130,10 @@ public class CwslLocalVisionSystem : MonoBehaviour
             if (projectile == null)
                 continue;
 
-            var visibility = playerVision.EvaluateLocalVisibility(projectile.transform.position, isProjectile: true);
+            var visibility = CwslTeamVision.EvaluateTeamVisibility(
+                projectile.transform.position,
+                isProjectile: true,
+                sources);
             SetOccludeeVisibility(projectile.gameObject, visibility);
         }
     }
