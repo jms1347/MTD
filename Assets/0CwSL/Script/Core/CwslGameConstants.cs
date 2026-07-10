@@ -19,7 +19,7 @@ public static class CwslGameConstants
     public const int PoolStructureExpandSize = 2;
 
     public const float NexusDefaultHealth = 20000f;
-    public const float PlayerVisionRadius = 40f;
+    public const float PlayerVisionRadius = 25f;
     public const float NexusTeamVisionRadius = PlayerVisionRadius;
     public const float TeamVisionSourceCacheSeconds = 0.05f;
     public const float SimpleVisionShowThreshold = 0.12f;
