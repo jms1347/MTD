@@ -100,7 +100,7 @@ public class CwslLocalDarkVision : MonoBehaviour
             ? 0f
             : isBlindVision
                 ? BlindVisionRadius
-                : Mathf.Max(8f, catalogVisionRadius + lighthouseBonus);
+                : Mathf.Max(16f, catalogVisionRadius + lighthouseBonus);
     }
 
     private void LateUpdate()

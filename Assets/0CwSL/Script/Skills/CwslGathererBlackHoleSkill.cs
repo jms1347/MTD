@@ -97,6 +97,7 @@ public class CwslGathererBlackHoleSkill : CwslPlayerSkillBase
             elapsed += Time.deltaTime;
             var t = Mathf.Clamp01(elapsed / liftDuration);
             var spin = CwslGameConstants.GathererWhirlwindSpinDegreesPerSecond * elapsed;
+            RefreshVictimStun(victims);
             UpdateVictimsLift(center, victims, spin, t);
             yield return null;
         }
@@ -106,6 +107,7 @@ public class CwslGathererBlackHoleSkill : CwslPlayerSkillBase
         {
             elapsed += Time.deltaTime;
             var t = Mathf.Clamp01(elapsed / throwDuration);
+            RefreshVictimStun(victims);
             UpdateVictimsThrow(center, victims, t);
             yield return null;
         }
@@ -139,9 +141,26 @@ public class CwslGathererBlackHoleSkill : CwslPlayerSkillBase
                 OrbitDistance = flat.magnitude,
                 BaseY = target.position.y,
             });
+
+            monster.GetComponent<CwslMonsterStun>()?.ApplyStunServer(
+                CwslGameConstants.GathererWhirlwindStunDuration,
+                target.position + Vector3.up * 0.6f);
         }
 
         return results;
+    }
+
+    private static void RefreshVictimStun(List<WhirlwindVictim> victims)
+    {
+        const float refreshSeconds = 0.35f;
+        foreach (var victim in victims)
+        {
+            if (victim.Transform == null)
+                continue;
+
+            victim.Transform.GetComponent<CwslMonsterStun>()
+                ?.ApplyStunServer(refreshSeconds, victim.Transform.position + Vector3.up * 0.6f);
+        }
     }
 
     private static void UpdateVictimsLift(

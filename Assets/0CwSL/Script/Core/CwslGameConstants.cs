@@ -19,7 +19,7 @@ public static class CwslGameConstants
     public const int PoolStructureExpandSize = 2;
 
     public const float NexusDefaultHealth = 20000f;
-    public const float NexusTeamVisionRadius = 11f;
+    public const float NexusTeamVisionRadius = 22f;
     public const float TeamVisionSourceCacheSeconds = 0.05f;
     public const float SimpleVisionShowThreshold = 0.12f;
     public const float EnemyBaseDefaultHealth = 3000f;
@@ -28,7 +28,7 @@ public static class CwslGameConstants
     public const float PlayerMaxHealth = 720f;
     public const float PlayerAttackDamage = 30f;
     public const float PlayerDefense = 70f;
-    public const float PlayerVisionRadius = 16f;
+    public const float PlayerVisionRadius = 32f;
     public const float PlayerMaxStamina = 100f;
     public const float PlayerStaminaRegenPerSecond = 10f;
     public const float SkillCooldownMultiplier = 2f;
@@ -150,6 +150,7 @@ public static class CwslGameConstants
     public const float GathererWhirlwindMaxHeight = 6f;
     public const float GathererWhirlwindThrowSeconds = 0.9f;
     public const float GathererWhirlwindThrowSpeed = 15f;
+    public const float GathererWhirlwindStunDuration = 3.8f;
     public const float GathererWhirlwindCastDuration = 0.4f;
     public const float GathererRopeAreaRadius = 5f;
     public const float GathererRopeConvergeSeconds = 0.4f;
@@ -237,7 +238,7 @@ public static class CwslGameConstants
     public const int VisionOverlaySortOrder = 50;
     public const float InkBlindDurationSeconds = 3f;
 
-    public const float BlindVisionRadius = 2.8f;
+    public const float BlindVisionRadius = 5.6f;
     public const float RedMageMeteorScryRadius = 5.8f;
     public const float RedMageMeteorScryDuration = 2.8f;
 
@@ -480,7 +481,7 @@ public static class CwslGameConstants
 
     public const int LighthouseCount = 8;
     public const float LighthouseRadius = 3.2f;
-    public const float LighthouseVisionBonus = 7f;
+    public const float LighthouseVisionBonus = 14f;
     public const float LighthouseActivateSeconds = 5f;
     public const float LighthouseDuration = 30f;
 
@@ -545,7 +546,7 @@ public static class CwslGameConstants
     public const float RallyZoneRadius = 5.5f;
     public const int RallyZoneMinAllies = 2;
     public const float RallyZoneDamageMultiplier = 1.25f;
-    public const float RallyZoneVisionBonus = 3f;
+    public const float RallyZoneVisionBonus = 6f;
 
     public const int GoldSpringCount = 2;
     public const float GoldSpringRadius = 2.6f;

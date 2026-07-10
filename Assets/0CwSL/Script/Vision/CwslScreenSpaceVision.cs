@@ -37,7 +37,7 @@ public class CwslScreenSpaceVision : MonoBehaviour
     {
         isAbsoluteBlind = absoluteBlind;
         isBlindVision = visionRadiusWorld <= 0.01f;
-        visionRadius = isAbsoluteBlind ? 0f : isBlindVision ? 2.8f : Mathf.Max(6f, visionRadiusWorld);
+        visionRadius = isAbsoluteBlind ? 0f : isBlindVision ? CwslGameConstants.BlindVisionRadius : Mathf.Max(12f, visionRadiusWorld);
     }
 
     public void Deactivate()

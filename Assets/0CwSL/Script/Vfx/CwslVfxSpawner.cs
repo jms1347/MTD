@@ -331,6 +331,7 @@ public static class CwslVfxSpawner
         {
             ring.transform.SetParent(root.transform, true);
             ring.transform.localPosition = Vector3.up * 0.02f;
+            CwslEtfxVfxOrientation.ApplyGroundMagicZoneOrientation(ring.transform);
             PrepareEffect(ring);
         }
 
@@ -345,27 +346,24 @@ public static class CwslVfxSpawner
     {
         var root = new GameObject("GathererYankZoneVfx");
         root.transform.position = center + Vector3.up * 0.05f;
-        root.transform.rotation = Quaternion.identity;
         var scale = Mathf.Max(0.8f, radius / 2.6f);
-        var portalRotation = CwslEtfxVfxOrientation.GroundZonePortalRotation;
 
         var portalPrefab = ResolvePrefab(null, CwslVfxPaths.GathererYankPortal);
-        var portal = Spawn(portalPrefab, center, portalRotation, 0f, scale);
+        var portal = Spawn(portalPrefab, center, CwslEtfxVfxOrientation.GroundZonePortalRotation, 0f, scale);
         if (portal != null)
         {
-            portal.transform.SetParent(root.transform, false);
+            portal.transform.SetParent(root.transform, true);
             portal.transform.localPosition = Vector3.zero;
-            portal.transform.localRotation = portalRotation;
+            CwslEtfxVfxOrientation.ApplyGroundPortalOrientation(portal.transform);
             PrepareEffect(portal);
         }
 
         var ringPrefab = ResolvePrefab(null, CwslVfxPaths.GathererYankRing);
-        var ring = Spawn(ringPrefab, center, Quaternion.identity, 0f, scale * 1.05f);
+        var ring = Spawn(ringPrefab, center + Vector3.up * 0.02f, Quaternion.identity, 0f, scale * 1.05f);
         if (ring != null)
         {
-            ring.transform.SetParent(root.transform, false);
-            ring.transform.localPosition = Vector3.up * 0.02f;
-            ring.transform.localRotation = Quaternion.identity;
+            ring.transform.SetParent(root.transform, true);
+            CwslEtfxVfxOrientation.ApplyGroundMagicZoneOrientation(ring.transform);
             PrepareEffect(ring);
         }
 

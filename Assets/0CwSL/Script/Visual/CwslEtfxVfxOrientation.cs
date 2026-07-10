@@ -18,4 +18,31 @@ public static class CwslEtfxVfxOrientation
 
     // ETFX SpinPortal — 풀 반환 시 identity로 리셋되므로 스폰 시 지면용 X -90° 재적용
     public static readonly Quaternion GroundZonePortalRotation = Quaternion.Euler(-90f, 0f, 0f);
+
+    // ETFX MagicZone — 루트 identity, GlowCircle 자식이 -90°. 풀 재사용 시 자식 회전 보정.
+    public static readonly Quaternion GroundMagicZoneRotation = Quaternion.identity;
+
+    public static void ApplyGroundPortalOrientation(Transform root)
+    {
+        if (root == null)
+            return;
+
+        root.localRotation = GroundZonePortalRotation;
+    }
+
+    public static void ApplyGroundMagicZoneOrientation(Transform root)
+    {
+        if (root == null)
+            return;
+
+        root.localRotation = GroundMagicZoneRotation;
+        foreach (var child in root.GetComponentsInChildren<Transform>(true))
+        {
+            if (child == root)
+                continue;
+
+            if (child.name.Contains("GlowCircle") || child.name.Contains("PortalDust"))
+                child.localRotation = Quaternion.Euler(-90f, 0f, 0f);
+        }
+    }
 }
