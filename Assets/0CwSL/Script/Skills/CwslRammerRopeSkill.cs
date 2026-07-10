@@ -7,7 +7,7 @@ using UnityEngine.AI;
 /// <summary>질주자 E — 작은 원 범위의 적 전원을 밧줄 연결.</summary>
 public class CwslRammerRopeSkill : CwslPlayerSkillBase
 {
-    public const int BoundSlotIndex = 1;
+    public const int BoundSlotIndex = CwslCharacterSkillCatalog.SlotE;
     private const int MaxLinkedTargets = 12;
 
     private readonly NetworkVariable<bool> hasLink = new(

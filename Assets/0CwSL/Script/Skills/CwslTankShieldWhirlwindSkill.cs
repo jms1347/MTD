@@ -7,7 +7,7 @@ using UnityEngine.AI;
 /// <summary>??? R ???? ???. 4?? ?? ??.</summary>
 public class CwslTankShieldWhirlwindSkill : CwslPlayerSkillBase
 {
-    public const int BoundSlotIndex = 2;
+    public const int BoundSlotIndex = CwslCharacterSkillCatalog.SlotR;
 
     private CwslTankFortifySkill fortifySkill;
     private CwslPlayerCharacter playerCharacter;

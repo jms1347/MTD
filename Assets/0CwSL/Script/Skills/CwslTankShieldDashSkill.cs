@@ -7,7 +7,7 @@ using UnityEngine.AI;
 /// <summary>??? W ????? ???. Q ?? ?? ?????? ???? ?? ???.</summary>
 public class CwslTankShieldDashSkill : CwslPlayerSkillBase
 {
-    public const int BoundSlotIndex = 3;
+    public const int BoundSlotIndex = CwslCharacterSkillCatalog.SlotW;
 
     private CwslTankFortifySkill fortifySkill;
     private CwslPlayerMovement movement;

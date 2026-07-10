@@ -4,7 +4,7 @@ using UnityEngine;
 /// <summary>바리케이드 Q — 드래그 시작~끝 직선 벽 설치.</summary>
 public class CwslBarricadeWallSkill : CwslPlayerSkillBase
 {
-    public const int BoundSlotIndex = 0;
+    public const int BoundSlotIndex = CwslCharacterSkillCatalog.SlotQ;
 
     private CwslPlayerHealth playerHealth;
     private CwslPlayerStun playerStun;

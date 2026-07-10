@@ -6,7 +6,7 @@ using UnityEngine;
 /// <summary>??? W ? ???? ??? ???? ?? ? ??? ?? ??.</summary>
 public class CwslRedMageLightningOrbSkill : CwslPlayerSkillBase
 {
-    public const int BoundSlotIndex = 3;
+    public const int BoundSlotIndex = CwslCharacterSkillCatalog.SlotW;
 
     private CwslPlayerCharacter playerCharacter;
     private CwslPlayerHealth playerHealth;

@@ -4,7 +4,7 @@ using UnityEngine;
 /// <summary>바리케이드 R — 내가 설치한 모든 벽 동시 폭파 + 화상.</summary>
 public class CwslBarricadeDetonateSkill : CwslPlayerSkillBase
 {
-    public const int BoundSlotIndex = 2;
+    public const int BoundSlotIndex = CwslCharacterSkillCatalog.SlotR;
 
     private CwslPlayerHealth playerHealth;
     private CwslPlayerStun playerStun;

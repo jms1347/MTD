@@ -5,7 +5,7 @@ using UnityEngine;
 /// <summary>질주자 W — 급브레이크: 모은 속도만큼 피해 + 주변 넉백.</summary>
 public class CwslRammerBrakeSkill : CwslPlayerSkillBase
 {
-    public const int BoundSlotIndex = 3;
+    public const int BoundSlotIndex = CwslCharacterSkillCatalog.SlotW;
 
     private CwslMomentumRammerSkill rammerSkill;
     private CwslPlayerHealth playerHealth;

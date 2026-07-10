@@ -6,7 +6,7 @@ using UnityEngine.AI;
 /// <summary>미사일 탱커 E — 뒤로 대시 + 연막탄 1발.</summary>
 public class CwslMissileTankSmokeDashSkill : CwslPlayerSkillBase
 {
-    public const int BoundSlotIndex = 1;
+    public const int BoundSlotIndex = CwslCharacterSkillCatalog.SlotE;
 
     private CwslMissileTankSkill missileSkill;
     private CwslPlayerMovement movement;

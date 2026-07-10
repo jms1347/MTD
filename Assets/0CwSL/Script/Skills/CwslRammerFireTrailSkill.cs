@@ -5,7 +5,7 @@ using UnityEngine;
 /// <summary>질주자 R — 불꽃 트레일 + 바닥 불길 장판(화상).</summary>
 public class CwslRammerFireTrailSkill : CwslPlayerSkillBase
 {
-    public const int BoundSlotIndex = 2;
+    public const int BoundSlotIndex = CwslCharacterSkillCatalog.SlotR;
 
     private CwslPlayerHealth playerHealth;
     private CwslPlayerStun playerStun;

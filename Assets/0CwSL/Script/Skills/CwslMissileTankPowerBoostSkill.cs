@@ -5,7 +5,7 @@ using UnityEngine;
 /// <summary>총잡이 W — 10초 버프: 관통, 이동속도 2배, 평타 쿨타임 제거.</summary>
 public class CwslMissileTankPowerBoostSkill : CwslPlayerSkillBase
 {
-    public const int BoundSlotIndex = 3;
+    public const int BoundSlotIndex = CwslCharacterSkillCatalog.SlotW;
 
     private CwslPlayerSkillCooldowns skillCooldowns;
     private CwslPlayerHealth playerHealth;

@@ -4,7 +4,7 @@ using UnityEngine;
 /// <summary>바리케이드 W — 점프 발판 설치.</summary>
 public class CwslBarricadeJumpPadSkill : CwslPlayerSkillBase
 {
-    public const int BoundSlotIndex = 3;
+    public const int BoundSlotIndex = CwslCharacterSkillCatalog.SlotW;
 
     private CwslPlayerHealth playerHealth;
     private CwslPlayerStun playerStun;

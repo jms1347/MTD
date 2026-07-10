@@ -4,7 +4,7 @@ using UnityEngine;
 /// <summary>미사일 탱커 R — 일반/Q 탄환 종류 순환.</summary>
 public class CwslMissileTankAmmoController : CwslPlayerSkillBase
 {
-    public const int BoundSlotIndex = 2;
+    public const int BoundSlotIndex = CwslCharacterSkillCatalog.SlotR;
 
     private readonly NetworkVariable<byte> networkAmmoKind = new(
         (byte)CwslMissileTankAmmoKind.Basic,

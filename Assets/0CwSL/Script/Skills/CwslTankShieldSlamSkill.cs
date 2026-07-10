@@ -6,7 +6,7 @@ using UnityEngine.AI;
 /// <summary>??? E ???? ??????. ??? ????? + ?????????</summary>
 public class CwslTankShieldSlamSkill : CwslPlayerSkillBase
 {
-    public const int BoundSlotIndex = 1;
+    public const int BoundSlotIndex = CwslCharacterSkillCatalog.SlotE;
 
     private CwslTankFortifySkill fortifySkill;
     private CwslPlayerMovement movement;

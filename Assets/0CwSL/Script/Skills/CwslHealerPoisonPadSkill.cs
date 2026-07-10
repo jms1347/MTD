@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class CwslHealerPoisonPadSkill : CwslPlayerSkillBase
 {
-    public const int BoundSlotIndex = 3;
+    public const int BoundSlotIndex = CwslCharacterSkillCatalog.SlotW;
 
     private CwslPlayerHealth playerHealth;
     private CwslPlayerStun playerStun;

@@ -4,7 +4,7 @@ using UnityEngine;
 /// <summary>빨간 마법사 E — 디아 오브. 직선 비행하며 8방향 얼음 파편 분사 + 동상 (UkDefense I-0007).</summary>
 public class CwslRedMageFrozenOrbSkill : CwslPlayerSkillBase
 {
-    public const int BoundSlotIndex = 1;
+    public const int BoundSlotIndex = CwslCharacterSkillCatalog.SlotE;
 
     private CwslPlayerCharacter playerCharacter;
     private CwslPlayerHealth playerHealth;

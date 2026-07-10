@@ -5,7 +5,7 @@ using UnityEngine;
 /// <summary>바리케이드 E — 넥서스 근처로 이동 후 스태미나로 수리.</summary>
 public class CwslBarricadeRepairSkill : CwslPlayerSkillBase
 {
-    public const int BoundSlotIndex = 1;
+    public const int BoundSlotIndex = CwslCharacterSkillCatalog.SlotE;
 
     private CwslPlayerHealth playerHealth;
     private CwslPlayerStun playerStun;

@@ -6,7 +6,7 @@ using UnityEngine.AI;
 /// <summary>빨간 마법사 R — 마우스 지정 지점 순간이동 + 골드 포털 연출.</summary>
 public class CwslRedMageTeleportSkill : CwslPlayerSkillBase
 {
-    public const int BoundSlotIndex = 2;
+    public const int BoundSlotIndex = CwslCharacterSkillCatalog.SlotR;
 
     private CwslPlayerMovement movement;
     private CwslPlayerHealth playerHealth;
