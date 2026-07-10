@@ -617,7 +617,7 @@ public static class CwslGameConstants
     public const float SeniorCoachAceSpotlightCooldown = 14f;
     public const float SeniorCoachOrbitSpeed = 2.6f;
     public const float SeniorCoachOrbitInset = 2.1f;
-    public const int MaxAliveMonsters = 80;
+    public const int MaxAliveMonsters = 100;
     public const float MonsterSpawnWarningSeconds = 2f;
     public const float MonsterSpawnWarningRadius = 1.8f;
     public const float SuicideExplosionScale = 0.32f;

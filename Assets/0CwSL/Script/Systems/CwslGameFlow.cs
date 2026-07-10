@@ -91,9 +91,12 @@ public class CwslGameFlow : NetworkBehaviour
     }
 
     [ServerRpc(RequireOwnership = false)]
-    public void RequestRestartServerRpc()
+    public void RequestRestartServerRpc(ServerRpcParams rpcParams = default)
     {
         if (!IsServer || restartInProgress)
+            return;
+
+        if (rpcParams.Receive.SenderClientId != NetworkManager.ServerClientId)
             return;
 
         restartInProgress = true;

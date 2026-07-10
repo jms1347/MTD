@@ -948,12 +948,18 @@ public class CwslPlayerInput : NetworkBehaviour
     [ServerRpc]
     private void AttackSelectedServerRpc(bool dualWieldMode)
     {
+        if (BlocksCombatInputServer())
+            return;
+
         combat?.AttackSelectedTarget(dualWieldMode);
     }
 
     [ServerRpc]
     private void AttackTargetServerRpc(NetworkObjectReference targetRef)
     {
+        if (BlocksCombatInputServer())
+            return;
+
         if (!targetRef.TryGet(out var target))
             return;
 
@@ -963,42 +969,63 @@ public class CwslPlayerInput : NetworkBehaviour
     [ServerRpc]
     private void AttackMoveServerRpc(Vector3 destination)
     {
+        if (BlocksCombatInputServer())
+            return;
+
         combat?.BeginAttackMoveServer(destination);
     }
 
     [ServerRpc]
     private void PressSkillServerRpc()
     {
+        if (BlocksCombatInputServer())
+            return;
+
         skills?.PressSkillServer(OwnerClientId);
     }
 
     [ServerRpc]
     private void ReleaseSkillServerRpc()
     {
+        if (BlocksCombatInputServer())
+            return;
+
         skills?.ReleaseSkillServer(OwnerClientId);
     }
 
     [ServerRpc]
     private void BeginGatherSkillServerRpc(Vector3 worldPoint)
     {
+        if (BlocksCombatInputServer())
+            return;
+
         skills?.BeginGatherSkillServer(OwnerClientId, worldPoint);
     }
 
     [ServerRpc]
     private void UpdateGatherSkillServerRpc(Vector3 worldPoint)
     {
+        if (BlocksCombatInputServer())
+            return;
+
         skills?.UpdateGatherSkillServer(OwnerClientId, worldPoint);
     }
 
     [ServerRpc]
     private void CastGroundSkillServerRpc(Vector3 worldPoint)
     {
+        if (BlocksCombatInputServer())
+            return;
+
         skills?.CastGroundSkillServer(OwnerClientId, worldPoint);
     }
 
     [ServerRpc]
     private void BuildBarricadeWallServerRpc(Vector3 start, Vector3 end)
     {
+        if (BlocksCombatInputServer())
+            return;
+
         if (skills != null && skills.BlocksSkillUseForOwner())
             return;
 
@@ -1008,7 +1035,15 @@ public class CwslPlayerInput : NetworkBehaviour
     [ServerRpc]
     private void UseSkillSlotServerRpc(int slotIndex, Vector3 worldPoint = default)
     {
+        if (BlocksCombatInputServer())
+            return;
+
         skills?.UseSkillSlotServer(OwnerClientId, slotIndex, worldPoint);
+    }
+
+    private static bool BlocksCombatInputServer()
+    {
+        return !CwslDefenseModeController.IsPlayerActionAllowed();
     }
 
     [ServerRpc]

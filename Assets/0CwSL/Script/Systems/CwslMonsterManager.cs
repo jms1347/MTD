@@ -19,17 +19,20 @@ public class CwslMonsterManager : MonoBehaviour
     [SerializeField] private int maxBases = 8;
 
     [Header("스폰")]
-    [SerializeField] private float spawnIntervalPerBase = 4f;
+    [SerializeField] private float spawnIntervalPerBase = 9.5f;
+    [SerializeField] private int spawnWaveMinCount = 3;
+    [SerializeField] private int spawnWaveMaxCount = 5;
+    [SerializeField] private float spawnWaveSpreadRadius = 3.5f;
     [SerializeField] private int maxAliveMonsters = CwslGameConstants.MaxAliveMonsters;
     [SerializeField] private float spawnWarningSeconds = 1.5f;
 
     [Header("분당 강화")]
-    [SerializeField] private float damageIncreasePerMinute = 0.1f;
+    [SerializeField] private float damageIncreasePerMinute = 0.13f;
     [SerializeField] private bool spawnMidBossEachMinute = true;
     [SerializeField] private bool spawnDefenseBossEachMinute = true;
 
     [Header("넥서스 우선 몬스터 배율")]
-    [SerializeField] private float nexusVariantHealthMultiplier = 2.2f;
+    [SerializeField] private float nexusVariantHealthMultiplier = 2.35f;
     [SerializeField] private float nexusVariantScaleMultiplier = 1.35f;
     [SerializeField] private float nexusVariantSpeedMultiplier = 0.72f;
 
@@ -57,6 +60,9 @@ public class CwslMonsterManager : MonoBehaviour
     public float BaseSpawnIntervalSeconds => baseSpawnIntervalSeconds;
     public int MaxBases => maxBases;
     public float SpawnWarningSeconds => spawnWarningSeconds;
+    public int SpawnWaveMinCount => Mathf.Max(1, spawnWaveMinCount);
+    public int SpawnWaveMaxCount => Mathf.Max(SpawnWaveMinCount, spawnWaveMaxCount);
+    public float SpawnWaveSpreadRadius => Mathf.Max(0.5f, spawnWaveSpreadRadius);
     public bool SpawnMidBossEachMinute => spawnMidBossEachMinute;
     public bool SpawnDefenseBossEachMinute => spawnDefenseBossEachMinute;
     public float NexusVariantHealthMultiplier => nexusVariantHealthMultiplier;
@@ -153,5 +159,25 @@ public class CwslMonsterManager : MonoBehaviour
                * GlobalDamageMultiplier
                * activeMonsterDamageMultiplier
                * Mathf.Max(0.01f, localMultiplier);
+    }
+
+    public string BuildDefenseGoalLabel()
+    {
+        var minutes = defenseDurationSeconds / 60f;
+        if (Mathf.Abs(minutes - Mathf.Round(minutes)) < 0.05f)
+            return $"넥서스를 {Mathf.RoundToInt(minutes)}분간 지키면 승리";
+
+        return $"넥서스를 {minutes:0.#}분간 지키면 승리";
+    }
+
+    public static string GetDefenseGoalLabel()
+    {
+        var manager = Instance;
+        if (manager == null)
+            manager = Object.FindFirstObjectByType<CwslMonsterManager>();
+
+        return manager != null
+            ? manager.BuildDefenseGoalLabel()
+            : "넥서스를 5분간 지키면 승리";
     }
 }

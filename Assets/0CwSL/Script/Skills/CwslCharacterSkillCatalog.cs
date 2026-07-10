@@ -160,6 +160,26 @@ public static class CwslCharacterSkillCatalog
         return builder.ToString().TrimEnd();
     }
 
+    public static string BuildSkillTierLabel(SkillSlotDefinition skill)
+    {
+        return skill.Tier switch
+        {
+            CwslSkillTier.Passive => "패시브",
+            _ => CwslSkillStaminaTable.GetTierLabel(skill.Tier),
+        };
+    }
+
+    public static string BuildSkillCostLabel(CwslCharacterId characterId, SkillSlotDefinition skill)
+    {
+        if (TryGetHoldSkillSpLabel(characterId, skill, out var holdLabel))
+            return holdLabel.Trim('(', ')');
+
+        if (skill.Tier == CwslSkillTier.Passive)
+            return "유지 비용 별도";
+
+        return $"{(int)skill.StaminaCost} SP";
+    }
+
     public static float GetStaminaCost(CwslCharacterId characterId, int slotIndex)
     {
         return Get(characterId, slotIndex).StaminaCost;

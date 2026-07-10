@@ -38,4 +38,18 @@ public static class CwslSkillStaminaTable
             _ => "-",
         };
     }
+
+    public static string BuildRulesGuideText()
+    {
+        return
+            $"최대 {(int)CwslGameConstants.PlayerMaxStamina} SP · 초당 {(int)CwslGameConstants.PlayerStaminaRegenPerSecond} 자동 회복\n" +
+            $"등급별 1회 비용 — C {(int)CwslGameConstants.SkillStaminaTierC} / " +
+            $"B {(int)CwslGameConstants.SkillStaminaTierB} / " +
+            $"A {(int)CwslGameConstants.SkillStaminaTierA} / " +
+            $"S {(int)CwslGameConstants.SkillStaminaTierS}\n" +
+            "W · E · R 및 일반 Q는 시전 시 SP 1회 차감\n" +
+            $"Q 홀드 — 탱커 {(int)CwslGameConstants.TankFortifyStaminaDrainPerSecond} SP/초 · " +
+            $"질주자·끌모 시작 비용 + {(int)CwslGameConstants.RammerWingSpreadStaminaDrainPerSecond} SP/초 (홀드 중 회복 정지)\n" +
+            "SP가 부족하면 스킬이 발동되지 않습니다";
+    }
 }

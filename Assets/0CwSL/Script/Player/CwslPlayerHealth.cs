@@ -174,18 +174,6 @@ public class CwslPlayerHealth : NetworkBehaviour
 
 
 
-    [ServerRpc(RequireOwnership = false)]
-
-    public void DamageServerRpc(float amount, int popupKind = (int)CwslDamagePopupKind.Player)
-
-    {
-
-        ApplyDamageServer(amount, (CwslDamagePopupKind)popupKind, GetDamagePopupAnchor());
-
-    }
-
-
-
     public bool TryReceiveProjectileHitServer(float damage, Vector3 hitPosition)
 
     {

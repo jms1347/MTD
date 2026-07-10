@@ -10,9 +10,55 @@ public class CwslMonsterSpawner : NetworkBehaviour
 
     private float spawnTimer;
     private int aliveCount;
+    private int pendingSpawnCount;
     private readonly List<float> baseSpawnTimers = new();
 
     public bool SpawningEnabled { get; set; } = true;
+
+    public void ResetAliveCountServer()
+    {
+        if (!IsServer)
+            return;
+
+        aliveCount = 0;
+        pendingSpawnCount = 0;
+        StopAllCoroutines();
+    }
+
+    private int GetReservedAliveCount() => aliveCount + pendingSpawnCount;
+
+    private bool TryBeginSpawnReservation()
+    {
+        if (GetReservedAliveCount() >= GetMaxAliveMonsters())
+            return false;
+
+        pendingSpawnCount++;
+        return true;
+    }
+
+    private void CancelSpawnReservation()
+    {
+        pendingSpawnCount = Mathf.Max(0, pendingSpawnCount - 1);
+    }
+
+    private void CommitSpawnReservation()
+    {
+        pendingSpawnCount = Mathf.Max(0, pendingSpawnCount - 1);
+        aliveCount++;
+    }
+
+    public void RegisterSpawnedMonsterServer(CwslMonsterHealth health)
+    {
+        if (!IsServer || health == null)
+            return;
+
+        if (!TryBeginSpawnReservation())
+            return;
+
+        health.OnKilled -= HandleMonsterKilled;
+        health.OnKilled += HandleMonsterKilled;
+        CommitSpawnReservation();
+    }
 
     private int GetMaxAliveMonsters()
     {
@@ -35,13 +81,16 @@ public class CwslMonsterSpawner : NetworkBehaviour
         if (spawnTimer > 0f)
             return;
 
-        if (aliveCount >= GetMaxAliveMonsters())
+        if (GetReservedAliveCount() >= GetMaxAliveMonsters())
         {
             spawnTimer = spawnInterval;
             return;
         }
 
         spawnTimer = spawnInterval;
+        if (!TryBeginSpawnReservation())
+            return;
+
         QueueSpawnWithWarning(CwslArenaUtility.GetRandomMonsterSpawnPosition(), CwslMonsterType.Melee);
     }
 
@@ -64,17 +113,46 @@ public class CwslMonsterSpawner : NetworkBehaviour
                 continue;
 
             baseSpawnTimers[i] = interval;
-            if (aliveCount >= maxAlive)
+            if (GetReservedAliveCount() >= maxAlive)
                 continue;
 
-            var type = RollDefenseMinionType();
-            QueueDefenseSpawnServer(basePositions[i], type);
+            var waveCount = manager != null
+                ? Random.Range(manager.SpawnWaveMinCount, manager.SpawnWaveMaxCount + 1)
+                : Random.Range(3, 6);
+            var spread = manager != null ? manager.SpawnWaveSpreadRadius : 3.5f;
+            QueueDefenseWaveServer(basePositions[i], waveCount, spread);
+        }
+    }
+
+    public void QueueDefenseWaveServer(Vector3 center, int count, float spreadRadius)
+    {
+        if (!IsServer || count <= 0)
+            return;
+
+        spreadRadius = Mathf.Max(0f, spreadRadius);
+        for (var i = 0; i < count; i++)
+        {
+            if (!TryBeginSpawnReservation())
+                break;
+
+            var offset = spreadRadius > 0.01f
+                ? Random.insideUnitCircle * spreadRadius
+                : Vector2.zero;
+            var position = new Vector3(
+                center.x + offset.x,
+                CwslGameConstants.SpawnHeight,
+                center.z + offset.y);
+            position = CwslArenaUtility.ClampToArena(position);
+            StartCoroutine(SpawnWithWarningRoutine(position, RollDefenseMinionType(), useDefenseRules: true));
         }
     }
 
     public void QueueDefenseSpawnServer(Vector3 position, CwslMonsterType forcedType)
     {
         if (!IsServer)
+            return;
+
+        if (!TryBeginSpawnReservation())
             return;
 
         StartCoroutine(SpawnWithWarningRoutine(position, forcedType, useDefenseRules: true));
@@ -105,7 +183,7 @@ public class CwslMonsterSpawner : NetworkBehaviour
 
         for (var i = 0; i < count; i++)
         {
-            if (aliveCount >= GetMaxAliveMonsters())
+            if (!TryBeginSpawnReservation())
                 break;
 
             var angle = Random.Range(0f, Mathf.PI * 2f);
@@ -124,7 +202,7 @@ public class CwslMonsterSpawner : NetworkBehaviour
 
         for (var i = 0; i < count; i++)
         {
-            if (aliveCount >= GetMaxAliveMonsters())
+            if (!TryBeginSpawnReservation())
                 break;
 
             var offset = Random.insideUnitCircle * spreadRadius;
@@ -158,16 +236,24 @@ public class CwslMonsterSpawner : NetworkBehaviour
         yield return new WaitForSeconds(warningSeconds);
 
         if (!IsServer || !SpawningEnabled)
+        {
+            CancelSpawnReservation();
             yield break;
+        }
 
         if (!useDefenseRules &&
             CwslKarmaSystem.Instance != null &&
             CwslKarmaSystem.Instance.IsBossThresholdReached)
+        {
+            CancelSpawnReservation();
             yield break;
+        }
 
-        var maxAlive = GetMaxAliveMonsters();
-        if (aliveCount >= maxAlive)
+        if (GetReservedAliveCount() > GetMaxAliveMonsters())
+        {
+            CancelSpawnReservation();
             yield break;
+        }
 
         SpawnMonsterAtServer(position, resolvedType, isExecutive);
     }
@@ -177,7 +263,7 @@ public class CwslMonsterSpawner : NetworkBehaviour
         if (Random.value < CwslGameConstants.InkSniperSpawnChance)
             return Random.value < 0.4f ? CwslMonsterType.NexusInkSniper : CwslMonsterType.InkSniper;
 
-        return Random.Range(0, 7) switch
+        return Random.Range(0, 8) switch
         {
             0 => CwslMonsterType.Melee,
             1 => CwslMonsterType.Ranged,
@@ -185,7 +271,8 @@ public class CwslMonsterSpawner : NetworkBehaviour
             3 => CwslMonsterType.StickySuicide,
             4 => CwslMonsterType.NexusMelee,
             5 => CwslMonsterType.NexusRanged,
-            _ => CwslMonsterType.NexusSuicide
+            6 => CwslMonsterType.NexusSuicide,
+            _ => CwslMonsterType.NexusMelee,
         };
     }
 
@@ -214,11 +301,17 @@ public class CwslMonsterSpawner : NetworkBehaviour
 
         var prefab = session.GetMonsterPrefab(type);
         if (prefab == null)
+        {
+            CancelSpawnReservation();
             return null;
+        }
 
         var networkObject = CwslNetworkPoolService.Instance?.Get(prefab, position, Quaternion.identity);
         if (networkObject == null)
+        {
+            CancelSpawnReservation();
             return null;
+        }
 
         var instance = networkObject.gameObject;
         instance.transform.localScale = Vector3.one;
@@ -237,7 +330,7 @@ public class CwslMonsterSpawner : NetworkBehaviour
         if (health != null)
             health.OnKilled += HandleMonsterKilled;
 
-        aliveCount++;
+        CommitSpawnReservation();
         return networkObject;
     }
 
@@ -272,7 +365,7 @@ public class CwslMonsterSpawner : NetworkBehaviour
         CwslMonsterType type,
         NetworkObject forcedPlayerTarget)
     {
-        if (aliveCount >= GetMaxAliveMonsters())
+        if (!TryBeginSpawnReservation())
             return;
 
         position = CwslArenaUtility.ClampToArena(position);

@@ -5,17 +5,17 @@ public static class CwslMonsterStatCatalog
 {
     public const float GlobalMoveSpeedMultiplier = 0.68f;
 
-    public const float MeleeBaseHealth = 100f;
+    public const float MeleeBaseHealth = 170f;
     public const float MeleeMoveSpeed = 3.2f;
     public const float MeleeAttackPower = 24f;
-    public const float MeleeDefense = 10f;
+    public const float MeleeDefense = 12f;
 
-    public const float RangedBaseHealth = 75f;
+    public const float RangedBaseHealth = 100f;
     public const float RangedMoveSpeed = 2.5f;
     public const float RangedProjectileDamage = 20f;
     public const float RangedDefense = 0f;
 
-    public const float SuicideBaseHealth = 110f;
+    public const float SuicideBaseHealth = 115f;
     public const float SuicideMoveSpeed = 2.9f;
     public const float SuicideExplosionDamage = 48f;
     public const float SuicideExplosionRadius = 2.5f;
@@ -67,7 +67,7 @@ public static class CwslMonsterStatCatalog
             CwslMonsterType.Ranged or CwslMonsterType.InkSniper => RangedDefense,
             CwslMonsterType.NexusRanged or CwslMonsterType.NexusInkSniper => 8f,
             CwslMonsterType.Suicide or CwslMonsterType.StickySuicide or CwslMonsterType.NexusSuicide => 0f,
-            CwslMonsterType.NexusMelee => 14f,
+            CwslMonsterType.NexusMelee => 16f,
             CwslMonsterType.MidBoss => MidBossDefense,
             CwslMonsterType.SeniorCoach => SeniorCoachDefense,
             CwslMonsterType.DefenseBoss => DefenseBossDefense,

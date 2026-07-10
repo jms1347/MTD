@@ -443,7 +443,13 @@ public class CwslPlayerSkills : NetworkBehaviour
 
     private bool BlocksSkillUseServer(ulong senderClientId)
     {
-        return senderClientId == OwnerClientId && CwslBossWatchState.BlocksSkills(senderClientId);
+        if (senderClientId != OwnerClientId)
+            return true;
+
+        if (!CwslDefenseModeController.IsPlayerActionAllowed())
+            return true;
+
+        return CwslBossWatchState.BlocksSkills(senderClientId);
     }
 
     private bool TrySpendSkillCost(int baseCost = -1)

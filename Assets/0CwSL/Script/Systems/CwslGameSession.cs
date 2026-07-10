@@ -328,5 +328,9 @@ public class CwslGameSession : NetworkBehaviour
 
         var monster = boss.GetComponent<CwslMonsterBase>();
         monster?.Initialize(CwslMonsterType.BossHongmyeongbo);
+
+        var health = boss.GetComponent<CwslMonsterHealth>();
+        if (health != null && monsterSpawner != null)
+            monsterSpawner.RegisterSpawnedMonsterServer(health);
     }
 }

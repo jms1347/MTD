@@ -88,6 +88,16 @@ public class CwslDefenseModeController : NetworkBehaviour
 
 
 
+    private readonly NetworkVariable<int> syncedEnemyBaseCount = new(
+
+        0,
+
+        NetworkVariableReadPermission.Everyone,
+
+        NetworkVariableWritePermission.Server);
+
+
+
     private readonly List<CwslEnemyBase> enemyBases = new();
 
     private readonly List<ulong> sortedClientIds = new();
@@ -132,20 +142,7 @@ public class CwslDefenseModeController : NetworkBehaviour
         }
     }
 
-    public int EnemyBaseCount
-    {
-        get
-        {
-            var count = 0;
-            for (var i = 0; i < enemyBases.Count; i++)
-            {
-                if (enemyBases[i] != null && enemyBases[i].IsAlive)
-                    count++;
-            }
-
-            return count;
-        }
-    }
+    public int EnemyBaseCount => syncedEnemyBaseCount.Value;
 
     private readonly List<Vector3> aliveBasePositions = new();
 
@@ -252,6 +249,24 @@ public class CwslDefenseModeController : NetworkBehaviour
 
 
         return IsMatchStarted;
+
+    }
+
+
+
+    public static bool IsPlayerActionAllowed()
+
+    {
+
+        if (!CwslGameConstants.UseDefenseMode)
+
+            return true;
+
+
+
+        var controller = Instance;
+
+        return controller != null && controller.CanPlayerAct();
 
     }
 
@@ -481,7 +496,13 @@ public class CwslDefenseModeController : NetworkBehaviour
 
         if (spawner != null)
 
+        {
+
+            spawner.ResetAliveCountServer();
+
             spawner.SpawningEnabled = true;
+
+        }
 
 
 
@@ -492,6 +513,10 @@ public class CwslDefenseModeController : NetworkBehaviour
         for (var i = 0; i < baseCount; i++)
 
             TryAddEnemyBaseServer();
+
+
+
+        SyncEnemyBaseCountServer();
 
 
 
@@ -887,7 +912,10 @@ public class CwslDefenseModeController : NetworkBehaviour
         var enemyBase = networkObject.GetComponent<CwslEnemyBase>();
         enemyBase?.ConfigureServer(maxHealth);
         if (enemyBase != null)
+        {
             enemyBases.Add(enemyBase);
+            SyncEnemyBaseCountServer();
+        }
     }
 
 
@@ -901,6 +929,48 @@ public class CwslDefenseModeController : NetworkBehaviour
             return;
 
         enemyBases.Remove(enemyBase);
+
+        SyncEnemyBaseCountServer();
+
+    }
+
+
+
+    private void SyncEnemyBaseCountServer()
+
+    {
+
+        if (!IsServer)
+
+            return;
+
+
+
+        syncedEnemyBaseCount.Value = CountAliveEnemyBasesLocal();
+
+    }
+
+
+
+    private int CountAliveEnemyBasesLocal()
+
+    {
+
+        var count = 0;
+
+        for (var i = 0; i < enemyBases.Count; i++)
+
+        {
+
+            if (enemyBases[i] != null && enemyBases[i].IsAlive)
+
+                count++;
+
+        }
+
+
+
+        return count;
 
     }
 

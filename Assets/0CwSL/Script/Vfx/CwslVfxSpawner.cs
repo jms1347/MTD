@@ -349,12 +349,12 @@ public static class CwslVfxSpawner
         var scale = Mathf.Max(0.8f, radius / 2.6f);
 
         var portalPrefab = ResolvePrefab(null, CwslVfxPaths.GathererYankPortal);
-        var portal = Spawn(portalPrefab, center, CwslEtfxVfxOrientation.GroundZonePortalRotation, 0f, scale);
+        var portal = Spawn(portalPrefab, center, CwslEtfxVfxOrientation.GathererYankPortalRotation, 0f, scale);
         if (portal != null)
         {
             portal.transform.SetParent(root.transform, true);
             portal.transform.localPosition = Vector3.zero;
-            CwslEtfxVfxOrientation.ApplyGroundPortalOrientation(portal.transform);
+            CwslEtfxVfxOrientation.ApplyGathererYankPortalOrientation(portal.transform);
             PrepareEffect(portal);
         }
 

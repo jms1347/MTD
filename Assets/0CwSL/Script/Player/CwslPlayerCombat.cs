@@ -271,6 +271,9 @@ public class CwslPlayerCombat : NetworkBehaviour
         if (!IsServer)
             return;
 
+        if (!CwslDefenseModeController.IsPlayerActionAllowed())
+            return;
+
         pureMoveMode = false;
         attackMoveActive = true;
         attackMoveDestination = destination;
@@ -283,6 +286,9 @@ public class CwslPlayerCombat : NetworkBehaviour
     public void AttackTargetServer(NetworkObject target, bool dualWieldMode = false)
     {
         if (!IsServer || target == null)
+            return;
+
+        if (!CwslDefenseModeController.IsPlayerActionAllowed())
             return;
 
         attackMoveActive = false;
@@ -399,6 +405,9 @@ public class CwslPlayerCombat : NetworkBehaviour
     public void AttackSelectedTarget(bool dualWieldMode = false)
     {
         if (!IsServer)
+            return;
+
+        if (!CwslDefenseModeController.IsPlayerActionAllowed())
             return;
 
         if (playerCharacter != null && playerCharacter.CharacterId == CwslCharacterId.MissileTank)
