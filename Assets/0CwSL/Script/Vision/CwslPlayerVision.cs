@@ -58,9 +58,31 @@ public class CwslPlayerVision : NetworkBehaviour
     public static bool IsInLocalVision(Vector3 worldPosition)
     {
         if (Local == null)
-            return true;
+            return false;
 
-        return CwslTeamVision.IsInTeamVision(worldPosition);
+        return Local.EvaluateLocalVisibility(worldPosition) > 0.01f;
+    }
+
+    public float EvaluateLocalVisibility(Vector3 worldPosition, bool isProjectile = false)
+    {
+        if (IsAbsoluteBlindVision)
+            return TryGetScryVisibility(worldPosition, isProjectile);
+
+        var visibility = CwslLocalVisionSystem.EvaluateVisibility(
+            VisionOrigin,
+            worldPosition,
+            EffectiveVisionRadius,
+            IsBlindVision,
+            isProjectile);
+
+        if (HasActiveScry)
+        {
+            visibility = Mathf.Max(
+                visibility,
+                TryGetScryVisibility(worldPosition, isProjectile));
+        }
+
+        return visibility;
     }
 
     public void RevealMeteorScry(Vector3 worldCenter)

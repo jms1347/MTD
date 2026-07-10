@@ -80,7 +80,7 @@ public static class CwslTeamVision
         IReadOnlyList<CwslTeamVisionSource> sources = null)
     {
         if (CwslPlayerVision.Local == null)
-            return 1f;
+            return 0f;
 
         sources ??= CollectSources();
 

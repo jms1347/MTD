@@ -63,13 +63,23 @@ public class CwslScreenSpaceVision : MonoBehaviour
 
     private void ApplyTeamVisionMask(Camera camera)
     {
+        var localVision = CwslPlayerVision.Local;
+        if (localVision == null)
+        {
+            vignetteMaterial.SetInt(TeamVisionCountId, 0);
+            return;
+        }
+
         var sources = CwslTeamVision.CollectSources();
         var count = 0;
 
         for (var i = 0; i < sources.Count && count < CwslTeamVision.MaxSources; i++)
         {
             var source = sources[i];
-            if (isAbsoluteBlind && source.PlayerVision == CwslPlayerVision.Local)
+            if (source.PlayerVision != localVision)
+                continue;
+
+            if (isAbsoluteBlind && source.PlayerVision == localVision)
                 continue;
 
             var viewport = camera.WorldToViewportPoint(source.Origin);
@@ -77,7 +87,7 @@ public class CwslScreenSpaceVision : MonoBehaviour
                 continue;
 
             var radius = source.Radius;
-            if (source.PlayerVision == CwslPlayerVision.Local && isBlindVision)
+            if (source.PlayerVision == localVision && isBlindVision)
                 radius = visionRadius;
 
             CwslVisionShape.ProjectViewportRadii(
