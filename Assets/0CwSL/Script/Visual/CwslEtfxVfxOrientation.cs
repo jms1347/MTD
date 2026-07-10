@@ -15,4 +15,7 @@ public static class CwslEtfxVfxOrientation
 
     // ETFX BodySlam / 지면 충격 — 루트 X -90° 보정
     public static readonly Quaternion GroundSlamRotationOffset = Quaternion.Euler(-90f, 0f, 0f);
+
+    // ETFX SpinPortal — 풀 반환 시 identity로 리셋되므로 스폰 시 지면용 X -90° 재적용
+    public static readonly Quaternion GroundZonePortalRotation = Quaternion.Euler(-90f, 0f, 0f);
 }

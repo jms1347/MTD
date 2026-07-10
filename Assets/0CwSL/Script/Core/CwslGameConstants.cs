@@ -7,7 +7,7 @@ public static class CwslGameConstants
     public const int LobbyPort = 7777;
     public const ushort GameNetcodePort = 7778;
     public const ushort GamePort = GameNetcodePort;
-    public const int MaxPlayers = 5;
+    public const int MaxPlayers = 7;
 
     public const int PoolHighChurnInitialSize = 100;
     public const int PoolHighChurnExpandSize = 16;
@@ -30,7 +30,7 @@ public static class CwslGameConstants
     public const float PlayerDefense = 70f;
     public const float PlayerVisionRadius = 16f;
     public const float PlayerMaxStamina = 100f;
-    public const float PlayerStaminaRegenPerSecond = 15f;
+    public const float PlayerStaminaRegenPerSecond = 10f;
     public const float SkillCooldownMultiplier = 2f;
     public const int SkillsPerCharacter = 4;
     public const float DefaultSkillStaminaCost = 22f;
@@ -136,15 +136,25 @@ public static class CwslGameConstants
 
     public const float GathererYankMaxDistance = 16f;
     public const float GathererYankPullSeconds = 0.35f;
-    public const float GathererYankCastDuration = 0.3f;
+    public const float GathererYankCastDuration = 3.4f;
+    public const float GathererYankDuration = 3f;
 
     public const float GathererSwapMaxDistance = 16f;
     public const float GathererSwapCastDuration = 0.25f;
 
     public const float GathererBlackHoleRadius = 6.5f;
-    public const float GathererBlackHoleDuration = 10f;
-    public const float GathererBlackHolePullSpeed = 4.2f;
-    public const float GathererBlackHoleCastDuration = 0.4f;
+    public const float GathererWhirlwindDuration = 3.5f;
+    public const float GathererWhirlwindRadius = 5.5f;
+    public const float GathererWhirlwindSpinDegreesPerSecond = 420f;
+    public const float GathererWhirlwindLiftSeconds = 2.4f;
+    public const float GathererWhirlwindMaxHeight = 6f;
+    public const float GathererWhirlwindThrowSeconds = 0.9f;
+    public const float GathererWhirlwindThrowSpeed = 15f;
+    public const float GathererWhirlwindCastDuration = 0.4f;
+    public const float GathererRopeAreaRadius = 5f;
+    public const float GathererRopeConvergeSeconds = 0.4f;
+    public const float GathererRopeExplosionSkillCoeff = 1.85f;
+    public const float GathererSwapRegionRadius = 6.5f;
 
     public const float BarricadeMeleeCooldown = 0.85f;
     public const float BarricadeMeleeRange = 2.6f;
@@ -195,12 +205,13 @@ public static class CwslGameConstants
     public const float GatherReferenceRadius = 4.8f;
     public const float GatherMaxRadius = GatherReferenceRadius * 2f;
     public const float GatherMinRadius = 1.4f;
-    public const float GatherChargeSeconds = 1.35f;
+    public const float GatherBlackHoleZoneRadius = 5f;
+    public const float GatherBlackHoleZoneDuration = 5f;
+    public const float GatherBlackHolePullSpeed = 3.8f;
+    public const float GatherPullSeconds = 0.48f;
     public const float GatherChargeStaminaDrainPerSecond = 3f;
     public const int GatherStartGoldCost = 0;
-    public const float GatherPullSeconds = 0.48f;
-    public const float GatherCooldown = 4f;
-    public const float GatherSlowMultiplier = 0.32f;
+    public const float GatherSlowMultiplier = 0.28f;
     public const float GatherSlowRefreshSeconds = 0.45f;
     public const int GatherSlowGoldPerTarget = 1;
     public const float GatherSlowGoldIntervalSeconds = 0.5f;

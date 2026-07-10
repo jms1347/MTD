@@ -19,13 +19,9 @@ public class CwslPlayerSkills : NetworkBehaviour
     {
         playerCharacter = GetComponent<CwslPlayerCharacter>();
         playerStamina = GetComponent<CwslPlayerStamina>();
-        if (playerStamina == null)
-            playerStamina = gameObject.AddComponent<CwslPlayerStamina>();
-        if (GetComponent<CwslPlayerSkillCooldowns>() == null)
-            gameObject.AddComponent<CwslPlayerSkillCooldowns>();
+        skillCooldowns = GetComponent<CwslPlayerSkillCooldowns>();
         if (GetComponent<CwslPlayerBossDebuff>() == null)
             gameObject.AddComponent<CwslPlayerBossDebuff>();
-        skillCooldowns = GetComponent<CwslPlayerSkillCooldowns>();
         skills.Clear();
         skills.AddRange(GetComponents<CwslPlayerSkillBase>());
         EnsureTankDashSkill();

@@ -475,6 +475,8 @@ public class CwslDefenseModeController : NetworkBehaviour
 
 
 
+        manager.ConfigureForPlayerCount(Mathf.Clamp(requiredPlayerCount.Value, 2, CwslGameConstants.MaxPlayers));
+
         var spawner = CwslGameSession.Instance?.MonsterSpawner;
 
         if (spawner != null)
@@ -483,7 +485,9 @@ public class CwslDefenseModeController : NetworkBehaviour
 
 
 
-        var baseCount = UnityEngine.Random.Range(manager.InitialBaseCountMin, manager.InitialBaseCountMax + 1);
+        var baseCount = UnityEngine.Random.Range(
+            manager.GetScaledInitialBaseCountMin(),
+            manager.GetScaledInitialBaseCountMax() + 1);
 
         for (var i = 0; i < baseCount; i++)
 

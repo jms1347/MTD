@@ -212,7 +212,16 @@ public static class CwslVfxPaths
         "Assets/Epic Toon FX/Prefabs/Combat/Brawling/Stun/StunnedCirclingStars.prefab";
 
     public const string GatherChargeCircle =
-        "Assets/Epic Toon FX/Prefabs/Interactive/Zone/SpinZone/SpinZoneBlue.prefab";
+        "Assets/Epic Toon FX/Prefabs/Interactive/Portals/VortexPortal/VortexPortalBlue.prefab";
+
+    public const string GatherBlackHoleRing =
+        "Assets/Epic Toon FX/Prefabs/Interactive/Zone/MagicZone/MagicZoneBlue.prefab";
+
+    public const string GathererYankPortal =
+        "Assets/Epic Toon FX/Prefabs/Interactive/Portals/SpinPortal/SpinPortalPurple.prefab";
+
+    public const string GathererYankRing =
+        "Assets/Epic Toon FX/Prefabs/Interactive/Zone/MagicZone/MagicZonePink.prefab";
 
     public const string GatherMaxReady =
         "Assets/Epic Toon FX/Prefabs/Combat/Magic/Charge/MagicChargeYellow.prefab";
@@ -236,6 +245,9 @@ public static class CwslVfxPaths
         "Assets/Epic Toon FX/Prefabs/Interactive/Portals/WavePortal/WavePortalBlue.prefab";
 
     public const string GathererBlackHole =
+        "Assets/Epic Toon FX/Prefabs/Environment/Weather/Whirlwind.prefab";
+
+    public const string GathererWhirlwind =
         "Assets/Epic Toon FX/Prefabs/Environment/Weather/Whirlwind.prefab";
 
     public const string BarricadeDetonateExplosion =

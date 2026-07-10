@@ -54,7 +54,7 @@ public static class CwslCharacterCatalog
         new(
             CwslCharacterId.CrowdGatherer,
             "끌모",
-            "몬스터를 끌어모아 아군 딜 타이밍을 만듭니다. 블랙홀·교환으로 전장을 교란합니다.",
+            "몬스터를 끌어모아 아군 딜 타이밍을 만듭니다. Q 블랙홀·W 밧줄 수렴·E 영역 교환·R 회오리로 전장을 교란합니다.",
             "우클릭 이동 · 좌클릭 적 선택 · Q/Space 홀드 스킬",
             CwslGameConstants.PlayerVisionRadius),
         new(

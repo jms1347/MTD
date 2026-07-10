@@ -173,7 +173,9 @@ public class CwslPlayerVisualTestController : MonoBehaviour
                 StartCoroutine(RammerChargeRoutine());
                 break;
             case CwslCharacterId.CrowdGatherer:
-                CwslGatherChargeVisual.BeginLocalCharge(previewRoot.position + previewRoot.forward * 1.2f);
+                CwslGatherChargeVisual.BeginBlackHoleZone(
+                    previewRoot.position + previewRoot.forward * 1.2f,
+                    CwslGameConstants.GatherBlackHoleZoneRadius);
                 break;
         }
     }

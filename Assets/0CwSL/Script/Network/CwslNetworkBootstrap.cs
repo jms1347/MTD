@@ -51,7 +51,7 @@ public class CwslNetworkBootstrap : MonoBehaviour
         if (connectedCount >= CwslGameConstants.MaxPlayers)
         {
             response.Approved = false;
-            response.Reason = "방이 가득 찼습니다. (최대 5인)";
+            response.Reason = "방이 가득 찼습니다. (최대 7인)";
             return;
         }
 

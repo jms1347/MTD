@@ -5,12 +5,12 @@ using UnityEngine.AI;
 
 public static class CwslDefensePrepUtility
 {
-    public const int MaxLineupSlots = 5;
+    public const int MaxLineupSlots = 7;
     public const float LineupRadius = 8.8f;
     public const float StartPadRadius = 2.6f;
     public const float SharedStartPadDistance = 12.2f;
 
-    private static readonly float[] SlotAnglesDeg = { 215f, 238f, 270f, 302f, 325f };
+    private static readonly float[] SlotAnglesDeg = { 205f, 227f, 249f, 270f, 291f, 313f, 335f };
 
     public static void CollectSortedClientIds(List<ulong> buffer)
     {

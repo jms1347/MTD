@@ -2,7 +2,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>왼쪽 하단 Q/W/E/R 스킬 쿨타임 (360° 라디얼 Fill + 남은 초).</summary>
+/// <summary>왼쪽 하단 Q/W/E/R 스킬 쿨타임 (슬롯 0=Q, 1=W, 2=E, 3=R).</summary>
 public class CwslPlayerSkillCooldownHud : MonoBehaviour
 {
     private sealed class SlotUi
@@ -10,6 +10,8 @@ public class CwslPlayerSkillCooldownHud : MonoBehaviour
         public Image cooldownFill;
         public TextMeshProUGUI keyLabel;
         public TextMeshProUGUI timeLabel;
+        public string keyHint;
+        public int boundSlotIndex = -1;
     }
 
     private CwslPlayerSkillCooldowns cooldowns;
@@ -47,10 +49,34 @@ public class CwslPlayerSkillCooldownHud : MonoBehaviour
         if (rect == null)
             return;
 
-        if (slots[0] == null)
+        if (NeedsRebuild(rect))
+        {
+            for (var i = rect.childCount - 1; i >= 0; i--)
+                Destroy(rect.GetChild(i).gameObject);
+
+            for (var i = 0; i < slots.Length; i++)
+                slots[i] = null;
+
             BuildUi(rect);
+        }
 
         ApplySlotStyles();
+    }
+
+    private static bool NeedsRebuild(RectTransform rect)
+    {
+        if (rect.childCount < CwslCharacterSkillCatalog.SkillCount)
+            return true;
+
+        for (var hudIndex = 0; hudIndex < CwslCharacterSkillCatalog.HudKeyOrder.Length; hudIndex++)
+        {
+            var expectedKey = CwslCharacterSkillCatalog.HudKeyOrder[hudIndex];
+            var child = rect.GetChild(hudIndex);
+            if (child == null || child.name != $"Slot_{expectedKey}")
+                return true;
+        }
+
+        return false;
     }
 
     private void BuildUi(RectTransform rect)
@@ -66,16 +92,17 @@ public class CwslPlayerSkillCooldownHud : MonoBehaviour
             boxSize * CwslCharacterSkillCatalog.SkillCount + spacing * (CwslCharacterSkillCatalog.SkillCount - 1),
             boxSize);
 
-        for (var i = 0; i < slots.Length; i++)
+        for (var hudIndex = 0; hudIndex < slots.Length; hudIndex++)
         {
-            var slotRoot = new GameObject($"Slot{i}", typeof(RectTransform));
+            var keyHint = CwslCharacterSkillCatalog.HudKeyOrder[hudIndex];
+            var slotRoot = new GameObject($"Slot_{keyHint}", typeof(RectTransform));
             slotRoot.transform.SetParent(rect, false);
             var slotRect = slotRoot.GetComponent<RectTransform>();
             slotRect.anchorMin = new Vector2(0f, 0f);
             slotRect.anchorMax = new Vector2(0f, 0f);
             slotRect.pivot = new Vector2(0f, 0f);
             slotRect.sizeDelta = new Vector2(boxSize, boxSize);
-            slotRect.anchoredPosition = new Vector2(i * (boxSize + spacing), 0f);
+            slotRect.anchoredPosition = new Vector2(hudIndex * (boxSize + spacing), 0f);
 
             var bg = new GameObject("Bg", typeof(RectTransform), typeof(Image));
             bg.transform.SetParent(slotRoot.transform, false);
@@ -124,11 +151,13 @@ public class CwslPlayerSkillCooldownHud : MonoBehaviour
             timeRect.offsetMax = Vector2.zero;
             var timeLabel = timeGo.GetComponent<TextMeshProUGUI>();
 
-            slots[i] = new SlotUi
+            slots[hudIndex] = new SlotUi
             {
                 cooldownFill = fillImage,
                 keyLabel = keyLabel,
                 timeLabel = timeLabel,
+                keyHint = keyHint,
+                boundSlotIndex = hudIndex,
             };
         }
 
@@ -151,6 +180,7 @@ public class CwslPlayerSkillCooldownHud : MonoBehaviour
                 slot.keyLabel.alignment = TextAlignmentOptions.TopLeft;
                 slot.keyLabel.color = new Color(0.78f, 0.86f, 0.96f, 0.88f);
                 slot.keyLabel.raycastTarget = false;
+                slot.keyLabel.text = slot.keyHint;
             }
 
             if (slot.timeLabel != null)
@@ -177,17 +207,20 @@ public class CwslPlayerSkillCooldownHud : MonoBehaviour
             ? playerCharacter.CharacterId
             : CwslCharacterId.Tank;
 
-        for (var i = 0; i < slots.Length; i++)
+        for (var hudIndex = 0; hudIndex < slots.Length; hudIndex++)
         {
-            var slot = slots[i];
+            var slot = slots[hudIndex];
             if (slot == null)
                 continue;
 
-            var definition = CwslCharacterSkillCatalog.Get(characterId, i);
-            if (slot.keyLabel != null)
-                slot.keyLabel.text = definition.KeyHint;
+            if (slot.boundSlotIndex < 0)
+                slot.boundSlotIndex = CwslCharacterSkillCatalog.GetSlotIndexByKey(characterId, slot.keyHint);
 
-            var remaining = cooldowns.GetRemaining(i);
+            var slotIndex = slot.boundSlotIndex;
+            if (slot.keyLabel != null)
+                slot.keyLabel.text = slot.keyHint;
+
+            var remaining = cooldowns.GetRemaining(slotIndex);
             if (slot.cooldownFill != null)
             {
                 if (slot.cooldownFill.sprite == null)
@@ -195,7 +228,7 @@ public class CwslPlayerSkillCooldownHud : MonoBehaviour
 
                 var onCooldown = remaining > 0.01f;
                 slot.cooldownFill.enabled = onCooldown;
-                slot.cooldownFill.fillAmount = onCooldown ? cooldowns.GetFillAmount(i) : 0f;
+                slot.cooldownFill.fillAmount = onCooldown ? cooldowns.GetFillAmount(slotIndex) : 0f;
             }
 
             if (slot.timeLabel != null)
@@ -214,6 +247,22 @@ public class CwslPlayerSkillCooldownHud : MonoBehaviour
     {
         cooldowns = skillCooldowns;
         playerCharacter = character;
+        RefreshBoundSlotIndices();
         ApplySlotStyles();
+    }
+
+    private void RefreshBoundSlotIndices()
+    {
+        var characterId = playerCharacter != null
+            ? playerCharacter.CharacterId
+            : CwslCharacterId.Tank;
+
+        for (var i = 0; i < slots.Length; i++)
+        {
+            if (slots[i] == null)
+                continue;
+
+            slots[i].boundSlotIndex = CwslCharacterSkillCatalog.GetSlotIndexByKey(characterId, slots[i].keyHint);
+        }
     }
 }

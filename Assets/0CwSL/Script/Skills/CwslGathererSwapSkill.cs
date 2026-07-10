@@ -1,17 +1,18 @@
+using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.AI;
 
-/// <summary>링거 E — 클릭한 유닛과 자리 교환(아군/적군).</summary>
+/// <summary>링거 E — 클릭 지역과 시전자 주변 동일 영역의 유닛·투사체를 맞바꿈.</summary>
 public class CwslGathererSwapSkill : CwslPlayerSkillBase
 {
-    public const int BoundSlotIndex = 1;
+    public const int BoundSlotIndex = CwslCharacterSkillCatalog.SlotE;
 
     private CwslPlayerHealth playerHealth;
     private CwslPlayerStun playerStun;
     private CwslPlayerSkillCooldowns skillCooldowns;
-    private CwslPlayerSelection selection;
     private CwslPlayerMovement movement;
+    private readonly List<Transform> regionATargets = new();
+    private readonly List<Transform> regionBTargets = new();
 
     public override CwslSkillActivationType ActivationType => CwslSkillActivationType.Instant;
 
@@ -25,12 +26,11 @@ public class CwslGathererSwapSkill : CwslPlayerSkillBase
         playerHealth = GetComponent<CwslPlayerHealth>();
         playerStun = GetComponent<CwslPlayerStun>();
         skillCooldowns = GetComponent<CwslPlayerSkillCooldowns>();
-        selection = GetComponent<CwslPlayerSelection>();
         movement = GetComponent<CwslPlayerMovement>();
     }
 
     public override bool CanUseSkillSlotServer(ulong senderClientId, int slotIndex, Vector3 worldPoint) =>
-        slotIndex == BoundSlotIndex && CanCastServer(senderClientId, worldPoint);
+        slotIndex == BoundSlotIndex && CanCastServer(senderClientId);
 
     public override bool TryUseSkillSlotServer(ulong senderClientId, int slotIndex, Vector3 worldPoint)
     {
@@ -42,23 +42,49 @@ public class CwslGathererSwapSkill : CwslPlayerSkillBase
 
     public bool TryCastServer(ulong senderClientId, Vector3 worldPoint)
     {
-        if (!CanCastServer(senderClientId, worldPoint))
+        if (!CanCastServer(senderClientId))
             return false;
 
-        if (!TryResolveTarget(worldPoint, out var target))
+        worldPoint.y = 0f;
+        worldPoint = CwslArenaUtility.ClampToPlayArea(worldPoint, 0.5f);
+        var regionCenterA = worldPoint;
+        var regionCenterB = transform.position;
+        regionCenterB.y = 0f;
+        var radius = CwslGameConstants.GathererSwapRegionRadius;
+
+        CollectRegion(regionCenterA, radius, regionATargets, true);
+        CollectRegion(regionCenterB, radius, regionBTargets, true);
+        if (regionATargets.Count == 0 && regionBTargets.Count == 0)
             return false;
 
         skillCooldowns?.BeginCooldown(BoundSlotIndex);
 
-        var selfPos = transform.position;
-        var targetPos = target.transform.position;
-        WarpUnit(transform, targetPos);
-        WarpUnit(target.transform, selfPos);
-        PlaySwapFxClientRpc(selfPos, targetPos);
+        var swappedA = new List<Vector3>(regionATargets.Count);
+        for (var i = 0; i < regionATargets.Count; i++)
+        {
+            var pos = regionATargets[i].position;
+            swappedA.Add(OffsetToRegion(pos, regionCenterA, regionCenterB));
+        }
+
+        var swappedB = new List<Vector3>(regionBTargets.Count);
+        for (var i = 0; i < regionBTargets.Count; i++)
+        {
+            var pos = regionBTargets[i].position;
+            swappedB.Add(OffsetToRegion(pos, regionCenterB, regionCenterA));
+        }
+
+        for (var i = 0; i < regionATargets.Count; i++)
+            CwslGathererSkillUtil.WarpTransform(regionATargets[i], swappedA[i]);
+
+        for (var i = 0; i < regionBTargets.Count; i++)
+            CwslGathererSkillUtil.WarpTransform(regionBTargets[i], swappedB[i]);
+
+        movement?.StopMovement();
+        PlayRegionSwapClientRpc(regionCenterA, regionCenterB, radius);
         return true;
     }
 
-    public bool CanCastServer(ulong senderClientId, Vector3 worldPoint)
+    public bool CanCastServer(ulong senderClientId)
     {
         if (!IsServer || senderClientId != OwnerClientId)
             return false;
@@ -69,114 +95,31 @@ public class CwslGathererSwapSkill : CwslPlayerSkillBase
         if (playerHealth != null && !playerHealth.IsAlive)
             return false;
 
-        if (playerStun != null && playerStun.IsStunned)
-            return false;
-
-        return TryResolveTarget(worldPoint, out _);
+        return playerStun == null || !playerStun.IsStunned;
     }
 
-    private bool TryResolveTarget(Vector3 worldPoint, out NetworkObject target)
+    private static void CollectRegion(
+        Vector3 center,
+        float radius,
+        List<Transform> results,
+        bool swappableOnly)
     {
-        target = null;
-        if (selection != null &&
-            selection.TryGetSelectedTarget(out var selected) &&
-            selected != null &&
-            selected.NetworkObjectId != NetworkObjectId &&
-            IsValidTarget(selected) &&
-            IsInRange(selected.transform.position))
-        {
-            target = selected;
-            return true;
-        }
-
-        var best = 2.6f;
-        var monsters = CwslCombatRegistry.AliveMonsters;
-        foreach (var monster in monsters)
-        {
-            if (monster == null || !monster.IsAlive || !IsInRange(monster.transform.position))
-                continue;
-
-            var d = Vector3.Distance(worldPoint, monster.transform.position);
-            if (d >= best)
-                continue;
-
-            best = d;
-            target = monster.NetworkObject;
-        }
-
-        if (NetworkManager.Singleton != null)
-        {
-            foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
-            {
-                var playerObject = client.PlayerObject;
-                if (playerObject == null || playerObject.NetworkObjectId == NetworkObjectId)
-                    continue;
-
-                var health = playerObject.GetComponent<CwslPlayerHealth>();
-                if (health == null || !health.IsAlive || !IsInRange(playerObject.transform.position))
-                    continue;
-
-                var d = Vector3.Distance(worldPoint, playerObject.transform.position);
-                if (d >= best)
-                    continue;
-
-                best = d;
-                target = playerObject;
-            }
-        }
-
-        return target != null;
+        CwslGathererSkillUtil.CollectInCircle(center, radius, results, swappableOnly);
     }
 
-    private bool IsInRange(Vector3 position)
+    private static Vector3 OffsetToRegion(Vector3 position, Vector3 fromCenter, Vector3 toCenter)
     {
-        var flat = position - transform.position;
-        flat.y = 0f;
-        var max = CwslGameConstants.GathererSwapMaxDistance;
-        return flat.sqrMagnitude <= max * max;
-    }
-
-    private static bool IsValidTarget(NetworkObject networkObject)
-    {
-        if (networkObject == null)
-            return false;
-
-        var monster = networkObject.GetComponent<CwslMonsterHealth>();
-        if (monster != null)
-            return monster.IsAlive;
-
-        var player = networkObject.GetComponent<CwslPlayerHealth>();
-        return player != null && player.IsAlive;
-    }
-
-    private void WarpUnit(Transform unit, Vector3 destination)
-    {
-        var bodyRadius = unit.GetComponent<CwslPlayerBodyCollider>()?.Radius
-            ?? CwslGameConstants.PlayerBodyColliderRadiusDefault;
-        destination = CwslArenaUtility.ClampToPlayArea(destination, bodyRadius);
-        destination.y = unit.position.y;
-
-        var rammer = unit.GetComponent<CwslMomentumRammerSkill>();
-        if (rammer != null && rammer.IsMomentumActive)
-        {
-            unit.position = destination;
-            return;
-        }
-
-        if (unit == transform)
-            movement?.StopMovement();
-
-        var agent = unit.GetComponent<NavMeshAgent>();
-        if (agent != null && agent.enabled && agent.isOnNavMesh)
-            agent.Warp(destination);
-        else
-            unit.position = destination;
+        var offset = position - fromCenter;
+        offset.y = 0f;
+        var destination = toCenter + offset;
+        destination.y = position.y;
+        return destination;
     }
 
     [ClientRpc]
-    private void PlaySwapFxClientRpc(Vector3 a, Vector3 b)
+    private void PlayRegionSwapClientRpc(Vector3 regionA, Vector3 regionB, float radius)
     {
-        CwslVfxSpawner.SpawnGathererSwap(a);
-        CwslVfxSpawner.SpawnGathererSwap(b);
+        CwslVfxSpawner.SpawnGathererRegionSwap(regionA, radius);
+        CwslVfxSpawner.SpawnGathererRegionSwap(regionB, radius);
     }
 }

@@ -80,6 +80,14 @@ public class CwslPlayerStaminaHud : MonoBehaviour
         label.color = new Color(0.92f, 0.96f, 1f, 0.95f);
     }
 
+    private void Update()
+    {
+        if (playerStamina == null)
+            return;
+
+        Refresh(playerStamina.Current, playerStamina.Max);
+    }
+
     private void OnDestroy()
     {
         if (playerStamina != null)

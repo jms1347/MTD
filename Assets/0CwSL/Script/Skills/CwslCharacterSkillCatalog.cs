@@ -5,6 +5,13 @@ public static class CwslCharacterSkillCatalog
     public const int SkillCount = CwslGameConstants.SkillsPerCharacter;
 
     private static readonly string[] GuideKeyOrder = { "Q", "W", "E", "R" };
+    public static readonly string[] HudKeyOrder = { "Q", "W", "E", "R" };
+
+    // 내부 슬롯 인덱스: 0=Q, 1=W, 2=E, 3=R — 스킬 코드·쿨타임·입력·HUD와 동일.
+    public const int SlotQ = 0;
+    public const int SlotW = 1;
+    public const int SlotE = 2;
+    public const int SlotR = 3;
 
     public readonly struct SkillSlotDefinition
     {
@@ -37,9 +44,9 @@ public static class CwslCharacterSkillCatalog
     private static readonly SkillSlotDefinition[] TankSkills =
     {
         new("방패 강화", "Q", "Q/Space 홀드 — 방패를 펼쳐 방어력 2배. SP 4/초 유지. E·R·W 효과 강화.", CwslSkillTier.Passive, CwslGameConstants.FortifyShieldGrowSmoothTime, true),
+        new("방패 돌진", "W", "전방으로 돌진하며 경로上的 적을 밀쳐냅니다.", CwslSkillTier.B, CwslGameConstants.TankShieldDashCastDuration, true),
         new("지진 강타", "E", "바닥을 내리쳐 주변 몬스터를 기절시키고 밀어냅니다.", CwslSkillTier.A, CwslGameConstants.TankShieldSlamCastDuration, true),
         new("방패 회전", "R", "4초간 제자리에서 회전하며 주변에 광역 피해를 줍니다.", CwslSkillTier.S, CwslGameConstants.TankShieldWhirlwindDuration, true),
-        new("방패 돌진", "W", "전방으로 돌진하며 경로上的 적을 밀쳐냅니다.", CwslSkillTier.B, CwslGameConstants.TankShieldDashCastDuration, true),
     };
 
     private static readonly SkillSlotDefinition[] MissileTankSkills =
@@ -68,10 +75,10 @@ public static class CwslCharacterSkillCatalog
 
     private static readonly SkillSlotDefinition[] CrowdGathererSkills =
     {
-        new("끌어모으기", "Q", "Q/Space 홀드 — 범위를 키우며 몬스터를 끌어당깁니다. 시작 SP + 3/초 유지.", CwslSkillTier.A, CwslGameConstants.GatherChargeSeconds, true),
-        new("강제 소환", "W", "원거리 적 한 명을 앞으로 끌어옵니다.", CwslSkillTier.B, CwslGameConstants.GathererYankCastDuration, true),
-        new("자리 교환", "E", "대상과 위치를 맞바꿉니다.", CwslSkillTier.B, CwslGameConstants.GathererSwapCastDuration, true),
-        new("블랙홀", "R", "흡인 장판을 만들어 적을 모읍니다.", CwslSkillTier.S, CwslGameConstants.GathererBlackHoleCastDuration, true),
+        new("끌어모으기", "Q", "Q/Space 홀드 — 슬로우+흡인, 뗄 때 이펙트가 수축하며 중심으로 모읍니다.", CwslSkillTier.A, CwslGameConstants.GatherBlackHoleZoneDuration, true),
+        new("강제 소환", "W", "W — 블랙홀 영역 생성. 밧줄 연결+슬로우 흡인 3초 후 중심 수렴. 미사일/자폭 유발 시 폭발.", CwslSkillTier.B, CwslGameConstants.GathererYankCastDuration, true),
+        new("자리 교환", "E", "E — 클릭 지역과 내 주변 영역을 동시에 표시한 뒤 유닛·투사체 위치를 맞바꿉니다.", CwslSkillTier.A, CwslGameConstants.GathererSwapCastDuration, true),
+        new("회오리", "R", "회오리로 적을 띄운 뒤 상단에서 던져냅니다.", CwslSkillTier.S, CwslGameConstants.GathererWhirlwindDuration, true),
     };
 
     private static readonly SkillSlotDefinition[] BarricadeSkills =
@@ -97,6 +104,18 @@ public static class CwslCharacterSkillCatalog
             return skills[0];
 
         return skills[slotIndex];
+    }
+
+    public static int GetSlotIndexByKey(CwslCharacterId characterId, string keyHint)
+    {
+        return keyHint switch
+        {
+            "Q" => SlotQ,
+            "W" => SlotW,
+            "E" => SlotE,
+            "R" => SlotR,
+            _ => SlotQ,
+        };
     }
 
     public static SkillSlotDefinition[] GetSkills(CwslCharacterId characterId)
@@ -171,8 +190,10 @@ public static class CwslCharacterSkillCatalog
                 label = "(4 SP/초 유지)";
                 return true;
             case CwslCharacterId.MomentumRammer:
-            case CwslCharacterId.CrowdGatherer:
                 label = $"(시작 {(int)skill.StaminaCost} + 3 SP/초)";
+                return true;
+            case CwslCharacterId.CrowdGatherer:
+                label = $"(시작 {(int)skill.StaminaCost} + 3 SP/초 · 5초)";
                 return true;
             default:
                 return false;

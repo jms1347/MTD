@@ -308,6 +308,72 @@ public static class CwslVfxSpawner
         return spawned;
     }
 
+    public static GameObject SpawnGatherBlackHoleZone(Vector3 center, float radius, float duration, bool bindChargeVisual = true)
+    {
+        var root = new GameObject("GatherBlackHoleZoneVfx");
+        root.transform.position = center + Vector3.up * 0.05f;
+        var scale = Mathf.Max(0.8f, radius / 2.6f);
+
+        var vortexPrefab = ResolvePrefab(
+            ResolveAssets()?.gatherChargeCircleVfx,
+            CwslVfxPaths.GatherChargeCircle);
+        var vortex = Spawn(vortexPrefab, center, Quaternion.identity, 0f, scale);
+        if (vortex != null)
+        {
+            vortex.transform.SetParent(root.transform, true);
+            vortex.transform.localPosition = Vector3.zero;
+            PrepareEffect(vortex);
+        }
+
+        var ringPrefab = ResolvePrefab(null, CwslVfxPaths.GatherBlackHoleRing);
+        var ring = Spawn(ringPrefab, center, Quaternion.identity, 0f, scale * 1.05f);
+        if (ring != null)
+        {
+            ring.transform.SetParent(root.transform, true);
+            ring.transform.localPosition = Vector3.up * 0.02f;
+            PrepareEffect(ring);
+        }
+
+        if (bindChargeVisual)
+            CwslGatherChargeVisual.BindInstances(root, vortex, ring);
+        if (duration > 0f)
+            Object.Destroy(root, duration + 0.15f);
+        return root;
+    }
+
+    public static GameObject SpawnGathererYankZone(Vector3 center, float radius, float duration)
+    {
+        var root = new GameObject("GathererYankZoneVfx");
+        root.transform.position = center + Vector3.up * 0.05f;
+        root.transform.rotation = Quaternion.identity;
+        var scale = Mathf.Max(0.8f, radius / 2.6f);
+        var portalRotation = CwslEtfxVfxOrientation.GroundZonePortalRotation;
+
+        var portalPrefab = ResolvePrefab(null, CwslVfxPaths.GathererYankPortal);
+        var portal = Spawn(portalPrefab, center, portalRotation, 0f, scale);
+        if (portal != null)
+        {
+            portal.transform.SetParent(root.transform, false);
+            portal.transform.localPosition = Vector3.zero;
+            portal.transform.localRotation = portalRotation;
+            PrepareEffect(portal);
+        }
+
+        var ringPrefab = ResolvePrefab(null, CwslVfxPaths.GathererYankRing);
+        var ring = Spawn(ringPrefab, center, Quaternion.identity, 0f, scale * 1.05f);
+        if (ring != null)
+        {
+            ring.transform.SetParent(root.transform, false);
+            ring.transform.localPosition = Vector3.up * 0.02f;
+            ring.transform.localRotation = Quaternion.identity;
+            PrepareEffect(ring);
+        }
+
+        if (duration > 0f)
+            Object.Destroy(root, duration + 0.15f);
+        return root;
+    }
+
     public static GameObject AttachGatherSlowEnchant(Transform anchor)
     {
         if (anchor == null)
@@ -1540,11 +1606,16 @@ public static class CwslVfxSpawner
 
     public static GameObject SpawnGathererBlackHole(Vector3 center, float radius, float duration)
     {
-        var root = new GameObject("GathererBlackHoleVfx");
+        return SpawnGathererWhirlwind(center, radius, duration);
+    }
+
+    public static GameObject SpawnGathererWhirlwind(Vector3 center, float radius, float duration)
+    {
+        var root = new GameObject("GathererWhirlwindVfx");
         root.transform.position = center;
         var prefab = ResolvePrefab(
             ResolveAssets()?.gathererBlackHoleVfx ?? ResolveAssets()?.blackHoleVortexVfx,
-            CwslVfxPaths.GathererBlackHole);
+            CwslVfxPaths.GathererWhirlwind);
         var spawned = Spawn(prefab, center, Quaternion.identity, 0f, radius / 3.2f);
         if (spawned != null)
         {
@@ -1554,6 +1625,34 @@ public static class CwslVfxSpawner
 
         Object.Destroy(root, duration + 0.1f);
         return root;
+    }
+
+    public static GameObject SpawnGathererRopeAreaPulse(Vector3 center, float radius)
+    {
+        var prefab = ResolvePrefab(null, CwslVfxPaths.GatherBlackHoleRing);
+        return Spawn(prefab, center + Vector3.up * 0.08f, Quaternion.identity, 1.2f, radius / 2.4f);
+    }
+
+    public static GameObject SpawnGathererRopeLinkBurst(Vector3 center)
+    {
+        var prefab = ResolvePrefab(
+            ResolveAssets()?.gathererYankBurstVfx,
+            CwslVfxPaths.GathererYankBurst);
+        return Spawn(prefab, center + Vector3.up * 0.2f, Quaternion.identity, 1.1f, 1.2f);
+    }
+
+    public static GameObject SpawnGathererRopeConvergeBurst(Vector3 center)
+    {
+        var prefab = ResolvePrefab(null, CwslVfxPaths.BarricadeDetonateExplosion);
+        return Spawn(prefab, center + Vector3.up * 0.2f, Quaternion.identity, 1.4f, 0.75f);
+    }
+
+    public static GameObject SpawnGathererRegionSwap(Vector3 center, float radius)
+    {
+        var prefab = ResolvePrefab(
+            ResolveAssets()?.gathererSwapPortalVfx,
+            CwslVfxPaths.GathererSwapPortal);
+        return Spawn(prefab, center + Vector3.up * 0.1f, Quaternion.identity, 1.1f, radius / 2.8f);
     }
 
     public static GameObject SpawnGathererMuzzle(Vector3 position)

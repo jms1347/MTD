@@ -192,7 +192,10 @@ public class CwslLocalPlayerHud : NetworkBehaviour
     {
         var stamina = GetComponent<CwslPlayerStamina>();
         if (stamina == null)
-            stamina = gameObject.AddComponent<CwslPlayerStamina>();
+        {
+            Debug.LogWarning("[CwslLocalPlayerHud] CwslPlayerStamina가 프리팹에 없습니다. SP UI가 동기화되지 않습니다.");
+            return;
+        }
 
         CwslPlayerStaminaHud.Ensure(canvasTransform, stamina);
     }
@@ -201,7 +204,10 @@ public class CwslLocalPlayerHud : NetworkBehaviour
     {
         var cooldowns = GetComponent<CwslPlayerSkillCooldowns>();
         if (cooldowns == null)
-            cooldowns = gameObject.AddComponent<CwslPlayerSkillCooldowns>();
+        {
+            Debug.LogWarning("[CwslLocalPlayerHud] CwslPlayerSkillCooldowns가 프리팹에 없습니다. 쿨타임 UI가 동기화되지 않습니다.");
+            return;
+        }
 
         CwslPlayerSkillCooldownHud.Ensure(canvasTransform, cooldowns, playerCharacter);
     }
@@ -212,13 +218,7 @@ public class CwslLocalPlayerHud : NetworkBehaviour
             return;
 
         var entry = CwslCharacterCatalog.Get(characterId);
-        var skillDefs = CwslCharacterSkillCatalog.GetSkills(characterId);
-        hintLabel.text =
-            $"{entry.ControlHint}\n" +
-            $"스킬: {skillDefs[0].KeyHint} {skillDefs[0].DisplayName} | " +
-            $"{skillDefs[1].KeyHint} {skillDefs[1].DisplayName} | " +
-            $"{skillDefs[2].KeyHint} {skillDefs[2].DisplayName} | " +
-            $"{skillDefs[3].KeyHint} {skillDefs[3].DisplayName}";
+        hintLabel.text = $"{entry.ControlHint}\n{CwslCharacterSkillCatalog.BuildGuideText(characterId)}";
     }
 
     private void EnsureGoldPanel(Transform canvasTransform)

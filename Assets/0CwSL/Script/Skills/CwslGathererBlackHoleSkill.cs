@@ -1,17 +1,25 @@
 using System.Collections;
+using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.AI;
 
-/// <summary>링거 R — 블랙홀 장판 10초, 적을 중심으로 서서히 흡인.</summary>
+/// <summary>링거 R — 회오리. 적을 중심에서 회전·상승 후 상단에서 던짐.</summary>
 public class CwslGathererBlackHoleSkill : CwslPlayerSkillBase
 {
-    public const int BoundSlotIndex = 2;
+    public const int BoundSlotIndex = CwslCharacterSkillCatalog.SlotR;
+
+    private sealed class WhirlwindVictim
+    {
+        public Transform Transform;
+        public float StartAngle;
+        public float OrbitDistance;
+        public float BaseY;
+    }
 
     private CwslPlayerHealth playerHealth;
     private CwslPlayerStun playerStun;
     private CwslPlayerSkillCooldowns skillCooldowns;
-    private Coroutine blackHoleRoutine;
+    private Coroutine whirlwindRoutine;
 
     public override CwslSkillActivationType ActivationType => CwslSkillActivationType.Instant;
 
@@ -44,8 +52,8 @@ public class CwslGathererBlackHoleSkill : CwslPlayerSkillBase
             return false;
 
         skillCooldowns?.BeginCooldown(BoundSlotIndex);
-        if (blackHoleRoutine != null)
-            StopCoroutine(blackHoleRoutine);
+        if (whirlwindRoutine != null)
+            StopCoroutine(whirlwindRoutine);
 
         var center = worldPoint;
         if (center.sqrMagnitude < 0.01f)
@@ -53,7 +61,7 @@ public class CwslGathererBlackHoleSkill : CwslPlayerSkillBase
         center.y = 0.05f;
         center = CwslArenaUtility.ClampToPlayArea(center, 0.5f);
 
-        blackHoleRoutine = StartCoroutine(BlackHoleRoutine(center));
+        whirlwindRoutine = StartCoroutine(WhirlwindRoutine(center));
         return true;
     }
 
@@ -71,87 +79,118 @@ public class CwslGathererBlackHoleSkill : CwslPlayerSkillBase
         if (playerStun != null && playerStun.IsStunned)
             return false;
 
-        return true;
+        return whirlwindRoutine == null;
     }
 
-    private IEnumerator BlackHoleRoutine(Vector3 center)
+    private IEnumerator WhirlwindRoutine(Vector3 center)
     {
-        var duration = CwslGameConstants.GathererBlackHoleDuration;
-        var radius = CwslGameConstants.GathererBlackHoleRadius;
-        PlayBlackHoleClientRpc(center, radius, duration);
+        var radius = CwslGameConstants.GathererWhirlwindRadius;
+        var liftDuration = CwslGameConstants.GathererWhirlwindLiftSeconds;
+        var throwDuration = CwslGameConstants.GathererWhirlwindThrowSeconds;
+        var totalDuration = liftDuration + throwDuration;
+        PlayWhirlwindClientRpc(center, radius, totalDuration);
 
+        var victims = CollectVictims(center, radius);
         var elapsed = 0f;
-        while (elapsed < duration)
+        while (elapsed < liftDuration)
         {
             elapsed += Time.deltaTime;
-            PullUnitsServer(center, radius);
+            var t = Mathf.Clamp01(elapsed / liftDuration);
+            var spin = CwslGameConstants.GathererWhirlwindSpinDegreesPerSecond * elapsed;
+            UpdateVictimsLift(center, victims, spin, t);
             yield return null;
         }
 
-        blackHoleRoutine = null;
+        elapsed = 0f;
+        while (elapsed < throwDuration)
+        {
+            elapsed += Time.deltaTime;
+            var t = Mathf.Clamp01(elapsed / throwDuration);
+            UpdateVictimsThrow(center, victims, t);
+            yield return null;
+        }
+
+        whirlwindRoutine = null;
     }
 
-    private void PullUnitsServer(Vector3 center, float radius)
+    private static List<WhirlwindVictim> CollectVictims(Vector3 center, float radius)
     {
+        var results = new List<WhirlwindVictim>();
         var radiusSq = radius * radius;
-        var pullSpeed = CwslGameConstants.GathererBlackHolePullSpeed;
 
-        var monsters = CwslCombatRegistry.AliveMonsters;
-        foreach (var monster in monsters)
+        foreach (var monster in CwslCombatRegistry.AliveMonsters)
         {
             if (monster == null || !monster.IsAlive)
                 continue;
 
-            PullTransform(monster.transform, center, radiusSq, pullSpeed);
+            var target = monster.transform;
+            if (!CwslGathererSkillUtil.IsInsideFlatRadius(center, target.position, radiusSq))
+                continue;
+
+            var flat = target.position - center;
+            flat.y = 0f;
+            if (flat.sqrMagnitude < 0.05f)
+                flat = Vector3.right * 0.6f;
+
+            results.Add(new WhirlwindVictim
+            {
+                Transform = target,
+                StartAngle = Mathf.Atan2(flat.z, flat.x),
+                OrbitDistance = flat.magnitude,
+                BaseY = target.position.y,
+            });
         }
 
-        if (NetworkManager.Singleton == null)
-            return;
+        return results;
+    }
 
-        foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
+    private static void UpdateVictimsLift(
+        Vector3 center,
+        List<WhirlwindVictim> victims,
+        float spinDegrees,
+        float liftT)
+    {
+        var eased = Mathf.SmoothStep(0f, 1f, liftT);
+        var orbitScale = Mathf.Lerp(1f, 0.45f, eased);
+        var height = Mathf.Lerp(0f, CwslGameConstants.GathererWhirlwindMaxHeight, eased);
+        var spinRad = spinDegrees * Mathf.Deg2Rad;
+
+        foreach (var victim in victims)
         {
-            var playerObject = client.PlayerObject;
-            if (playerObject == null || playerObject.NetworkObjectId == NetworkObjectId)
+            if (victim.Transform == null)
                 continue;
 
-            var health = playerObject.GetComponent<CwslPlayerHealth>();
-            if (health == null || !health.IsAlive)
-                continue;
-
-            PullTransform(playerObject.transform, center, radiusSq, pullSpeed * 0.75f);
+            var dist = victim.OrbitDistance * orbitScale;
+            var angle = victim.StartAngle + spinRad;
+            var next = center + new Vector3(Mathf.Cos(angle) * dist, victim.BaseY + height, Mathf.Sin(angle) * dist);
+            CwslGathererSkillUtil.WarpTransform(victim.Transform, next);
         }
     }
 
-    private static void PullTransform(Transform target, Vector3 center, float radiusSq, float pullSpeed)
+    private static void UpdateVictimsThrow(
+        Vector3 center,
+        List<WhirlwindVictim> victims,
+        float throwT)
     {
-        var flat = center - target.position;
-        flat.y = 0f;
-        if (flat.sqrMagnitude > radiusSq || flat.sqrMagnitude < 0.25f)
-            return;
-
-        var distance = flat.magnitude;
-        var strength = Mathf.Lerp(1.4f, 0.45f, distance / Mathf.Sqrt(radiusSq));
-        var next = target.position + flat.normalized * (pullSpeed * strength * Time.deltaTime);
-        next.y = target.position.y;
-        next = CwslArenaUtility.ClampToPlayArea(next, 0.4f);
-
-        var rammer = target.GetComponent<CwslMomentumRammerSkill>();
-        if (rammer != null && rammer.IsMomentumActive)
+        var throwSpeed = CwslGameConstants.GathererWhirlwindThrowSpeed;
+        foreach (var victim in victims)
         {
-            target.position = next;
-            return;
-        }
+            if (victim.Transform == null)
+                continue;
 
-        var agent = target.GetComponent<NavMeshAgent>();
-        if (agent != null && agent.enabled && agent.isOnNavMesh)
-            agent.Warp(next);
-        else
-            target.position = next;
+            var flat = victim.Transform.position - center;
+            flat.y = 0f;
+            if (flat.sqrMagnitude < 0.05f)
+                flat = Random.insideUnitCircle.normalized;
+
+            var launchDir = (flat.normalized + Vector3.up * 1.1f).normalized;
+            var distance = throwSpeed * throwT;
+            var next = victim.Transform.position + launchDir * distance;
+            CwslGathererSkillUtil.WarpTransform(victim.Transform, next);
+        }
     }
 
     [ClientRpc]
-    private void PlayBlackHoleClientRpc(Vector3 center, float radius, float duration)
-    {
-        CwslVfxSpawner.SpawnGathererBlackHole(center, radius, duration);
-    }
+    private void PlayWhirlwindClientRpc(Vector3 center, float radius, float duration) =>
+        CwslVfxSpawner.SpawnGathererWhirlwind(center, radius, duration);
 }

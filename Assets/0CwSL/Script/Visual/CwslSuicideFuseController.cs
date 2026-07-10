@@ -73,4 +73,4 @@ public class CwslSuicideFuseController : NetworkBehaviour
         return monsterBase.MonsterType == CwslMonsterType.StickySuicide;
     }
 }
-
+

@@ -56,10 +56,7 @@ public class CwslMonsterManager : MonoBehaviour
     public float EnemyBaseMaxHealth => enemyBaseMaxHealth;
     public float BaseSpawnIntervalSeconds => baseSpawnIntervalSeconds;
     public int MaxBases => maxBases;
-    public float SpawnIntervalPerBase => spawnIntervalPerBase;
-    public int MaxAliveMonsters => maxAliveMonsters;
     public float SpawnWarningSeconds => spawnWarningSeconds;
-    public float DamageIncreasePerMinute => damageIncreasePerMinute;
     public bool SpawnMidBossEachMinute => spawnMidBossEachMinute;
     public bool SpawnDefenseBossEachMinute => spawnDefenseBossEachMinute;
     public float NexusVariantHealthMultiplier => nexusVariantHealthMultiplier;
@@ -78,6 +75,34 @@ public class CwslMonsterManager : MonoBehaviour
 
     public float GlobalDamageMultiplier { get; private set; } = 1f;
     public int ElapsedMinute { get; private set; }
+    public int ActivePlayerCount { get; private set; } = 4;
+    public CwslPlayerCountBalance.Profile ActiveBalanceProfile { get; private set; }
+
+    private float activeSpawnIntervalPerBase;
+    private int activeMaxAliveMonsters;
+    private float activeDamageIncreasePerMinute;
+    private float activeMonsterDamageMultiplier = 1f;
+    private float activeInitialBaseCountMultiplier = 1f;
+
+    public float SpawnIntervalPerBase =>
+        activeSpawnIntervalPerBase > 0f ? activeSpawnIntervalPerBase : spawnIntervalPerBase;
+
+    public int MaxAliveMonsters =>
+        activeMaxAliveMonsters > 0 ? activeMaxAliveMonsters : maxAliveMonsters;
+
+    public float DamageIncreasePerMinute =>
+        activeDamageIncreasePerMinute > 0f ? activeDamageIncreasePerMinute : damageIncreasePerMinute;
+
+    public int GetScaledInitialBaseCountMin()
+    {
+        return Mathf.Max(1, Mathf.RoundToInt(initialBaseCountMin * activeInitialBaseCountMultiplier));
+    }
+
+    public int GetScaledInitialBaseCountMax()
+    {
+        var min = GetScaledInitialBaseCountMin();
+        return Mathf.Max(min, Mathf.RoundToInt(initialBaseCountMax * activeInitialBaseCountMultiplier));
+    }
 
     private void Awake()
     {
@@ -102,14 +127,31 @@ public class CwslMonsterManager : MonoBehaviour
         ElapsedMinute = 0;
     }
 
+    public void ConfigureForPlayerCount(int playerCount)
+    {
+        ActivePlayerCount = Mathf.Clamp(playerCount, 2, 7);
+        ActiveBalanceProfile = CwslPlayerCountBalance.Get(ActivePlayerCount);
+
+        activeSpawnIntervalPerBase = spawnIntervalPerBase * ActiveBalanceProfile.SpawnIntervalMultiplier;
+        activeMaxAliveMonsters = Mathf.Max(
+            24,
+            Mathf.RoundToInt(maxAliveMonsters * ActiveBalanceProfile.MaxAliveMultiplier));
+        activeDamageIncreasePerMinute = damageIncreasePerMinute * ActiveBalanceProfile.MinuteEscalationMultiplier;
+        activeMonsterDamageMultiplier = ActiveBalanceProfile.MonsterDamageMultiplier;
+        activeInitialBaseCountMultiplier = ActiveBalanceProfile.InitialBaseCountMultiplier;
+    }
+
     public void ApplyMinuteEscalation()
     {
         ElapsedMinute++;
-        GlobalDamageMultiplier *= 1f + damageIncreasePerMinute;
+        GlobalDamageMultiplier *= 1f + DamageIncreasePerMinute;
     }
 
     public float GetScaledDamage(float baseDamage, float localMultiplier = 1f)
     {
-        return baseDamage * GlobalDamageMultiplier * Mathf.Max(0.01f, localMultiplier);
+        return baseDamage
+               * GlobalDamageMultiplier
+               * activeMonsterDamageMultiplier
+               * Mathf.Max(0.01f, localMultiplier);
     }
 }

@@ -18,6 +18,7 @@ public class CwslPlayerInput : NetworkBehaviour
     private bool groundTargeting;
     private bool rammerRopeTargeting;
     private bool rammerRopeCancelLatch;
+    private bool gathererSwapTargeting;
     private bool attackMovePending;
     private bool barricadeWallDragging;
     private Vector3 barricadeWallDragStart;
@@ -26,6 +27,8 @@ public class CwslPlayerInput : NetworkBehaviour
     private bool hasLastGroundTargetPoint;
     private Vector3 lastRammerRopeTargetPoint;
     private bool hasLastRammerRopeTargetPoint;
+    private Vector3 lastGathererSwapTargetPoint;
+    private bool hasLastGathererSwapTargetPoint;
     private const float RammerRopePreviewRadiusScale = 1.15f;
 
     public override void OnNetworkSpawn()
@@ -62,11 +65,14 @@ public class CwslPlayerInput : NetworkBehaviour
         groundTargeting = false;
         rammerRopeTargeting = false;
         rammerRopeCancelLatch = false;
+        gathererSwapTargeting = false;
         attackMovePending = false;
         barricadeWallDragging = false;
         hasLastGroundTargetPoint = false;
         hasLastRammerRopeTargetPoint = false;
+        hasLastGathererSwapTargetPoint = false;
         CwslRammerRopeTargetMarker.Hide();
+        CwslGathererSwapRegionMarker.Hide();
         CwslGroundTargetMarker.Hide();
     }
 
@@ -97,6 +103,7 @@ public class CwslPlayerInput : NetworkBehaviour
         {
             CancelGroundTargeting();
             CancelRammerRopeTargeting();
+            CancelGathererSwapTargeting();
             CancelAttackMovePending();
             return;
         }
@@ -107,6 +114,7 @@ public class CwslPlayerInput : NetworkBehaviour
             return;
 
         HandleRammerRopeHoldInput();
+        HandleGathererSwapInput();
         HandleGroundTargetPreview();
         HandleAttackMovePreview();
         HandleRammerSteerInput();
@@ -132,13 +140,13 @@ public class CwslPlayerInput : NetworkBehaviour
                 ? transform.position + moveDirection * 5f
                 : transform.position + transform.forward * 5f;
 
-            UseSkillSlotServerRpc(3, dashPoint);
+            UseSkillSlotServerRpc(CwslCharacterSkillCatalog.SlotW, dashPoint);
             return;
         }
 
         if (Input.GetKeyDown(KeyCode.W) && characterId == CwslCharacterId.MissileTank)
         {
-            UseSkillSlotServerRpc(3);
+            UseSkillSlotServerRpc(CwslCharacterSkillCatalog.SlotW);
             return;
         }
 
@@ -148,13 +156,12 @@ public class CwslPlayerInput : NetworkBehaviour
             if (playerCamera != null && CwslMouseGround.TryGetGroundPoint(playerCamera, out var point, out _))
                 lightningPoint = point;
 
-            UseSkillSlotServerRpc(3, lightningPoint);
+            UseSkillSlotServerRpc(CwslCharacterSkillCatalog.SlotW, lightningPoint);
             return;
         }
 
         if (Input.GetKeyDown(KeyCode.W) &&
             (characterId == CwslCharacterId.MomentumRammer ||
-             characterId == CwslCharacterId.CrowdGatherer ||
              characterId == CwslCharacterId.Barricade ||
              characterId == CwslCharacterId.Healer))
         {
@@ -162,20 +169,35 @@ public class CwslPlayerInput : NetworkBehaviour
             if (playerCamera != null && CwslMouseGround.TryGetGroundPoint(playerCamera, out var point, out _))
                 skillPoint = point;
 
-            UseSkillSlotServerRpc(3, skillPoint);
+            UseSkillSlotServerRpc(CwslCharacterSkillCatalog.SlotW, skillPoint);
+            return;
+        }
+
+        if (Input.GetKeyDown(KeyCode.W) && characterId == CwslCharacterId.CrowdGatherer)
+        {
+            var skillPoint = transform.position;
+            skillPoint.y = 0f;
+            if (playerCamera != null && CwslMouseGround.TryGetSkillGroundPoint(playerCamera, out var point))
+            {
+                skillPoint = point;
+                skillPoint.y = 0f;
+            }
+
+            UseSkillSlotServerRpc(CwslCharacterSkillCatalog.SlotW, skillPoint);
             return;
         }
 
         if (Input.GetKeyDown(KeyCode.E))
         {
-            if (characterId == CwslCharacterId.MomentumRammer)
+            if (characterId == CwslCharacterId.MomentumRammer ||
+                characterId == CwslCharacterId.CrowdGatherer)
                 return;
 
             var slamPoint = transform.position + transform.forward * 5f;
             if (playerCamera != null && CwslMouseGround.TryGetGroundPoint(playerCamera, out var point, out _))
                 slamPoint = point;
 
-            UseSkillSlotServerRpc(1, slamPoint);
+            UseSkillSlotServerRpc(CwslCharacterSkillCatalog.SlotE, slamPoint);
         }
         if (Input.GetKeyDown(KeyCode.R))
         {
@@ -183,7 +205,7 @@ public class CwslPlayerInput : NetworkBehaviour
             if (playerCamera != null && CwslMouseGround.TryGetGroundPoint(playerCamera, out var point, out _))
                 skillPoint = point;
 
-            UseSkillSlotServerRpc(2, skillPoint);
+            UseSkillSlotServerRpc(CwslCharacterSkillCatalog.SlotR, skillPoint);
         }
     }
 
@@ -205,6 +227,31 @@ public class CwslPlayerInput : NetworkBehaviour
 
     private void HandleGroundTargetPreview()
     {
+        if (gathererSwapTargeting)
+        {
+            var radius = CwslGameConstants.GathererSwapRegionRadius;
+            var playerCenter = transform.position;
+            playerCenter.y = 0f;
+
+            if (CwslMouseGround.TryGetSkillGroundPoint(playerCamera, out var swapPoint))
+            {
+                lastGathererSwapTargetPoint = swapPoint;
+                hasLastGathererSwapTargetPoint = true;
+            }
+
+            if (hasLastGathererSwapTargetPoint)
+            {
+                CwslGathererSwapRegionMarker.Show(
+                    lastGathererSwapTargetPoint,
+                    playerCenter,
+                    radius);
+            }
+
+            return;
+        }
+
+        CwslGathererSwapRegionMarker.Hide();
+
         if (rammerRopeTargeting)
         {
             var radius = CwslGameConstants.RammerRopeLinkRadius * RammerRopePreviewRadiusScale;
@@ -268,6 +315,12 @@ public class CwslPlayerInput : NetworkBehaviour
             return;
         }
 
+        if (gathererSwapTargeting)
+        {
+            CancelGathererSwapTargeting();
+            return;
+        }
+
         if (playerCharacter != null && playerCharacter.CharacterId == CwslCharacterId.MomentumRammer)
             return;
 
@@ -299,6 +352,13 @@ public class CwslPlayerInput : NetworkBehaviour
         {
             if (Input.GetMouseButtonDown(1))
                 CancelRammerRopeTargeting(latchUntilERelease: true);
+            return;
+        }
+
+        if (gathererSwapTargeting)
+        {
+            if (Input.GetMouseButtonDown(1))
+                CancelGathererSwapTargeting();
             return;
         }
 
@@ -350,8 +410,25 @@ public class CwslPlayerInput : NetworkBehaviour
 
             if (hasLastRammerRopeTargetPoint)
             {
-                UseSkillSlotServerRpc(1, lastRammerRopeTargetPoint);
+                UseSkillSlotServerRpc(CwslCharacterSkillCatalog.SlotE, lastRammerRopeTargetPoint);
                 CancelRammerRopeTargeting();
+            }
+
+            return;
+        }
+
+        if (gathererSwapTargeting)
+        {
+            if (CwslMouseGround.TryGetSkillGroundPoint(playerCamera, out var swapPoint))
+            {
+                lastGathererSwapTargetPoint = swapPoint;
+                hasLastGathererSwapTargetPoint = true;
+            }
+
+            if (hasLastGathererSwapTargetPoint)
+            {
+                UseSkillSlotServerRpc(CwslCharacterSkillCatalog.SlotE, lastGathererSwapTargetPoint);
+                CancelGathererSwapTargeting();
             }
 
             return;
@@ -555,6 +632,7 @@ public class CwslPlayerInput : NetworkBehaviour
             var gatherKeyHeld = Input.GetKey(KeyCode.Q) || Input.GetKey(KeyCode.Space);
             if (gatherKeyHeld)
             {
+                CancelGathererSwapTargeting();
                 if (CwslMouseGround.TryGetGroundPoint(playerCamera, out var point, out _))
                 {
                     if (!skillHeld)
@@ -569,9 +647,9 @@ public class CwslPlayerInput : NetworkBehaviour
 
                     if (crowdGatherSkill != null && crowdGatherSkill.IsCharging)
                     {
-                        var previewRadius = crowdGatherSkill.ChargeRadius;
-                        var atMax = crowdGatherSkill.IsAtMaxCharge;
-                        CwslGatherChargeVisual.Sync(point, previewRadius, atMax);
+                        CwslGatherChargeVisual.SyncBlackHoleZone(
+                            point,
+                            crowdGatherSkill.ChargeRadius);
                     }
                 }
             }
@@ -738,6 +816,67 @@ public class CwslPlayerInput : NetworkBehaviour
                 CwslRammerRopeTargetMarker.Show(lastRammerRopeTargetPoint, radius);
             }
         }
+    }
+
+    private void HandleGathererSwapInput()
+    {
+        if (IsLocalSkillSilenced())
+            return;
+
+        var characterId = playerCharacter != null ? playerCharacter.CharacterId : CwslCharacterId.Tank;
+        if (characterId != CwslCharacterId.CrowdGatherer)
+            return;
+
+        if (Input.GetKeyDown(KeyCode.Escape) && gathererSwapTargeting)
+        {
+            CancelGathererSwapTargeting();
+            return;
+        }
+
+        if (!Input.GetKeyDown(KeyCode.E))
+            return;
+
+        if (!gathererSwapTargeting)
+        {
+            CancelGroundTargeting();
+            CancelAttackMovePending();
+            CancelRammerRopeTargeting();
+            gathererSwapTargeting = true;
+            var radius = CwslGameConstants.GathererSwapRegionRadius;
+            var playerCenter = transform.position;
+            playerCenter.y = 0f;
+
+            if (CwslMouseGround.TryGetSkillGroundPoint(playerCamera, out var swapPoint))
+            {
+                lastGathererSwapTargetPoint = swapPoint;
+                hasLastGathererSwapTargetPoint = true;
+            }
+            else
+            {
+                lastGathererSwapTargetPoint = transform.position + transform.forward * 4f;
+                lastGathererSwapTargetPoint.y = 0f;
+                hasLastGathererSwapTargetPoint = true;
+            }
+
+            CwslGathererSwapRegionMarker.Show(
+                lastGathererSwapTargetPoint,
+                playerCenter,
+                radius);
+            return;
+        }
+
+        if (hasLastGathererSwapTargetPoint)
+        {
+            UseSkillSlotServerRpc(CwslCharacterSkillCatalog.SlotE, lastGathererSwapTargetPoint);
+            CancelGathererSwapTargeting();
+        }
+    }
+
+    private void CancelGathererSwapTargeting()
+    {
+        gathererSwapTargeting = false;
+        hasLastGathererSwapTargetPoint = false;
+        CwslGathererSwapRegionMarker.Hide();
     }
 
     private void CancelRammerRopeTargeting(bool latchUntilERelease = false)

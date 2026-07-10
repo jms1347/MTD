@@ -64,9 +64,13 @@ public class CwslDefenseStartPadVisual : MonoBehaviour
 
         if (controller.MatchPhase == CwslDefenseMatchPhase.Active)
         {
-            gameObject.SetActive(false);
+            if (padRenderer != null)
+                padRenderer.enabled = false;
             return;
         }
+
+        if (padRenderer != null && !padRenderer.enabled)
+            padRenderer.enabled = true;
 
         if (!gameObject.activeSelf)
             gameObject.SetActive(true);
