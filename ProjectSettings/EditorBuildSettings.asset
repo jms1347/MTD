@@ -20,6 +20,9 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Game/0Scene/TestScene.unity
     guid: b95bad93c45157440b7055bbd75e42db
+  - enabled: 0
+    path: Assets/STLL/Scenes/StllGameScene.unity
+    guid: 6b53bc9a0a5481341b0d67d930f0f183
   m_configObjects:
     com.unity.addressableassets: {fileID: 11400000, guid: 73047381a300fc940ba63b231b182eee, type: 2}
   m_UseUCBPForAssetBundles: 0
