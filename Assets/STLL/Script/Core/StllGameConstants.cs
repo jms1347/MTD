@@ -17,4 +17,6 @@ public static class StllGameConstants
     public const float CameraFieldOfView = 58f;
     public const float CameraFollowSmoothTime = 0.36f;
     public const float CameraLeadDistance = 3.5f;
+
+    public const string HorseGallopClipPath = "Assets/Game/0Sound/horse-galloping.mp3";
 }

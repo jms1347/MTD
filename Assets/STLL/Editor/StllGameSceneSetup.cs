@@ -20,10 +20,13 @@ public static class StllGameSceneSetup
         EnsureFolders();
         var networkPrefabs = EnsureNetworkPrefabsList();
         var assets = EnsureGameAssets();
+        var gallopClip = AssetDatabase.LoadAssetAtPath<AudioClip>(StllGameConstants.HorseGallopClipPath);
+        if (gallopClip != null)
+            assets.horseGallopSound = gallopClip;
 
         var minionPrefab = BuildMinionPrefab();
         var enemyPrefab = BuildEnemyGruntPrefab();
-        var playerPrefab = BuildPlayerPrefab(assets, minionPrefab);
+        var playerPrefab = BuildPlayerPrefab(assets, minionPrefab, gallopClip);
 
         assets.playerPrefab = playerPrefab;
         assets.minionPrefab = minionPrefab;
@@ -92,7 +95,7 @@ public static class StllGameSceneSetup
         list.Add(new NetworkPrefab { Prefab = prefab });
     }
 
-    private static GameObject BuildPlayerPrefab(StllGameAssets assets, GameObject minionPrefab)
+    private static GameObject BuildPlayerPrefab(StllGameAssets assets, GameObject minionPrefab, AudioClip gallopClip)
     {
         var root = new GameObject("StllPlayer");
 
@@ -117,6 +120,13 @@ public static class StllGameSceneSetup
         root.AddComponent<StllCommanderAura>();
         root.AddComponent<StllMountedInput>();
         root.AddComponent<StllPlayerController>();
+
+        var gallopObject = new GameObject("GallopAudio");
+        gallopObject.transform.SetParent(root.transform, false);
+        gallopObject.transform.localPosition = new Vector3(0f, 0.15f, 0f);
+        var gallopAudio = gallopObject.AddComponent<StllHorseGallopAudio>();
+        if (gallopClip != null)
+            gallopAudio.AssignClip(gallopClip);
 
         var spawner = root.AddComponent<StllMinionSpawner>();
         var spawnerSerialized = new SerializedObject(spawner);
