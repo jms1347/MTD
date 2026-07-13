@@ -42,6 +42,50 @@ public class CwslTankShieldDashSkill : CwslPlayerSkillBase
         shieldSkillVisual = transform.Find("Visual")?.GetComponent<CwslTankShieldSkillVisual>();
         agent = GetComponent<NavMeshAgent>();
         skillCooldowns = GetComponent<CwslPlayerSkillCooldowns>();
+
+        if (playerHealth != null)
+            playerHealth.OnDied += HandleOwnerDied;
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        if (playerHealth != null)
+            playerHealth.OnDied -= HandleOwnerDied;
+
+        CancelSkillServer();
+    }
+
+    private void OnDisable()
+    {
+        CancelSkillServer();
+    }
+
+    private void HandleOwnerDied()
+    {
+        CancelSkillServer();
+    }
+
+    public void CancelSkillServer()
+    {
+        if (dashRoutine != null)
+        {
+            StopCoroutine(dashRoutine);
+            dashRoutine = null;
+        }
+
+        ReleaseAgentMotor();
+    }
+
+    private void ReleaseAgentMotor()
+    {
+        if (agent == null || !agent.enabled)
+            return;
+
+        agent.updatePosition = true;
+        agent.updateRotation = true;
+        if (agent.isOnNavMesh)
+            agent.Warp(transform.position);
+        agent.isStopped = false;
     }
 
     public override bool CanUseSkillSlotServer(ulong senderClientId, int slotIndex, Vector3 worldPoint)
@@ -119,55 +163,52 @@ public class CwslTankShieldDashSkill : CwslPlayerSkillBase
 
     private IEnumerator DashRoutine(Vector3 direction)
     {
-        movement?.StopMovement();
-        if (agent != null && agent.enabled)
+        try
         {
-            agent.isStopped = true;
-            agent.ResetPath();
-            agent.updatePosition = false;
-            agent.updateRotation = false;
-        }
+            movement?.StopMovement();
+            if (agent != null && agent.enabled)
+            {
+                agent.isStopped = true;
+                agent.ResetPath();
+                agent.updatePosition = false;
+                agent.updateRotation = false;
+            }
 
-        shieldSkillVisual?.ResetShieldPoseImmediate();
-        transform.rotation = Quaternion.LookRotation(direction, Vector3.up);
-        var empowered = fortifySkill != null && fortifySkill.IsShieldActive;
-        PlayDashClientRpc(direction, empowered);
-        var notifiedMonsters = new HashSet<int>(16);
-
-        var duration = CwslGameConstants.TankShieldDashDuration;
-        var distance = CwslGameConstants.TankShieldDashDistance;
-        var origin = transform.position;
-        var bodyRadius = GetComponent<CwslPlayerBodyCollider>()?.Radius
-            ?? CwslGameConstants.PlayerBodyColliderRadiusDefault;
-        var elapsed = 0f;
-
-        while (elapsed < duration)
-        {
-            elapsed += Time.deltaTime;
-            var t = Mathf.Clamp01(elapsed / duration);
-            var target = origin + direction * (distance * t);
-            var next = CwslArenaUtility.ClampToPlayArea(target, bodyRadius);
+            shieldSkillVisual?.ResetShieldPoseImmediate();
             transform.rotation = Quaternion.LookRotation(direction, Vector3.up);
-            transform.position = next;
+            var empowered = fortifySkill != null && fortifySkill.IsShieldActive;
+            PlayDashClientRpc(direction, empowered);
+            var notifiedMonsters = new HashSet<int>(16);
 
+            var duration = CwslGameConstants.TankShieldDashDuration;
+            var distance = CwslGameConstants.TankShieldDashDistance;
+            var origin = transform.position;
+            var bodyRadius = GetComponent<CwslPlayerBodyCollider>()?.Radius
+                ?? CwslGameConstants.PlayerBodyColliderRadiusDefault;
+            var elapsed = 0f;
+
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                var t = Mathf.Clamp01(elapsed / duration);
+                var target = origin + direction * (distance * t);
+                var next = CwslArenaUtility.ClampToPlayArea(target, bodyRadius);
+                transform.rotation = Quaternion.LookRotation(direction, Vector3.up);
+                transform.position = next;
+
+                ApplyDashPushServer(direction, empowered, notifiedMonsters);
+                yield return null;
+            }
+
+            var finalPos = CwslArenaUtility.ClampToPlayArea(origin + direction * distance, bodyRadius);
+            transform.position = finalPos;
             ApplyDashPushServer(direction, empowered, notifiedMonsters);
-            yield return null;
         }
-
-        var finalPos = CwslArenaUtility.ClampToPlayArea(origin + direction * distance, bodyRadius);
-        transform.position = finalPos;
-        ApplyDashPushServer(direction, empowered, notifiedMonsters);
-
-        if (agent != null && agent.enabled)
+        finally
         {
-            agent.updatePosition = true;
-            agent.updateRotation = true;
-            if (agent.isOnNavMesh)
-                agent.Warp(transform.position);
-            agent.isStopped = false;
+            ReleaseAgentMotor();
+            dashRoutine = null;
         }
-
-        dashRoutine = null;
     }
 
     private void ApplyDashPushServer(Vector3 dashDirection, bool empowered, HashSet<int> notifiedMonsters)

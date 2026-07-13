@@ -2,7 +2,7 @@ using System.Collections;
 using Unity.Netcode;
 using UnityEngine;
 
-/// <summary>Î∞©Ìå® ?±Ïª§ ?âÌ? ??3Ï¥?Ïø? ?†Îîú ??Î∞©Ìå® Í∞ïÌ?. Q Î∞©Ìå® Í∞ïÌôî ??3Î∞∞¬∑Í¥ë??</summary>
+/// <summary>?? ?ù? ?ùù? ??3ù?ù? ?ù? ???? ?ù?. Q ?? ?? ??3?∑???</summary>
 public class CwslTankShieldAttack : NetworkBehaviour
 {
     private const float WindupSeconds = 0.32f;
@@ -24,6 +24,38 @@ public class CwslTankShieldAttack : NetworkBehaviour
         dashSkill = GetComponent<CwslTankShieldDashSkill>();
         slamSkill = GetComponent<CwslTankShieldSlamSkill>();
         whirlwindSkill = GetComponent<CwslTankShieldWhirlwindSkill>();
+
+        var playerHealth = GetComponent<CwslPlayerHealth>();
+        if (playerHealth != null)
+            playerHealth.OnDied += HandleOwnerDied;
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        var playerHealth = GetComponent<CwslPlayerHealth>();
+        if (playerHealth != null)
+            playerHealth.OnDied -= HandleOwnerDied;
+
+        CancelSkillServer();
+    }
+
+    private void OnDisable()
+    {
+        CancelSkillServer();
+    }
+
+    private void HandleOwnerDied()
+    {
+        CancelSkillServer();
+    }
+
+    public void CancelSkillServer()
+    {
+        if (bashRoutine != null)
+        {
+            StopCoroutine(bashRoutine);
+            bashRoutine = null;
+        }
     }
 
     public bool TryPerformAttackServer(
@@ -71,32 +103,38 @@ public class CwslTankShieldAttack : NetworkBehaviour
         float attackPower,
         Vector3 hitPoint)
     {
-        nextAttackTime = Time.time + CwslCharacterStatCatalog.GetAttackCooldown(CwslCharacterId.Tank);
-        PlayShieldWindupClientRpc(hitPoint);
-
-        yield return new WaitForSeconds(WindupSeconds);
-
-        if (IsEmpoweredShieldAttack())
+        try
         {
-            var empoweredDamage = CwslCombatMath.ResolveSkillDamage(
-                CwslCharacterId.Tank,
-                CwslGameConstants.TankEmpoweredBashSkillCoeff);
-            ApplyAreaDamageServer(empoweredDamage, ResolveEmpoweredHitCenter());
-        }
-        else if (targetObject != null && targetObject.IsSpawned &&
-                 CwslPlayerShieldBashVisual.IsInStrikeRange(transform, targetObject))
-        {
-            var basicDamage = CwslCombatMath.ResolveSkillDamage(
-                CwslCharacterId.Tank,
-                CwslGameConstants.BasicAttackSkillCoeff);
-            if (monsterHealth != null && monsterHealth.IsAlive)
-                monsterHealth.DamageFromPlayer(OwnerClientId, basicDamage);
-            else if (enemyBase != null && enemyBase.IsAlive)
-                enemyBase.DamageFromPlayer(OwnerClientId, basicDamage);
-        }
+            nextAttackTime = Time.time + CwslCharacterStatCatalog.GetAttackCooldown(CwslCharacterId.Tank);
+            PlayShieldWindupClientRpc(hitPoint);
 
-        PlayShieldImpactClientRpc(hitPoint, IsEmpoweredShieldAttack());
-        bashRoutine = null;
+            yield return new WaitForSeconds(WindupSeconds);
+
+            if (IsEmpoweredShieldAttack())
+            {
+                var empoweredDamage = CwslCombatMath.ResolveSkillDamage(
+                    CwslCharacterId.Tank,
+                    CwslGameConstants.TankEmpoweredBashSkillCoeff);
+                ApplyAreaDamageServer(empoweredDamage, ResolveEmpoweredHitCenter());
+            }
+            else if (targetObject != null && targetObject.IsSpawned &&
+                     CwslPlayerShieldBashVisual.IsInStrikeRange(transform, targetObject))
+            {
+                var basicDamage = CwslCombatMath.ResolveSkillDamage(
+                    CwslCharacterId.Tank,
+                    CwslGameConstants.BasicAttackSkillCoeff);
+                if (monsterHealth != null && monsterHealth.IsAlive)
+                    monsterHealth.DamageFromPlayer(OwnerClientId, basicDamage);
+                else if (enemyBase != null && enemyBase.IsAlive)
+                    enemyBase.DamageFromPlayer(OwnerClientId, basicDamage);
+            }
+
+            PlayShieldImpactClientRpc(hitPoint, IsEmpoweredShieldAttack());
+        }
+        finally
+        {
+            bashRoutine = null;
+        }
     }
 
     private bool IsEmpoweredShieldAttack()

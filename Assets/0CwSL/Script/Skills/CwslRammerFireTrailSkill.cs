@@ -28,6 +28,38 @@ public class CwslRammerFireTrailSkill : CwslPlayerSkillBase
         skillCooldowns = GetComponent<CwslPlayerSkillCooldowns>();
         rammerSkill = GetComponent<CwslMomentumRammerSkill>();
         ropeSkill = GetComponent<CwslRammerRopeSkill>();
+
+        if (playerHealth != null)
+            playerHealth.OnDied += HandleOwnerDied;
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        if (playerHealth != null)
+            playerHealth.OnDied -= HandleOwnerDied;
+
+        CancelSkillServer();
+    }
+
+    private void OnDisable()
+    {
+        CancelSkillServer();
+    }
+
+    private void HandleOwnerDied()
+    {
+        CancelSkillServer();
+    }
+
+    public void CancelSkillServer()
+    {
+        if (trailRoutine != null)
+        {
+            StopCoroutine(trailRoutine);
+            trailRoutine = null;
+        }
+
+        StopTrailVisualClientRpc();
     }
 
     public override bool CanUseSkillSlotServer(ulong senderClientId, int slotIndex, Vector3 worldPoint) =>
@@ -83,35 +115,40 @@ public class CwslRammerFireTrailSkill : CwslPlayerSkillBase
 
     private IEnumerator FireTrailRoutine()
     {
-        var duration = CwslGameConstants.RammerFireTrailDuration;
-        var interval = CwslGameConstants.RammerFireTrailDropInterval;
-        var elapsed = 0f;
-        var nextDrop = 0f;
-        var lastDrop = transform.position;
-
-        while (elapsed < duration)
+        try
         {
-            if (playerHealth != null && !playerHealth.IsAlive)
-                break;
+            var duration = CwslGameConstants.RammerFireTrailDuration;
+            var interval = CwslGameConstants.RammerFireTrailDropInterval;
+            var elapsed = 0f;
+            var nextDrop = 0f;
+            var lastDrop = transform.position;
 
-            elapsed += Time.deltaTime;
-            if (Time.time >= nextDrop)
+            while (elapsed < duration)
             {
-                nextDrop = Time.time + interval;
-                var dropPos = transform.position;
-                dropPos.y = 0.05f;
-                if ((dropPos - lastDrop).sqrMagnitude > 0.2f * 0.2f || elapsed < 0.05f)
+                if (playerHealth != null && !playerHealth.IsAlive)
+                    break;
+
+                elapsed += Time.deltaTime;
+                if (Time.time >= nextDrop)
                 {
-                    lastDrop = dropPos;
-                    SpawnDenseTrailDropsServer(dropPos);
+                    nextDrop = Time.time + interval;
+                    var dropPos = transform.position;
+                    dropPos.y = 0.05f;
+                    if ((dropPos - lastDrop).sqrMagnitude > 0.2f * 0.2f || elapsed < 0.05f)
+                    {
+                        lastDrop = dropPos;
+                        SpawnDenseTrailDropsServer(dropPos);
+                    }
                 }
+
+                yield return null;
             }
-
-            yield return null;
         }
-
-        StopTrailVisualClientRpc();
-        trailRoutine = null;
+        finally
+        {
+            StopTrailVisualClientRpc();
+            trailRoutine = null;
+        }
     }
 
     [ClientRpc]

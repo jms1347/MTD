@@ -24,6 +24,38 @@ public class CwslBarricadeRepairSkill : CwslPlayerSkillBase
         playerStun = GetComponent<CwslPlayerStun>();
         skillCooldowns = GetComponent<CwslPlayerSkillCooldowns>();
         movement = GetComponent<CwslPlayerMovement>();
+
+        if (playerHealth != null)
+            playerHealth.OnDied += HandleOwnerDied;
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        if (playerHealth != null)
+            playerHealth.OnDied -= HandleOwnerDied;
+
+        CancelSkillServer();
+    }
+
+    private void OnDisable()
+    {
+        CancelSkillServer();
+    }
+
+    private void HandleOwnerDied()
+    {
+        CancelSkillServer();
+    }
+
+    public void CancelSkillServer()
+    {
+        if (repairRoutine != null)
+        {
+            StopCoroutine(repairRoutine);
+            repairRoutine = null;
+        }
+
+        movement?.StopMovement();
     }
 
     public override bool CanUseSkillSlotServer(ulong senderClientId, int slotIndex, Vector3 worldPoint) =>
@@ -65,28 +97,33 @@ public class CwslBarricadeRepairSkill : CwslPlayerSkillBase
 
     private IEnumerator RepairRoutine(CwslNexus nexus)
     {
-        var approach = nexus.GetMeleeApproachPoint(transform.position, 0.4f);
-        movement?.RequestMoveTo(approach);
-
-        var timeout = 4f;
-        while (timeout > 0f)
+        try
         {
-            timeout -= Time.deltaTime;
-            var flat = transform.position - nexus.transform.position;
-            flat.y = 0f;
-            if (flat.magnitude <= CwslGameConstants.BarricadeRepairRange)
-                break;
-            yield return null;
+            var approach = nexus.GetMeleeApproachPoint(transform.position, 0.4f);
+            movement?.RequestMoveTo(approach);
+
+            var timeout = 4f;
+            while (timeout > 0f)
+            {
+                timeout -= Time.deltaTime;
+                var flat = transform.position - nexus.transform.position;
+                flat.y = 0f;
+                if (flat.magnitude <= CwslGameConstants.BarricadeRepairRange)
+                    break;
+                yield return null;
+            }
+
+            movement?.StopMovement();
+            PlayRepairClientRpc(nexus.transform.position);
+            yield return new WaitForSeconds(CwslGameConstants.BarricadeRepairDuration);
+
+            if (nexus != null && nexus.IsAlive)
+                nexus.HealServer(CwslGameConstants.BarricadeRepairAmount);
         }
-
-        movement?.StopMovement();
-        PlayRepairClientRpc(nexus.transform.position);
-        yield return new WaitForSeconds(CwslGameConstants.BarricadeRepairDuration);
-
-        if (nexus != null && nexus.IsAlive)
-            nexus.HealServer(CwslGameConstants.BarricadeRepairAmount);
-
-        repairRoutine = null;
+        finally
+        {
+            repairRoutine = null;
+        }
     }
 
     [ClientRpc]

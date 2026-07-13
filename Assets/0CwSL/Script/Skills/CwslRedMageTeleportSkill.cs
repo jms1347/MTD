@@ -29,6 +29,50 @@ public class CwslRedMageTeleportSkill : CwslPlayerSkillBase
         playerStun = GetComponent<CwslPlayerStun>();
         skillCooldowns = GetComponent<CwslPlayerSkillCooldowns>();
         agent = GetComponent<NavMeshAgent>();
+
+        if (playerHealth != null)
+            playerHealth.OnDied += HandleOwnerDied;
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        if (playerHealth != null)
+            playerHealth.OnDied -= HandleOwnerDied;
+
+        CancelSkillServer();
+    }
+
+    private void OnDisable()
+    {
+        CancelSkillServer();
+    }
+
+    private void HandleOwnerDied()
+    {
+        CancelSkillServer();
+    }
+
+    public void CancelSkillServer()
+    {
+        if (teleportRoutine != null)
+        {
+            StopCoroutine(teleportRoutine);
+            teleportRoutine = null;
+        }
+
+        ReleaseAgentMotor();
+    }
+
+    private void ReleaseAgentMotor()
+    {
+        if (agent == null || !agent.enabled)
+            return;
+
+        agent.updatePosition = true;
+        agent.updateRotation = true;
+        if (agent.isOnNavMesh)
+            agent.Warp(transform.position);
+        agent.isStopped = false;
     }
 
     public override bool CanUseSkillSlotServer(ulong senderClientId, int slotIndex, Vector3 worldPoint) =>
@@ -79,41 +123,39 @@ public class CwslRedMageTeleportSkill : CwslPlayerSkillBase
 
     private IEnumerator TeleportRoutine(Vector3 worldPoint)
     {
-        movement?.StopMovement();
-
-        if (agent != null && agent.enabled)
+        try
         {
-            agent.isStopped = true;
-            agent.ResetPath();
-            agent.updatePosition = false;
+            movement?.StopMovement();
+
+            if (agent != null && agent.enabled)
+            {
+                agent.isStopped = true;
+                agent.ResetPath();
+                agent.updatePosition = false;
+            }
+
+            var departPosition = transform.position;
+            var arrivePosition = ResolveTeleportPosition(worldPoint);
+            var faceDirection = arrivePosition - departPosition;
+            faceDirection.y = 0f;
+
+            PlayDepartPortalClientRpc(departPosition);
+            PlayArrivePortalClientRpc(arrivePosition);
+
+            yield return new WaitForSeconds(CwslGameConstants.RedMageTeleportArrivalDelay);
+
+            if (faceDirection.sqrMagnitude > 0.0001f)
+                transform.rotation = Quaternion.LookRotation(faceDirection.normalized, Vector3.up);
+
+            var bodyRadius = GetComponent<CwslPlayerBodyCollider>()?.Radius
+                ?? CwslGameConstants.PlayerBodyColliderRadiusDefault;
+            transform.position = CwslArenaUtility.ClampToPlayArea(arrivePosition, bodyRadius);
         }
-
-        var departPosition = transform.position;
-        var arrivePosition = ResolveTeleportPosition(worldPoint);
-        var faceDirection = arrivePosition - departPosition;
-        faceDirection.y = 0f;
-
-        PlayDepartPortalClientRpc(departPosition);
-        PlayArrivePortalClientRpc(arrivePosition);
-
-        yield return new WaitForSeconds(CwslGameConstants.RedMageTeleportArrivalDelay);
-
-        if (faceDirection.sqrMagnitude > 0.0001f)
-            transform.rotation = Quaternion.LookRotation(faceDirection.normalized, Vector3.up);
-
-        var bodyRadius = GetComponent<CwslPlayerBodyCollider>()?.Radius
-            ?? CwslGameConstants.PlayerBodyColliderRadiusDefault;
-        transform.position = CwslArenaUtility.ClampToPlayArea(arrivePosition, bodyRadius);
-
-        if (agent != null && agent.enabled)
+        finally
         {
-            agent.updatePosition = true;
-            if (agent.isOnNavMesh)
-                agent.Warp(transform.position);
-            agent.isStopped = false;
+            ReleaseAgentMotor();
+            teleportRoutine = null;
         }
-
-        teleportRoutine = null;
     }
 
     private Vector3 ResolveTeleportPosition(Vector3 worldPoint)

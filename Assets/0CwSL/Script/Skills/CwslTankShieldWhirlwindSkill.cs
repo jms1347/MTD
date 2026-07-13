@@ -41,12 +41,38 @@ public class CwslTankShieldWhirlwindSkill : CwslPlayerSkillBase
         slamSkill = GetComponent<CwslTankShieldSlamSkill>();
         agent = GetComponent<NavMeshAgent>();
         skillCooldowns = GetComponent<CwslPlayerSkillCooldowns>();
+
+        if (playerHealth != null)
+            playerHealth.OnDied += HandleOwnerDied;
     }
 
     public override void OnNetworkDespawn()
     {
-        if (movement != null)
-            movement.WhirlwindSpeedMultiplier = 1f;
+        if (playerHealth != null)
+            playerHealth.OnDied -= HandleOwnerDied;
+
+        CancelSkillServer();
+    }
+
+    private void OnDisable()
+    {
+        CancelSkillServer();
+    }
+
+    private void HandleOwnerDied()
+    {
+        CancelSkillServer();
+    }
+
+    public void CancelSkillServer()
+    {
+        if (whirlRoutine != null)
+        {
+            StopCoroutine(whirlRoutine);
+            whirlRoutine = null;
+        }
+
+        EndWhirlwindMovement();
     }
 
     public override bool CanUseSkillSlotServer(ulong senderClientId, int slotIndex, Vector3 worldPoint)
@@ -103,34 +129,40 @@ public class CwslTankShieldWhirlwindSkill : CwslPlayerSkillBase
 
     private IEnumerator WhirlwindRoutine()
     {
-        BeginWhirlwindMovement();
-
-        var empowered = CwslTankSkillEmpower.IsEmpowered(fortifySkill);
-        var duration = CwslGameConstants.TankShieldWhirlwindDuration;
-        PlayWhirlwindClientRpc(duration, empowered);
-
-        var elapsed = 0f;
-        var tickTimer = 0f;
-        var spinSpeed = CwslGameConstants.TankShieldWhirlwindSpinSpeed;
-
-        while (elapsed < duration)
+        try
         {
-            elapsed += Time.deltaTime;
-            tickTimer += Time.deltaTime;
-            transform.Rotate(0f, spinSpeed * Time.deltaTime, 0f, Space.World);
+            BeginWhirlwindMovement();
 
-            if (tickTimer >= CwslGameConstants.TankShieldWhirlwindTickInterval)
+            var empowered = CwslTankSkillEmpower.IsEmpowered(fortifySkill);
+            var duration = CwslGameConstants.TankShieldWhirlwindDuration;
+            PlayWhirlwindClientRpc(duration, empowered);
+
+            var elapsed = 0f;
+            var tickTimer = 0f;
+            var spinSpeed = CwslGameConstants.TankShieldWhirlwindSpinSpeed;
+
+            while (elapsed < duration)
             {
-                tickTimer = 0f;
-                ApplyWhirlwindTickServer(empowered);
+                elapsed += Time.deltaTime;
+                tickTimer += Time.deltaTime;
+                transform.Rotate(0f, spinSpeed * Time.deltaTime, 0f, Space.World);
+
+                if (tickTimer >= CwslGameConstants.TankShieldWhirlwindTickInterval)
+                {
+                    tickTimer = 0f;
+                    ApplyWhirlwindTickServer(empowered);
+                }
+
+                yield return null;
             }
 
-            yield return null;
+            ApplyWhirlwindTickServer(empowered);
         }
-
-        ApplyWhirlwindTickServer(empowered);
-        EndWhirlwindMovement();
-        whirlRoutine = null;
+        finally
+        {
+            EndWhirlwindMovement();
+            whirlRoutine = null;
+        }
     }
 
     private void BeginWhirlwindMovement()
@@ -163,6 +195,7 @@ public class CwslTankShieldWhirlwindSkill : CwslPlayerSkillBase
         if (agent == null || !agent.enabled)
             return;
 
+        agent.updatePosition = true;
         agent.updateRotation = true;
         if (agent.isOnNavMesh)
             agent.Warp(transform.position);

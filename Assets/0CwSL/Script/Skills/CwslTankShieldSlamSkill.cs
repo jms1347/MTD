@@ -38,6 +38,38 @@ public class CwslTankShieldSlamSkill : CwslPlayerSkillBase
         whirlwindSkill = GetComponent<CwslTankShieldWhirlwindSkill>();
         agent = GetComponent<NavMeshAgent>();
         skillCooldowns = GetComponent<CwslPlayerSkillCooldowns>();
+
+        if (playerHealth != null)
+            playerHealth.OnDied += HandleOwnerDied;
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        if (playerHealth != null)
+            playerHealth.OnDied -= HandleOwnerDied;
+
+        CancelSkillServer();
+    }
+
+    private void OnDisable()
+    {
+        CancelSkillServer();
+    }
+
+    private void HandleOwnerDied()
+    {
+        CancelSkillServer();
+    }
+
+    public void CancelSkillServer()
+    {
+        if (slamRoutine != null)
+        {
+            StopCoroutine(slamRoutine);
+            slamRoutine = null;
+        }
+
+        ReleaseAgent();
     }
 
     public override bool CanUseSkillSlotServer(ulong senderClientId, int slotIndex, Vector3 worldPoint)
@@ -113,28 +145,34 @@ public class CwslTankShieldSlamSkill : CwslPlayerSkillBase
 
     private IEnumerator SlamRoutine()
     {
-        movement?.StopMovement();
-        HoldAgent();
-        FaceKnockbackDirection();
+        try
+        {
+            movement?.StopMovement();
+            HoldAgent();
+            FaceKnockbackDirection();
 
-        var empowered = CwslTankSkillEmpower.IsEmpowered(fortifySkill);
-        PlaySlamClientRpc(empowered);
+            var empowered = CwslTankSkillEmpower.IsEmpowered(fortifySkill);
+            PlaySlamClientRpc(empowered);
 
-        yield return new WaitForSeconds(
-            CwslGameConstants.TankShieldSlamWindup + CwslGameConstants.TankShieldSlamSlamDownTime);
+            yield return new WaitForSeconds(
+                CwslGameConstants.TankShieldSlamWindup + CwslGameConstants.TankShieldSlamSlamDownTime);
 
-        var radius = CwslGameConstants.TankShieldSlamRadius
-                     * CwslTankSkillEmpower.GetRadiusMultiplier(empowered);
-        var stunDuration = CwslGameConstants.TankShieldSlamStunDuration
-                           * CwslTankSkillEmpower.GetPowerMultiplier(empowered);
+            var radius = CwslGameConstants.TankShieldSlamRadius
+                         * CwslTankSkillEmpower.GetRadiusMultiplier(empowered);
+            var stunDuration = CwslGameConstants.TankShieldSlamStunDuration
+                               * CwslTankSkillEmpower.GetPowerMultiplier(empowered);
 
-        var impactPos = transform.position;
-        impactPos.y = CwslTankShieldVfxUtil.VisualGroundY;
-        CwslSkillAudioFeedback.PlayTankShieldSlamGroundImpact(impactPos);
+            var impactPos = transform.position;
+            impactPos.y = CwslTankShieldVfxUtil.VisualGroundY;
+            CwslSkillAudioFeedback.PlayTankShieldSlamGroundImpact(impactPos);
 
-        ApplySlamEffectsServer(radius, stunDuration, empowered);
-        ReleaseAgent();
-        slamRoutine = null;
+            ApplySlamEffectsServer(radius, stunDuration, empowered);
+        }
+        finally
+        {
+            ReleaseAgent();
+            slamRoutine = null;
+        }
     }
 
     private void ApplySlamEffectsServer(float radius, float stunDuration, bool empowered)
@@ -183,6 +221,7 @@ public class CwslTankShieldSlamSkill : CwslPlayerSkillBase
         if (agent == null || !agent.enabled)
             return;
 
+        agent.updatePosition = true;
         agent.updateRotation = true;
         if (agent.isOnNavMesh)
             agent.Warp(transform.position);

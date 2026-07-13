@@ -33,6 +33,36 @@ public class CwslGathererBlackHoleSkill : CwslPlayerSkillBase
         playerHealth = GetComponent<CwslPlayerHealth>();
         playerStun = GetComponent<CwslPlayerStun>();
         skillCooldowns = GetComponent<CwslPlayerSkillCooldowns>();
+
+        if (playerHealth != null)
+            playerHealth.OnDied += HandleOwnerDied;
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        if (playerHealth != null)
+            playerHealth.OnDied -= HandleOwnerDied;
+
+        CancelSkillServer();
+    }
+
+    private void OnDisable()
+    {
+        CancelSkillServer();
+    }
+
+    private void HandleOwnerDied()
+    {
+        CancelSkillServer();
+    }
+
+    public void CancelSkillServer()
+    {
+        if (whirlwindRoutine != null)
+        {
+            StopCoroutine(whirlwindRoutine);
+            whirlwindRoutine = null;
+        }
     }
 
     public override bool CanUseSkillSlotServer(ulong senderClientId, int slotIndex, Vector3 worldPoint) =>
@@ -84,35 +114,40 @@ public class CwslGathererBlackHoleSkill : CwslPlayerSkillBase
 
     private IEnumerator WhirlwindRoutine(Vector3 center)
     {
-        var radius = CwslGameConstants.GathererWhirlwindRadius;
-        var liftDuration = CwslGameConstants.GathererWhirlwindLiftSeconds;
-        var throwDuration = CwslGameConstants.GathererWhirlwindThrowSeconds;
-        var totalDuration = liftDuration + throwDuration;
-        PlayWhirlwindClientRpc(center, radius, totalDuration);
-
-        var victims = CollectVictims(center, radius);
-        var elapsed = 0f;
-        while (elapsed < liftDuration)
+        try
         {
-            elapsed += Time.deltaTime;
-            var t = Mathf.Clamp01(elapsed / liftDuration);
-            var spin = CwslGameConstants.GathererWhirlwindSpinDegreesPerSecond * elapsed;
-            RefreshVictimStun(victims);
-            UpdateVictimsLift(center, victims, spin, t);
-            yield return null;
-        }
+            var radius = CwslGameConstants.GathererWhirlwindRadius;
+            var liftDuration = CwslGameConstants.GathererWhirlwindLiftSeconds;
+            var throwDuration = CwslGameConstants.GathererWhirlwindThrowSeconds;
+            var totalDuration = liftDuration + throwDuration;
+            PlayWhirlwindClientRpc(center, radius, totalDuration);
 
-        elapsed = 0f;
-        while (elapsed < throwDuration)
+            var victims = CollectVictims(center, radius);
+            var elapsed = 0f;
+            while (elapsed < liftDuration)
+            {
+                elapsed += Time.deltaTime;
+                var t = Mathf.Clamp01(elapsed / liftDuration);
+                var spin = CwslGameConstants.GathererWhirlwindSpinDegreesPerSecond * elapsed;
+                RefreshVictimStun(victims);
+                UpdateVictimsLift(center, victims, spin, t);
+                yield return null;
+            }
+
+            elapsed = 0f;
+            while (elapsed < throwDuration)
+            {
+                elapsed += Time.deltaTime;
+                var t = Mathf.Clamp01(elapsed / throwDuration);
+                RefreshVictimStun(victims);
+                UpdateVictimsThrow(center, victims, t);
+                yield return null;
+            }
+        }
+        finally
         {
-            elapsed += Time.deltaTime;
-            var t = Mathf.Clamp01(elapsed / throwDuration);
-            RefreshVictimStun(victims);
-            UpdateVictimsThrow(center, victims, t);
-            yield return null;
+            whirlwindRoutine = null;
         }
-
-        whirlwindRoutine = null;
     }
 
     private static List<WhirlwindVictim> CollectVictims(Vector3 center, float radius)

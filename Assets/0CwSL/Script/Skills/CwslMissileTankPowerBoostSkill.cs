@@ -29,6 +29,45 @@ public class CwslMissileTankPowerBoostSkill : CwslPlayerSkillBase
         playerHealth = GetComponent<CwslPlayerHealth>();
         playerStun = GetComponent<CwslPlayerStun>();
         smokeDashSkill = GetComponent<CwslMissileTankSmokeDashSkill>();
+
+        if (playerHealth != null)
+            playerHealth.OnDied += HandleOwnerDied;
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        if (playerHealth != null)
+            playerHealth.OnDied -= HandleOwnerDied;
+
+        CancelSkillServer();
+    }
+
+    private void OnDisable()
+    {
+        CancelSkillServer();
+
+        if (attachedGlow != null)
+        {
+            Destroy(attachedGlow);
+            attachedGlow = null;
+        }
+    }
+
+    private void HandleOwnerDied()
+    {
+        CancelSkillServer();
+    }
+
+    public void CancelSkillServer()
+    {
+        if (activeRoutine != null)
+        {
+            StopCoroutine(activeRoutine);
+            activeRoutine = null;
+        }
+
+        IsActive = false;
+        CwslMoveSpeedBuff.Ensure(this)?.ClearBuff();
     }
 
     public override bool CanUseSkillSlotServer(ulong senderClientId, int slotIndex, Vector3 worldPoint) =>
@@ -79,20 +118,25 @@ public class CwslMissileTankPowerBoostSkill : CwslPlayerSkillBase
 
     private IEnumerator ActiveRoutine()
     {
-        IsActive = true;
-        skillCooldowns?.BeginCooldown(BoundSlotIndex);
+        try
+        {
+            IsActive = true;
+            skillCooldowns?.BeginCooldown(BoundSlotIndex);
 
-        CwslMoveSpeedBuff.Ensure(this)?.ApplyBuff(
-            CwslGameConstants.MissileTankPowerBoostSpeedMultiplier,
-            CwslGameConstants.MissileTankPowerBoostDuration);
+            CwslMoveSpeedBuff.Ensure(this)?.ApplyBuff(
+                CwslGameConstants.MissileTankPowerBoostSpeedMultiplier,
+                CwslGameConstants.MissileTankPowerBoostDuration);
 
-        PlayBoostClientRpc(true);
-        yield return new WaitForSeconds(CwslGameConstants.MissileTankPowerBoostDuration);
-
-        IsActive = false;
-        CwslMoveSpeedBuff.Ensure(this)?.ClearBuff();
-        PlayBoostClientRpc(false);
-        activeRoutine = null;
+            PlayBoostClientRpc(true);
+            yield return new WaitForSeconds(CwslGameConstants.MissileTankPowerBoostDuration);
+        }
+        finally
+        {
+            IsActive = false;
+            CwslMoveSpeedBuff.Ensure(this)?.ClearBuff();
+            PlayBoostClientRpc(false);
+            activeRoutine = null;
+        }
     }
 
     [ClientRpc]
@@ -112,14 +156,5 @@ public class CwslMissileTankPowerBoostSkill : CwslPlayerSkillBase
             return;
 
         attachedGlow = CwslVfxSpawner.AttachMissileTankPowerBoostGlow(visual);
-    }
-
-    private void OnDisable()
-    {
-        if (attachedGlow != null)
-        {
-            Destroy(attachedGlow);
-            attachedGlow = null;
-        }
     }
 }

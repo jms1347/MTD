@@ -65,6 +65,46 @@ public class CwslMissileTankSkill : CwslPlayerSkillBase
         navAgent = GetComponent<NavMeshAgent>();
         ammoController = GetComponent<CwslMissileTankAmmoController>();
         powerBoostSkill = GetComponent<CwslMissileTankPowerBoostSkill>();
+
+        if (playerCharacter != null)
+            playerCharacter.OnCharacterChanged += HandleCharacterChanged;
+
+        var playerHealth = GetComponent<CwslPlayerHealth>();
+        if (playerHealth != null)
+            playerHealth.OnDied += HandleOwnerDied;
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        if (playerCharacter != null)
+            playerCharacter.OnCharacterChanged -= HandleCharacterChanged;
+
+        var playerHealth = GetComponent<CwslPlayerHealth>();
+        if (playerHealth != null)
+            playerHealth.OnDied -= HandleOwnerDied;
+
+        CancelCombatMotorServer();
+    }
+
+    private void HandleCharacterChanged(CwslCharacterId characterId)
+    {
+        if (characterId != CwslCharacterId.MissileTank)
+            CancelCombatMotorServer();
+    }
+
+    private void HandleOwnerDied()
+    {
+        CancelCombatMotorServer();
+    }
+
+    public void CancelCombatMotorServer()
+    {
+        manualCombatFacing = false;
+        lastCombatPoseActive = false;
+        lastCombatPoseMode = CwslGunCombatPoseMode.Off;
+
+        if (navAgent != null && navAgent.enabled)
+            navAgent.updateRotation = true;
     }
 
     private void Update()

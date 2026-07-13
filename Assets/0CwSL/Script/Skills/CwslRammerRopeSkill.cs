@@ -38,13 +38,37 @@ public class CwslRammerRopeSkill : CwslPlayerSkillBase
         hasLink.OnValueChanged += HandleLinkChanged;
         linkedObjectIds.OnListChanged += HandleLinkedListChanged;
         RefreshRopeVisual();
+
+        if (playerHealth != null)
+            playerHealth.OnDied += HandleOwnerDied;
     }
 
     public override void OnNetworkDespawn()
     {
         hasLink.OnValueChanged -= HandleLinkChanged;
         linkedObjectIds.OnListChanged -= HandleLinkedListChanged;
+        if (playerHealth != null)
+            playerHealth.OnDied -= HandleOwnerDied;
         ClearRopeVisual();
+        CancelSkillServer();
+    }
+
+    private void OnDisable()
+    {
+        CancelSkillServer();
+    }
+
+    private void HandleOwnerDied()
+    {
+        CancelSkillServer();
+    }
+
+    public void CancelSkillServer()
+    {
+        if (!IsServer)
+            return;
+
+        ClearLinksServer();
     }
 
     private void Update()
@@ -181,55 +205,61 @@ public class CwslRammerRopeSkill : CwslPlayerSkillBase
 
     private IEnumerator SpinLinkedTargetsRoutine()
     {
-        var elapsed = 0f;
-        var angleBase = 0f;
-
-        while (elapsed < CwslGameConstants.RammerRopeSpinDuration && HasActiveLink)
+        try
         {
-            elapsed += Time.deltaTime;
-            angleBase += CwslGameConstants.RammerRopeSpinAngularSpeed * Time.deltaTime;
-            var count = linkedObjectIds.Count;
+            var elapsed = 0f;
+            var angleBase = 0f;
 
-            for (var i = count - 1; i >= 0; i--)
+            while (elapsed < CwslGameConstants.RammerRopeSpinDuration && HasActiveLink)
             {
-                var targetId = linkedObjectIds[i];
-                if (!TryGetLinkedTransform(targetId, out var target))
+                elapsed += Time.deltaTime;
+                angleBase += CwslGameConstants.RammerRopeSpinAngularSpeed * Time.deltaTime;
+                var count = linkedObjectIds.Count;
+
+                for (var i = count - 1; i >= 0; i--)
                 {
-                    RemoveLinkedTargetAtServer(i);
-                    continue;
+                    var targetId = linkedObjectIds[i];
+                    if (!TryGetLinkedTransform(targetId, out var target))
+                    {
+                        RemoveLinkedTargetAtServer(i);
+                        continue;
+                    }
+
+                    if (!IsValidLinkedTarget(target))
+                    {
+                        LaunchIfDeadEnemyServer(target, ResolveSpinDirection(angleBase));
+                        RemoveLinkedTargetAtServer(i);
+                        continue;
+                    }
+
+                    var angle = angleBase + (360f * i / Mathf.Max(1, count));
+                    var dir = ResolveSpinDirection(angle);
+                    var radius = Mathf.Clamp(
+                        Vector3.Distance(transform.position, target.position),
+                        CwslGameConstants.RammerRopeSpinRadiusMin,
+                        CwslGameConstants.RammerRopeSpinRadiusMax);
+
+                    var before = target.position;
+                    var desired = transform.position + dir * radius;
+                    desired.y = target.position.y;
+                    WarpOrMove(target, desired);
+
+                    var movedSpeed = Vector3.Distance(before, target.position) / Mathf.Max(Time.deltaTime, 0.0001f);
+                    ApplyRopeDamageBySpeedServer(targetId, target, movedSpeed);
+                    ApplyStunToLinkedTargetServer(target);
+                    ApplySpinCollisionStunServer(target);
+                    PlayFlingFxClientRpc(target.position, dir);
                 }
 
-                if (!IsValidLinkedTarget(target))
-                {
-                    LaunchIfDeadEnemyServer(target, ResolveSpinDirection(angleBase));
-                    RemoveLinkedTargetAtServer(i);
-                    continue;
-                }
-
-                var angle = angleBase + (360f * i / Mathf.Max(1, count));
-                var dir = ResolveSpinDirection(angle);
-                var radius = Mathf.Clamp(
-                    Vector3.Distance(transform.position, target.position),
-                    CwslGameConstants.RammerRopeSpinRadiusMin,
-                    CwslGameConstants.RammerRopeSpinRadiusMax);
-
-                var before = target.position;
-                var desired = transform.position + dir * radius;
-                desired.y = target.position.y;
-                WarpOrMove(target, desired);
-
-                var movedSpeed = Vector3.Distance(before, target.position) / Mathf.Max(Time.deltaTime, 0.0001f);
-                ApplyRopeDamageBySpeedServer(targetId, target, movedSpeed);
-                ApplyStunToLinkedTargetServer(target);
-                ApplySpinCollisionStunServer(target);
-                PlayFlingFxClientRpc(target.position, dir);
+                yield return null;
             }
 
-            yield return null;
+            ClearLinksServer();
         }
-
-        spinRoutine = null;
-        ClearLinksServer();
+        finally
+        {
+            spinRoutine = null;
+        }
     }
 
     private void ApplyRopeDamageBySpeedServer(ulong targetId, Transform target, float movedSpeed)

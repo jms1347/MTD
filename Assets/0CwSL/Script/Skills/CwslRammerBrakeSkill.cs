@@ -26,6 +26,36 @@ public class CwslRammerBrakeSkill : CwslPlayerSkillBase
         playerHealth = GetComponent<CwslPlayerHealth>();
         playerStun = GetComponent<CwslPlayerStun>();
         skillCooldowns = GetComponent<CwslPlayerSkillCooldowns>();
+
+        if (playerHealth != null)
+            playerHealth.OnDied += HandleOwnerDied;
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        if (playerHealth != null)
+            playerHealth.OnDied -= HandleOwnerDied;
+
+        CancelSkillServer();
+    }
+
+    private void OnDisable()
+    {
+        CancelSkillServer();
+    }
+
+    private void HandleOwnerDied()
+    {
+        CancelSkillServer();
+    }
+
+    public void CancelSkillServer()
+    {
+        if (brakeSlideRoutine != null)
+        {
+            StopCoroutine(brakeSlideRoutine);
+            brakeSlideRoutine = null;
+        }
     }
 
     public override bool CanUseSkillSlotServer(ulong senderClientId, int slotIndex, Vector3 worldPoint) =>
@@ -127,37 +157,39 @@ public class CwslRammerBrakeSkill : CwslPlayerSkillBase
 
     private IEnumerator BrakeSlideRoutine(Vector3 forward, float distance)
     {
-        var duration = CwslGameConstants.RammerBrakeSlideDuration;
-        if (duration <= 0.01f || distance <= 0.05f)
+        try
+        {
+            var duration = CwslGameConstants.RammerBrakeSlideDuration;
+            if (duration <= 0.01f || distance <= 0.05f)
+                yield break;
+
+            forward.y = 0f;
+            if (forward.sqrMagnitude < 0.0001f)
+                forward = transform.forward;
+            forward.y = 0f;
+            if (forward.sqrMagnitude < 0.0001f)
+                forward = Vector3.forward;
+            forward.Normalize();
+
+            var elapsed = 0f;
+            var start = transform.position;
+            var bodyRadius = GetComponent<CwslPlayerBodyCollider>()?.Radius
+                ?? CwslGameConstants.PlayerBodyColliderRadiusDefault;
+
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                var t = Mathf.Clamp01(elapsed / duration);
+                var eased = 1f - Mathf.Pow(1f - t, 2.5f);
+                var target = start + forward * (distance * eased);
+                transform.position = CwslArenaUtility.ClampToPlayArea(target, bodyRadius);
+                yield return null;
+            }
+        }
+        finally
         {
             brakeSlideRoutine = null;
-            yield break;
         }
-
-        forward.y = 0f;
-        if (forward.sqrMagnitude < 0.0001f)
-            forward = transform.forward;
-        forward.y = 0f;
-        if (forward.sqrMagnitude < 0.0001f)
-            forward = Vector3.forward;
-        forward.Normalize();
-
-        var elapsed = 0f;
-        var start = transform.position;
-        var bodyRadius = GetComponent<CwslPlayerBodyCollider>()?.Radius
-            ?? CwslGameConstants.PlayerBodyColliderRadiusDefault;
-
-        while (elapsed < duration)
-        {
-            elapsed += Time.deltaTime;
-            var t = Mathf.Clamp01(elapsed / duration);
-            var eased = 1f - Mathf.Pow(1f - t, 2.5f);
-            var target = start + forward * (distance * eased);
-            transform.position = CwslArenaUtility.ClampToPlayArea(target, bodyRadius);
-            yield return null;
-        }
-
-        brakeSlideRoutine = null;
     }
 
     private static void PlayBrakeScreech(Vector3 center)

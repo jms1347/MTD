@@ -35,6 +35,50 @@ public class CwslMissileTankSmokeDashSkill : CwslPlayerSkillBase
         powerBoostSkill = GetComponent<CwslMissileTankPowerBoostSkill>();
         skillCooldowns = GetComponent<CwslPlayerSkillCooldowns>();
         agent = GetComponent<NavMeshAgent>();
+
+        if (playerHealth != null)
+            playerHealth.OnDied += HandleOwnerDied;
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        if (playerHealth != null)
+            playerHealth.OnDied -= HandleOwnerDied;
+
+        CancelSkillServer();
+    }
+
+    private void OnDisable()
+    {
+        CancelSkillServer();
+    }
+
+    private void HandleOwnerDied()
+    {
+        CancelSkillServer();
+    }
+
+    public void CancelSkillServer()
+    {
+        if (dashRoutine != null)
+        {
+            StopCoroutine(dashRoutine);
+            dashRoutine = null;
+        }
+
+        ReleaseAgentMotor();
+    }
+
+    private void ReleaseAgentMotor()
+    {
+        if (agent == null || !agent.enabled)
+            return;
+
+        agent.updatePosition = true;
+        agent.updateRotation = true;
+        if (agent.isOnNavMesh)
+            agent.Warp(transform.position);
+        agent.isStopped = false;
     }
 
     public override bool CanUseSkillSlotServer(ulong senderClientId, int slotIndex, Vector3 worldPoint) =>
@@ -91,50 +135,47 @@ public class CwslMissileTankSmokeDashSkill : CwslPlayerSkillBase
 
     private IEnumerator DashRoutine(Vector3 dashDirection)
     {
-        movement?.StopMovement();
-        if (agent != null && agent.enabled)
+        try
         {
-            agent.isStopped = true;
-            agent.ResetPath();
-            agent.updatePosition = false;
-            agent.updateRotation = false;
+            movement?.StopMovement();
+            if (agent != null && agent.enabled)
+            {
+                agent.isStopped = true;
+                agent.ResetPath();
+                agent.updatePosition = false;
+                agent.updateRotation = false;
+            }
+
+            var faceDirection = -dashDirection;
+            if (faceDirection.sqrMagnitude > 0.0001f)
+                transform.rotation = Quaternion.LookRotation(faceDirection, Vector3.up);
+
+            PlayDashClientRpc(dashDirection);
+            missileSkill?.FireSmokeBombServer(faceDirection);
+
+            var duration = CwslGameConstants.MissileTankSmokeDashDuration;
+            var distance = CwslGameConstants.MissileTankSmokeDashDistance;
+            var origin = transform.position;
+            var bodyRadius = GetComponent<CwslPlayerBodyCollider>()?.Radius
+                ?? CwslGameConstants.PlayerBodyColliderRadiusDefault;
+            var elapsed = 0f;
+
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                var t = Mathf.Clamp01(elapsed / duration);
+                var target = origin + dashDirection * (distance * t);
+                transform.position = CwslArenaUtility.ClampToPlayArea(target, bodyRadius);
+                yield return null;
+            }
+
+            transform.position = CwslArenaUtility.ClampToPlayArea(origin + dashDirection * distance, bodyRadius);
         }
-
-        var faceDirection = -dashDirection;
-        if (faceDirection.sqrMagnitude > 0.0001f)
-            transform.rotation = Quaternion.LookRotation(faceDirection, Vector3.up);
-
-        PlayDashClientRpc(dashDirection);
-        missileSkill?.FireSmokeBombServer(faceDirection);
-
-        var duration = CwslGameConstants.MissileTankSmokeDashDuration;
-        var distance = CwslGameConstants.MissileTankSmokeDashDistance;
-        var origin = transform.position;
-        var bodyRadius = GetComponent<CwslPlayerBodyCollider>()?.Radius
-            ?? CwslGameConstants.PlayerBodyColliderRadiusDefault;
-        var elapsed = 0f;
-
-        while (elapsed < duration)
+        finally
         {
-            elapsed += Time.deltaTime;
-            var t = Mathf.Clamp01(elapsed / duration);
-            var target = origin + dashDirection * (distance * t);
-            transform.position = CwslArenaUtility.ClampToPlayArea(target, bodyRadius);
-            yield return null;
+            ReleaseAgentMotor();
+            dashRoutine = null;
         }
-
-        transform.position = CwslArenaUtility.ClampToPlayArea(origin + dashDirection * distance, bodyRadius);
-
-        if (agent != null && agent.enabled)
-        {
-            agent.updatePosition = true;
-            agent.updateRotation = true;
-            if (agent.isOnNavMesh)
-                agent.Warp(transform.position);
-            agent.isStopped = false;
-        }
-
-        dashRoutine = null;
     }
 
     [ClientRpc]

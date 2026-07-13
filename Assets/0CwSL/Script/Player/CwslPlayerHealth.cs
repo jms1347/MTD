@@ -400,6 +400,8 @@ public class CwslPlayerHealth : NetworkBehaviour
 
         movement?.SetAgentEnabled(true);
 
+        playerSkills?.CancelAllSkillMotorsServer();
+
         OnRevived?.Invoke();
 
         PlayReviveClientRpc();
@@ -427,6 +429,7 @@ public class CwslPlayerHealth : NetworkBehaviour
 
 
         playerSkills?.ReleaseSkillServer(OwnerClientId);
+        playerSkills?.CancelAllSkillMotorsServer();
 
         momentumRammerSkill?.StopOnDeathServer();
 

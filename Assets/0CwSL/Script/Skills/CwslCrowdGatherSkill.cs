@@ -58,14 +58,35 @@ public class CwslCrowdGatherSkill : CwslPlayerSkillBase
             playerHealth.OnDied -= HandleDied;
     }
 
-    private void HandleDied() => CancelChargeServer();
+    private void HandleDied() => CancelSkillServer();
 
     private void HandleCharacterChanged(CwslCharacterId characterId)
     {
         if (!IsServer || characterId == CwslCharacterId.CrowdGatherer)
             return;
 
-        CancelChargeServer();
+        CancelSkillServer();
+    }
+
+    public void CancelSkillServer()
+    {
+        if (!IsServer)
+            return;
+
+        if (isCharging.Value)
+        {
+            var center = syncedCenter.Value;
+            var radius = CwslGameConstants.GatherBlackHoleZoneRadius;
+            isCharging.Value = false;
+            ClearZoneSlowServer(center, radius);
+            EndChargeVisualClientRpc();
+        }
+
+        if (pullRoutine != null)
+        {
+            StopCoroutine(pullRoutine);
+            pullRoutine = null;
+        }
     }
 
     private void CancelChargeServer()
@@ -182,46 +203,48 @@ public class CwslCrowdGatherSkill : CwslPlayerSkillBase
 
     private IEnumerator PullTargetsOnReleaseServer(Vector3 center, float radius)
     {
-        var entries = CollectPullEntries(center, radius);
-        if (entries.Count == 0)
+        try
         {
-            pullRoutine = null;
-            yield break;
-        }
+            var entries = CollectPullEntries(center, radius);
+            if (entries.Count == 0)
+                yield break;
 
-        var duration = CwslGameConstants.GatherPullSeconds;
-        var elapsed = 0f;
-        var targetPositions = new Vector3[entries.Count];
-        for (var i = 0; i < entries.Count; i++)
-            targetPositions[i] = ResolvePullDestination(center, entries[i].Transform);
+            var duration = CwslGameConstants.GatherPullSeconds;
+            var elapsed = 0f;
+            var targetPositions = new Vector3[entries.Count];
+            for (var i = 0; i < entries.Count; i++)
+                targetPositions[i] = ResolvePullDestination(center, entries[i].Transform);
 
-        while (elapsed < duration)
-        {
-            elapsed += Time.deltaTime;
-            var t = Mathf.SmoothStep(0f, 1f, elapsed / duration);
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                var t = Mathf.SmoothStep(0f, 1f, elapsed / duration);
+                for (var i = 0; i < entries.Count; i++)
+                {
+                    var entry = entries[i];
+                    if (entry.Transform == null)
+                        continue;
+
+                    var next = Vector3.Lerp(entry.StartPosition, targetPositions[i], t);
+                    ApplyPullPosition(entry, next);
+                }
+
+                yield return null;
+            }
+
             for (var i = 0; i < entries.Count; i++)
             {
                 var entry = entries[i];
                 if (entry.Transform == null)
                     continue;
 
-                var next = Vector3.Lerp(entry.StartPosition, targetPositions[i], t);
-                ApplyPullPosition(entry, next);
+                ApplyPullPosition(entry, targetPositions[i]);
             }
-
-            yield return null;
         }
-
-        for (var i = 0; i < entries.Count; i++)
+        finally
         {
-            var entry = entries[i];
-            if (entry.Transform == null)
-                continue;
-
-            ApplyPullPosition(entry, targetPositions[i]);
+            pullRoutine = null;
         }
-
-        pullRoutine = null;
     }
 
     private void PullUnitsInZoneServer(Vector3 center, float radius)

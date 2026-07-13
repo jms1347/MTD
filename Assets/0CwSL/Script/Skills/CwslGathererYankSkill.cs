@@ -57,6 +57,32 @@ public class CwslGathererYankSkill : CwslPlayerSkillBase
         if (playerHealth != null)
             playerHealth.OnDied -= HandleDied;
         ClearRopeVisual();
+        CancelSkillServer();
+    }
+
+    private void OnDisable()
+    {
+        CancelSkillServer();
+    }
+
+    public void CancelSkillServer()
+    {
+        if (!IsServer)
+            return;
+
+        if (sequenceRoutine != null)
+        {
+            StopCoroutine(sequenceRoutine);
+            sequenceRoutine = null;
+        }
+
+        if (!isActive.Value)
+            return;
+
+        linkedObjectIds.Clear();
+        isActive.Value = false;
+        EndYankVisualClientRpc();
+        ClearRopeVisualClientRpc();
     }
 
     private void Update()
@@ -112,35 +138,41 @@ public class CwslGathererYankSkill : CwslPlayerSkillBase
 
     private IEnumerator YankSequenceRoutine()
     {
-        var center = syncedAreaCenter.Value;
-        var radius = CwslGameConstants.GathererRopeAreaRadius;
-        var pullDuration = CwslGameConstants.GathererYankDuration;
-        var convergeDuration = CwslGameConstants.GathererRopeConvergeSeconds;
-
-        BeginYankVisualClientRpc(center, radius, pullDuration, convergeDuration);
-        PlayYankCastClientRpc(center);
-
-        var elapsed = 0f;
-        while (elapsed < pullDuration)
+        try
         {
-            elapsed += Time.deltaTime;
-            ApplySlowOnLinkedServer(center, radius);
-            PullLinkedTowardCenterServer(center, radius);
-            yield return null;
+            var center = syncedAreaCenter.Value;
+            var radius = CwslGameConstants.GathererRopeAreaRadius;
+            var pullDuration = CwslGameConstants.GathererYankDuration;
+            var convergeDuration = CwslGameConstants.GathererRopeConvergeSeconds;
+
+            BeginYankVisualClientRpc(center, radius, pullDuration, convergeDuration);
+            PlayYankCastClientRpc(center);
+
+            var elapsed = 0f;
+            while (elapsed < pullDuration)
+            {
+                elapsed += Time.deltaTime;
+                ApplySlowOnLinkedServer(center, radius);
+                PullLinkedTowardCenterServer(center, radius);
+                yield return null;
+            }
+
+            yield return ConvergeLinkedToCenterServer(center, convergeDuration);
+
+            var shouldExplode = HasExplosiveTriggerInLinked();
+            if (shouldExplode)
+            {
+                ApplyExplosionDamageServer(center, radius);
+                PlayYankExplosionClientRpc(center, radius);
+            }
+
+            ClearSlowOnLinkedServer(center, radius);
+            FinishSequenceServer();
         }
-
-        yield return ConvergeLinkedToCenterServer(center, convergeDuration);
-
-        var shouldExplode = HasExplosiveTriggerInLinked();
-        if (shouldExplode)
+        finally
         {
-            ApplyExplosionDamageServer(center, radius);
-            PlayYankExplosionClientRpc(center, radius);
+            sequenceRoutine = null;
         }
-
-        ClearSlowOnLinkedServer(center, radius);
-        FinishSequenceServer();
-        sequenceRoutine = null;
     }
 
     private void LinkRopesInAreaServer()
@@ -341,22 +373,7 @@ public class CwslGathererYankSkill : CwslPlayerSkillBase
 
     private void HandleDied()
     {
-        if (!IsServer)
-            return;
-
-        if (sequenceRoutine != null)
-        {
-            StopCoroutine(sequenceRoutine);
-            sequenceRoutine = null;
-        }
-
-        if (!isActive.Value)
-            return;
-
-        linkedObjectIds.Clear();
-        isActive.Value = false;
-        EndYankVisualClientRpc();
-        ClearRopeVisualClientRpc();
+        CancelSkillServer();
     }
 
     private void HandleActiveChanged(bool previous, bool current) => RefreshRopeVisual();

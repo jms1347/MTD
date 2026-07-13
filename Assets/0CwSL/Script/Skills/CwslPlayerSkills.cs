@@ -347,6 +347,29 @@ public class CwslPlayerSkills : NetworkBehaviour
 
     public bool BlocksSkillUseForOwner() => BlocksSkillUseServer(OwnerClientId);
 
+    public void CancelAllSkillMotorsServer()
+    {
+        if (!IsServer)
+            return;
+
+        GetComponent<CwslTankShieldDashSkill>()?.CancelSkillServer();
+        GetComponent<CwslTankShieldSlamSkill>()?.CancelSkillServer();
+        GetComponent<CwslTankShieldWhirlwindSkill>()?.CancelSkillServer();
+        GetComponent<CwslTankShieldAttack>()?.CancelSkillServer();
+        GetComponent<CwslMissileTankSmokeDashSkill>()?.CancelSkillServer();
+        GetComponent<CwslMissileTankPowerBoostSkill>()?.CancelSkillServer();
+        GetComponent<CwslMissileTankSkill>()?.CancelCombatMotorServer();
+        GetComponent<CwslRedMageTeleportSkill>()?.CancelSkillServer();
+        GetComponent<CwslRedMageLightningOrbSkill>()?.CancelSkillServer();
+        GetComponent<CwslCrowdGatherSkill>()?.CancelSkillServer();
+        GetComponent<CwslGathererYankSkill>()?.CancelSkillServer();
+        GetComponent<CwslGathererBlackHoleSkill>()?.CancelSkillServer();
+        GetComponent<CwslRammerRopeSkill>()?.CancelSkillServer();
+        GetComponent<CwslRammerFireTrailSkill>()?.CancelSkillServer();
+        GetComponent<CwslRammerBrakeSkill>()?.CancelSkillServer();
+        GetComponent<CwslBarricadeRepairSkill>()?.CancelSkillServer();
+    }
+
     private bool IsSkillActiveForCharacter(CwslPlayerSkillBase skill)
     {
         var characterId = playerCharacter != null

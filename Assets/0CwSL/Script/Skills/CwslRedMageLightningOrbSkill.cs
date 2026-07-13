@@ -28,6 +28,36 @@ public class CwslRedMageLightningOrbSkill : CwslPlayerSkillBase
         playerHealth = GetComponent<CwslPlayerHealth>();
         playerStun = GetComponent<CwslPlayerStun>();
         skillCooldowns = GetComponent<CwslPlayerSkillCooldowns>();
+
+        if (playerHealth != null)
+            playerHealth.OnDied += HandleOwnerDied;
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        if (playerHealth != null)
+            playerHealth.OnDied -= HandleOwnerDied;
+
+        CancelSkillServer();
+    }
+
+    private void OnDisable()
+    {
+        CancelSkillServer();
+    }
+
+    private void HandleOwnerDied()
+    {
+        CancelSkillServer();
+    }
+
+    public void CancelSkillServer()
+    {
+        if (castRoutine != null)
+        {
+            StopCoroutine(castRoutine);
+            castRoutine = null;
+        }
     }
 
     public override bool CanUseSkillSlotServer(ulong senderClientId, int slotIndex, Vector3 worldPoint) =>
@@ -77,56 +107,62 @@ public class CwslRedMageLightningOrbSkill : CwslPlayerSkillBase
 
     private IEnumerator CastRoutine(Vector3 direction)
     {
-        var flatDirection = direction;
-        flatDirection.y = 0f;
-        if (flatDirection.sqrMagnitude < 0.0001f)
-            flatDirection = transform.forward;
-        flatDirection.Normalize();
-
-        var startPosition = ResolveOrbPosition(flatDirection);
-        var travelDistance = CwslGameConstants.RedMageLightningOrbTravelDistance;
-        var travelSpeed = CwslGameConstants.RedMageLightningOrbTravelSpeed;
-        var travelDuration = travelDistance / travelSpeed;
-        var strikeInterval = CwslGameConstants.RedMageLightningOrbStrikeInterval;
-        var strikeRadius = CwslGameConstants.RedMageLightningOrbStrikeRadius;
-
-        PlayLightningOrbTravelClientRpc(
-            startPosition,
-            flatDirection,
-            travelDuration,
-            CwslGameConstants.RedMageLightningOrbVisualScale,
-            strikeRadius);
-
-        yield return new WaitForSeconds(CwslGameConstants.RedMageLightningOrbChargeSeconds);
-
-        var damage = playerCharacter != null
-            ? CwslCharacterStatCatalog.GetAttackPower(playerCharacter.CharacterId)
-            : CwslGameConstants.AttackDamage;
-        var shockDuration = CwslGameConstants.RedMageLightningShockDuration;
-        var strikeDamage = damage * CwslGameConstants.RedMageLightningOrbStrikeDamageRatio;
-
-        var elapsed = 0f;
-        var strikeTimer = strikeInterval;
-        while (elapsed < travelDuration)
+        try
         {
-            elapsed += Time.deltaTime;
-            strikeTimer += Time.deltaTime;
+            var flatDirection = direction;
+            flatDirection.y = 0f;
+            if (flatDirection.sqrMagnitude < 0.0001f)
+                flatDirection = transform.forward;
+            flatDirection.Normalize();
 
-            var orbPosition = startPosition + flatDirection * (travelDistance * Mathf.Clamp01(elapsed / travelDuration));
+            var startPosition = ResolveOrbPosition(flatDirection);
+            var travelDistance = CwslGameConstants.RedMageLightningOrbTravelDistance;
+            var travelSpeed = CwslGameConstants.RedMageLightningOrbTravelSpeed;
+            var travelDuration = travelDistance / travelSpeed;
+            var strikeInterval = CwslGameConstants.RedMageLightningOrbStrikeInterval;
+            var strikeRadius = CwslGameConstants.RedMageLightningOrbStrikeRadius;
 
-            if (strikeTimer >= strikeInterval)
+            PlayLightningOrbTravelClientRpc(
+                startPosition,
+                flatDirection,
+                travelDuration,
+                CwslGameConstants.RedMageLightningOrbVisualScale,
+                strikeRadius);
+
+            yield return new WaitForSeconds(CwslGameConstants.RedMageLightningOrbChargeSeconds);
+
+            var damage = playerCharacter != null
+                ? CwslCharacterStatCatalog.GetAttackPower(playerCharacter.CharacterId)
+                : CwslGameConstants.AttackDamage;
+            var shockDuration = CwslGameConstants.RedMageLightningShockDuration;
+            var strikeDamage = damage * CwslGameConstants.RedMageLightningOrbStrikeDamageRatio;
+
+            var elapsed = 0f;
+            var strikeTimer = strikeInterval;
+            while (elapsed < travelDuration)
             {
-                strikeTimer -= strikeInterval;
-                StrikeMonstersNearOrbServer(orbPosition, strikeRadius, strikeDamage, shockDuration);
+                elapsed += Time.deltaTime;
+                strikeTimer += Time.deltaTime;
+
+                var orbPosition = startPosition + flatDirection * (travelDistance * Mathf.Clamp01(elapsed / travelDuration));
+
+                if (strikeTimer >= strikeInterval)
+                {
+                    strikeTimer -= strikeInterval;
+                    StrikeMonstersNearOrbServer(orbPosition, strikeRadius, strikeDamage, shockDuration);
+                }
+
+                yield return null;
             }
 
-            yield return null;
+            var endPosition = startPosition + flatDirection * travelDistance;
+            StrikeMonstersNearOrbServer(endPosition, strikeRadius, strikeDamage, shockDuration);
+            PlayLightningOrbImpactClientRpc(endPosition);
         }
-
-        var endPosition = startPosition + flatDirection * travelDistance;
-        StrikeMonstersNearOrbServer(endPosition, strikeRadius, strikeDamage, shockDuration);
-        PlayLightningOrbImpactClientRpc(endPosition);
-        castRoutine = null;
+        finally
+        {
+            castRoutine = null;
+        }
     }
 
     private void StrikeMonstersNearOrbServer(
