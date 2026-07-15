@@ -22,6 +22,7 @@ public class StllHorseMotor : NetworkBehaviour
     private bool isCharging;
     private float chargeTimer;
     private StllMountedCharge mountedCharge;
+    private StllPlayerMoveModifiers moveModifiers;
 
     public float CurrentSpeed => IsOwner || IsServer ? LocalSpeed : syncedSpeed.Value;
     public float LocalSpeed { get; private set; }
@@ -33,8 +34,14 @@ public class StllHorseMotor : NetworkBehaviour
     private void Awake()
     {
         mountedCharge = GetComponent<StllMountedCharge>();
+        moveModifiers = GetComponent<StllPlayerMoveModifiers>();
         headingDirection = FlatForward();
         velocityDirection = headingDirection;
+    }
+
+    private float GetMaxSpeed()
+    {
+        return CwslGameConstants.RammerMaxSpeed * (moveModifiers != null ? moveModifiers.GetSpeedMultiplier() : 1f);
     }
 
     public override void OnNetworkSpawn()
@@ -166,7 +173,7 @@ public class StllHorseMotor : NetworkBehaviour
                 var pivotRate = StllGlaiveConstants.HorsePivotTurnRate * Time.deltaTime;
                 headingDirection = RotateFlat(headingDirection, inputDir, pivotRate);
 
-                var pivotTarget = headingDirection * CwslGameConstants.RammerMaxSpeed;
+                var pivotTarget = headingDirection * GetMaxSpeed();
                 var pivotStrength = StllGlaiveConstants.HorsePivotVelocityBlend;
                 BlendVelocityToward(pivotTarget, pivotStrength, ref velocityDirection, ref speed);
 
@@ -174,7 +181,7 @@ public class StllHorseMotor : NetworkBehaviour
                 {
                     isPivotTurning = false;
                     speed = Mathf.Min(
-                        CwslGameConstants.RammerMaxSpeed,
+                        GetMaxSpeed(),
                         speed + CwslGameConstants.RammerAccelPerSecond * Time.deltaTime);
                 }
             }
@@ -188,7 +195,7 @@ public class StllHorseMotor : NetworkBehaviour
                 if (steerAlignment >= StllGlaiveConstants.HorseSteerAccelDotThreshold)
                 {
                     speed = Mathf.Min(
-                        CwslGameConstants.RammerMaxSpeed,
+                        GetMaxSpeed(),
                         speed + CwslGameConstants.RammerAccelPerSecond * Time.deltaTime);
                 }
                 else if (speed > 0f)
@@ -275,9 +282,9 @@ public class StllHorseMotor : NetworkBehaviour
             direction = targetVelocity.normalized;
     }
 
-    private static float VelocityBlendStrength(float speed)
+    private float VelocityBlendStrength(float speed)
     {
-        var speedRatio = Mathf.Clamp01(speed / CwslGameConstants.RammerMaxSpeed);
+        var speedRatio = Mathf.Clamp01(speed / GetMaxSpeed());
         var drift = Mathf.Lerp(
             StllGlaiveConstants.HorseDriftAtLowSpeed,
             StllGlaiveConstants.HorseDriftAtHighSpeed,
@@ -314,9 +321,9 @@ public class StllHorseMotor : NetworkBehaviour
         return forward.sqrMagnitude > 0.001f ? forward.normalized : Vector3.forward;
     }
 
-    private static float TurnRateForSpeed(float speed)
+    private float TurnRateForSpeed(float speed)
     {
-        var ratio = Mathf.Clamp01(speed / CwslGameConstants.RammerMaxSpeed);
+        var ratio = Mathf.Clamp01(speed / GetMaxSpeed());
         return Mathf.Lerp(
             CwslGameConstants.RammerSteerTurnRateHigh,
             CwslGameConstants.RammerSteerTurnRateLow,

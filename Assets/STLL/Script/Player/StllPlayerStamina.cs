@@ -8,8 +8,15 @@ public class StllPlayerStamina : NetworkBehaviour
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server);
 
+    private StllPlayerCardInventory cardInventory;
+
     public float Current => stamina.Value;
     public float Max => StllGlaiveConstants.MaxStamina;
+
+    private void Awake()
+    {
+        cardInventory = GetComponent<StllPlayerCardInventory>();
+    }
 
     private void Update()
     {
@@ -19,9 +26,11 @@ public class StllPlayerStamina : NetworkBehaviour
         if (stamina.Value >= StllGlaiveConstants.MaxStamina)
             return;
 
-        stamina.Value = Mathf.Min(
-            StllGlaiveConstants.MaxStamina,
-            stamina.Value + StllGlaiveConstants.StaminaRegenPerSecond * Time.deltaTime);
+        var regen = StllGlaiveConstants.StaminaRegenPerSecond;
+        if (cardInventory != null)
+            regen *= 1f + cardInventory.GetPassiveBonus(StllPassiveBonusType.StaminaRegen);
+
+        stamina.Value = Mathf.Min(StllGlaiveConstants.MaxStamina, stamina.Value + regen * Time.deltaTime);
     }
 
     public bool TrySpendServer(float amount)

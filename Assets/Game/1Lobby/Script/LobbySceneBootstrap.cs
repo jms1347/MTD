@@ -5,6 +5,8 @@ using UnityEngine;
 /// </summary>
 public class LobbySceneBootstrap : MonoBehaviour
 {
+    [SerializeField] private bool useStllEaScene;
+
     private void Awake()
     {
         if (LobbyNetworkManager.Instance == null)
@@ -13,7 +15,9 @@ public class LobbySceneBootstrap : MonoBehaviour
             managerObject.AddComponent<LobbyNetworkManager>();
         }
 
-        LobbyNetworkManager.Instance.GameSceneName = CwslGameConstants.GameSceneName;
+        LobbyNetworkManager.Instance.GameSceneName = useStllEaScene
+            ? StllGameConstants.GameSceneName
+            : CwslGameConstants.GameSceneName;
 
         if (FindFirstObjectByType<LobbyUIController>() == null)
         {

@@ -12,7 +12,9 @@ public enum StllRiderKind
 
 public enum StllWeaponKind
 {
-    Glaive = 0
+    Glaive = 0,
+    TwinSwords = 1,
+    SpearMace = 2
 }
 
 /// <summary>말·기수·무기를 분리 조립/교체합니다.</summary>
@@ -37,6 +39,13 @@ public class StllMountAssembly : MonoBehaviour
         RebuildLoadout(horseKind, riderKind, weaponKind);
     }
 
+    public void RebuildForRole(StllBrotherhoodRole role)
+    {
+        var profile = StllRoleVisualCatalog.Get(role);
+        accentColor = profile.AccentColor;
+        RebuildLoadout(horseKind, riderKind, profile.WeaponKind);
+    }
+
     public void RebuildLoadout(StllHorseKind horse, StllRiderKind rider, StllWeaponKind weapon)
     {
         horseKind = horse;
@@ -55,6 +64,10 @@ public class StllMountAssembly : MonoBehaviour
 
         if (weaponKind == StllWeaponKind.Glaive)
             weaponVisual = StllWeaponVisualBuilder.BuildGlaive(riderVisual.RightHandSocket, accentColor);
+        else if (weaponKind == StllWeaponKind.TwinSwords)
+            weaponVisual = StllWeaponVisualBuilder.BuildTwinSwords(riderVisual.RightHandSocket, accentColor);
+        else if (weaponKind == StllWeaponKind.SpearMace)
+            weaponVisual = StllWeaponVisualBuilder.BuildSpearMace(riderVisual.RightHandSocket, accentColor);
 
         rideVisual = visualRoot.gameObject.AddComponent<StllHorseRideVisual>();
         rideVisual.Bind(

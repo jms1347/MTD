@@ -52,8 +52,11 @@ public static class StllGameSceneSetup
         Directory.CreateDirectory(StllGameConstants.RootFolder + "/Data");
         Directory.CreateDirectory(StllGameConstants.RootFolder + "/Prefabs/Characters");
         Directory.CreateDirectory(StllGameConstants.RootFolder + "/Prefabs/Units");
+        Directory.CreateDirectory(StllGameConstants.RootFolder + "/Prefabs/Structures");
         Directory.CreateDirectory(StllGameConstants.RootFolder + "/Scenes");
     }
+
+    public static void EnsureFoldersPublic() => EnsureFolders();
 
     private static StllGameAssets EnsureGameAssets()
     {

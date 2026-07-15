@@ -8,6 +8,8 @@ public class StllGlaiveCombat : NetworkBehaviour
     private StllHorseMotor motor;
     private StllMountAssembly mountAssembly;
     private StllGlaiveSwingVisual swingVisual;
+    private StllBrotherhoodRoleState roleState;
+    private StllPlayerMoveModifiers moveModifiers;
 
     private float nextBasicAttackTime;
     private float nextSpinTime;
@@ -23,6 +25,8 @@ public class StllGlaiveCombat : NetworkBehaviour
         motor = GetComponent<StllHorseMotor>();
         mountAssembly = GetComponent<StllMountAssembly>();
         swingVisual = GetComponent<StllGlaiveSwingVisual>();
+        roleState = GetComponent<StllBrotherhoodRoleState>();
+        moveModifiers = GetComponent<StllPlayerMoveModifiers>();
     }
 
     public bool TryBasicAttackServer()
@@ -46,12 +50,24 @@ public class StllGlaiveCombat : NetworkBehaviour
                 continue;
 
             enemy.TakeDamageServer(
-                StllGlaiveConstants.BasicAttackDamage,
+                StllGlaiveConstants.BasicAttackDamage * GetAttackMultiplier(),
                 OwnerClientId,
                 forward * StllGlaiveConstants.BasicAttackKnockback);
 
             if (Random.value < StllGlaiveConstants.QinglongProcChance)
                 StllQinglongWave.Spawn(origin, forward, StllGlaiveConstants.QinglongProjectileDamage, OwnerClientId);
+        }
+
+        DamageBossesInFan(origin, forward, halfAngle, StllGlaiveConstants.BasicAttackRange,
+            StllGlaiveConstants.BasicAttackDamage * GetAttackMultiplier());
+
+        var cardInventory = GetComponent<StllPlayerCardInventory>();
+        if (cardInventory != null)
+        {
+            var extraChance = cardInventory.GetPassiveBonus(StllPassiveBonusType.ExtraAttackChance);
+            if (Random.value < extraChance)
+                DamageBossesInFan(origin, forward, halfAngle, StllGlaiveConstants.BasicAttackRange,
+                    StllGlaiveConstants.BasicAttackDamage * GetAttackMultiplier() * 0.5f);
         }
 
         PlayBasicSwingClientRpc(forward);
@@ -103,10 +119,41 @@ public class StllGlaiveCombat : NetworkBehaviour
             var knockDir = flat.sqrMagnitude > 0.01f ? flat.normalized : Random.insideUnitSphere;
             knockDir.y = 0f;
             enemy.TakeDamageServer(
-                StllGlaiveConstants.ChargeSpinDamagePerHit,
+                StllGlaiveConstants.ChargeSpinDamagePerHit * GetAttackMultiplier(),
                 OwnerClientId,
                 knockDir * StllGlaiveConstants.ChargeSpinKnockback);
         }
+    }
+
+    private float GetAttackMultiplier()
+    {
+        if (moveModifiers != null)
+            return moveModifiers.GetDamageMultiplier();
+
+        if (roleState == null)
+            return 1f;
+
+        return StllRoleCombatModifiers.GetAttackDamageMultiplier(roleState.Role);
+    }
+
+    private void DamageBossesInFan(Vector3 origin, Vector3 forward, float halfAngle, float range, float damage)
+    {
+        var minibosses = FindObjectsByType<StllMiniBossHuangYing>(FindObjectsSortMode.None);
+        for (var i = 0; i < minibosses.Length; i++)
+        {
+            var boss = minibosses[i];
+            if (boss == null || !boss.IsAlive)
+                continue;
+
+            if (!IsInFan(origin, forward, boss.transform.position, halfAngle, range))
+                continue;
+
+            boss.DamageServer(damage, OwnerClientId, forward * 2f);
+        }
+
+        var lubu = FindFirstObjectByType<StllBossLuBu>();
+        if (lubu != null && lubu.IsAlive && IsInFan(origin, forward, lubu.transform.position, halfAngle, range))
+            lubu.DamageServer(damage);
     }
 
     private static bool IsInFan(Vector3 origin, Vector3 forward, Vector3 target, float halfAngleDeg, float range)

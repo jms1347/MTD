@@ -30,7 +30,14 @@ public class StllEnemyHealth : NetworkBehaviour
         knockbackVelocity += knockback;
 
         if (health.Value <= 0f)
+        {
+            var ai = GetComponent<StllEnemyGruntAI>();
+            if (ai != null && ai.Kind == StllEnemyKind.Arsonist)
+                StllZoneEffect.SpawnFireZoneServer(transform.position, 4f, 3f, 8f, attackerClientId);
+
+            StllGoldDropper.ServerAwardKillGold(attackerClientId, gameObject);
             NetworkObject.Despawn(true);
+        }
     }
 
     public void ApplyKnockbackServer(Vector3 knockback, float damage, ulong attackerClientId)

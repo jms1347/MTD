@@ -1,9 +1,6 @@
 using Unity.Netcode;
 using UnityEngine;
 
-/// <summary>
-/// WASD = 카메라 기준 이동. Owner는 로컬 즉시 반영 + 서버 동기화.
-/// </summary>
 [DefaultExecutionOrder(-10)]
 public class StllMountedInput : NetworkBehaviour
 {
@@ -14,6 +11,8 @@ public class StllMountedInput : NetworkBehaviour
     private StllMountedCharge charge;
     private StllGlaiveCombat combat;
     private StllMinionCommander commander;
+    private StllRoleSkills roleSkills;
+    private StllActiveCardCaster cardCaster;
     private Camera playerCamera;
 
     private float rmbDownTime;
@@ -25,6 +24,8 @@ public class StllMountedInput : NetworkBehaviour
         charge = GetComponent<StllMountedCharge>();
         combat = GetComponent<StllGlaiveCombat>();
         commander = GetComponent<StllMinionCommander>();
+        roleSkills = GetComponent<StllRoleSkills>();
+        cardCaster = GetComponent<StllActiveCardCaster>();
     }
 
     private void Update()
@@ -86,7 +87,7 @@ public class StllMountedInput : NetworkBehaviour
         if (Input.GetMouseButtonUp(1))
         {
             if (!rmbSteerActive && Time.time - rmbDownTime <= RmbTapMaxSeconds)
-                RequestChargeSpinServerRpc();
+                RequestRoleSkillServerRpc();
 
             ReleaseSteer();
             rmbSteerActive = false;
@@ -158,29 +159,32 @@ public class StllMountedInput : NetworkBehaviour
 
         if (Input.GetMouseButtonDown(0))
             RequestBasicAttackServerRpc();
+
+        if (Input.GetKeyDown(KeyCode.Q))
+            RequestChargeSpinServerRpc();
+
+        if (Input.GetKeyDown(KeyCode.Alpha1))
+            RequestActiveCardServerRpc(0);
+
+        if (Input.GetKeyDown(KeyCode.Alpha2))
+            RequestActiveCardServerRpc(1);
     }
 
     [ServerRpc]
-    private void RequestChargeServerRpc()
-    {
-        charge?.TryStartChargeServer();
-    }
+    private void RequestChargeServerRpc() => charge?.TryStartChargeServer();
 
     [ServerRpc]
-    private void RequestToggleMinionModeServerRpc()
-    {
-        commander?.ToggleModeServer();
-    }
+    private void RequestToggleMinionModeServerRpc() => commander?.ToggleModeServer();
 
     [ServerRpc]
-    private void RequestBasicAttackServerRpc()
-    {
-        combat?.TryBasicAttackServer();
-    }
+    private void RequestBasicAttackServerRpc() => combat?.TryBasicAttackServer();
 
     [ServerRpc]
-    private void RequestChargeSpinServerRpc()
-    {
-        combat?.TryChargeSpinServer();
-    }
+    private void RequestChargeSpinServerRpc() => combat?.TryChargeSpinServer();
+
+    [ServerRpc]
+    private void RequestRoleSkillServerRpc() => roleSkills?.TryCastRoleSkillServer();
+
+    [ServerRpc]
+    private void RequestActiveCardServerRpc(int slot) => cardCaster?.TryCastActiveSlotServer(slot);
 }
